@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>DMX sans fil · simple</title>
+<style>
+  :root{
+    --bg:#0A0C12; --ink:#D7DEE6; --dim:#7A879A;
+    --teal:#33E0C8; --amber:#FFB020; --good:#46E27A; --bad:#FF4D5E; --violet:#B16CFF;
+    --panel:#E8ECEF; --line:#1C2632;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;color:var(--ink);}
+  #app{position:fixed;inset:0;} canvas{display:block;touch-action:none;}
+
+  .top{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 14px) 16px 6px;pointer-events:none;}
+  .title{font-weight:700;font-size:16px;}
+  .title span{color:var(--teal);}
+
+  .tabs{position:fixed;left:16px;right:16px;top:calc(env(safe-area-inset-top) + 44px);
+    display:flex;gap:6px;pointer-events:auto;}
+  .tab{flex:1;text-align:center;font-weight:600;font-size:12.5px;padding:10px 4px;border-radius:10px;
+    border:1px solid var(--line);background:rgba(16,22,32,.85);color:var(--dim);}
+  .tab.on{color:#0a0d12;background:var(--teal);border-color:var(--teal);}
+
+  #labels{position:fixed;inset:0;pointer-events:none;}
+  .lbl{position:absolute;transform:translate(-50%,-50%);font-weight:700;font-size:11px;
+    padding:4px 8px;border-radius:7px;white-space:nowrap;background:rgba(9,12,18,.75);
+    border:1px solid rgba(255,255,255,.08);transition:opacity .15s;}
+  .t-teal{color:var(--teal)} .t-amber{color:var(--amber)} .t-violet{color:var(--violet)} .t-ink{color:var(--ink)}
+
+  .deck{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(env(safe-area-inset-bottom) + 14px);
+    background:linear-gradient(to top,rgba(10,12,18,.98),rgba(10,12,18,0));}
+  .pane{display:none;} .pane.on{display:block;}
+  .label{font-size:12px;font-weight:700;color:var(--dim);margin:2px 2px 6px;}
+  .choices{display:flex;gap:8px;margin-bottom:10px;}
+  .choice{flex:1;text-align:center;padding:13px 6px;border-radius:12px;font-weight:700;font-size:13px;
+    border:1.5px solid var(--line);background:rgba(16,22,32,.88);color:var(--ink);}
+  .choice small{display:block;font-weight:500;font-size:10px;color:var(--dim);margin-top:2px;}
+  .choice.on{border-color:var(--teal);background:rgba(51,224,200,.12);color:var(--teal);}
+  .choice.on small{color:var(--teal);opacity:.85;}
+
+  .verdict{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;font-weight:700;font-size:13px;line-height:1.4;}
+  .verdict .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;margin-top:2px;}
+  .verdict.ok{background:rgba(70,226,122,.1);border:1px solid rgba(70,226,122,.3);color:var(--good);}
+  .verdict.mid{background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.3);color:var(--amber);}
+  .verdict.bad{background:rgba(255,77,94,.1);border:1px solid rgba(255,77,94,.3);color:var(--bad);}
+  .verdict .dot.ok{background:var(--good);} .verdict .dot.mid{background:var(--amber);} .verdict .dot.bad{background:var(--bad);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="top"><div class="title"><span>DMX</span> sans fil — vue simple</div></div>
+<div class="tabs">
+  <div class="tab on" data-m="0">Puissance</div>
+  <div class="tab" data-m="1">Angle</div>
+  <div class="tab" data-m="2">Interférence</div>
+</div>
+<div id="labels"></div>
+
+<div class="deck">
+  <!-- PUISSANCE -->
+  <div class="pane on" id="p0">
+    <div class="label">Combien tu envoies de signal</div>
+    <div class="choices" id="pwSel">
+      <div class="choice" data-v="low">Faible</div>
+      <div class="choice on" data-v="mid">Normale</div>
+      <div class="choice" data-v="max">Maximum</div>
+    </div>
+    <div class="verdict ok" id="v0"><div class="dot ok"></div><div id="v0t">—</div></div>
+  </div>
+
+  <!-- ANGLE -->
+  <div class="pane" id="p1">
+    <div class="label">Comment les antennes sont orientées</div>
+    <div class="choices" id="agSel">
+      <div class="choice on" data-v="same">Même sens</div>
+      <div class="choice" data-v="cross">Croisées</div>
+      <div class="choice" data-v="face">Face à face</div>
+    </div>
+    <div class="verdict ok" id="v1"><div class="dot ok"></div><div id="v1t">—</div></div>
+  </div>
+
+  <!-- INTERFERENCE -->
+  <div class="pane" id="p2">
+    <div class="label">Ce qui traîne autour du signal</div>
+    <div class="choices" id="itSel">
+      <div class="choice on" data-v="none">Rien</div>
+      <div class="choice" data-v="wall">Mur proche</div>
+      <div class="choice" data-v="jam">Autre émetteur</div>
+    </div>
+    <div class="verdict ok" id="v2"><div class="dot ok"></div><div id="v2t">—</div></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const TEAL=0x33E0C8,AMBER=0xFFB020,GOOD=0x46E27A,BAD=0xFF4D5E,VIOLET=0xB16CFF,PANELC=0xE8ECEF;
+
+const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x0A0C12,0.015);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));document.getElementById('app').appendChild(renderer.domElement);
+const camera=new THREE.PerspectiveCamera(52,1,0.1,300);
+(function(){const c=document.createElement('canvas');c.width=8;c.height=256;const g=c.getContext('2d');
+ const gr=g.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#111826');gr.addColorStop(1,'#07090F');
+ g.fillStyle=gr;g.fillRect(0,0,8,256);scene.background=new THREE.CanvasTexture(c);})();
+scene.add(new THREE.HemisphereLight(0x8fa6c0,0x0a0d13,0.95));
+const key=new THREE.DirectionalLight(0xffffff,0.8);key.position.set(-6,12,8);scene.add(key);
+const grid=new THREE.GridHelper(60,60,0x28374a,0x131b25);grid.material.transparent=true;grid.material.opacity=.5;scene.add(grid);
+
+function device(w,h,d,c){const g=new THREE.Group();
+  const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:c,roughness:.6,metalness:.25}));
+  b.position.y=h/2;g.add(b);
+  g.add(new THREE.LineSegments(new THREE.EdgesGeometry(b.geometry),new THREE.LineBasicMaterial({color:0x3a4757})).translateY(h/2));
+  return g;}
+function whip(x,z,h){const g=new THREE.Group();g.position.set(x,0,z);
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.045,h,10),new THREE.MeshStandardMaterial({color:0x111418,roughness:.4,metalness:.6}));
+  m.position.y=h/2;g.add(m);return g;}
+function omni(R,color){const g=new THREE.Group();const geo=new THREE.TorusGeometry(R,R*0.4,16,52);
+  const m1=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:0.16,side:2,depthWrite:false,blending:THREE.AdditiveBlending}));
+  const m2=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:color,wireframe:true,transparent:true,opacity:0.10,depthWrite:false}));
+  g.add(m1,m2);g.children.forEach(c=>c.rotation.x=Math.PI/2);g.userData.mesh=m1;return g;}
+function lobe(len,maxR,color){const pts=[];const N=32;
+  for(let i=0;i<=N;i++){const t=i/N;const r=maxR*Math.pow(Math.sin(Math.PI*t),0.85)*(0.35+0.65*t);pts.push(new THREE.Vector2(r,t*len));}
+  const geo=new THREE.LatheGeometry(pts,36);
+  const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:0.18,side:2,depthWrite:false,blending:THREE.AdditiveBlending}));
+  m.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:color,wireframe:true,transparent:true,opacity:0.12,depthWrite:false})));
+  m.rotation.x=Math.PI/2;const h=new THREE.Group();h.add(m);h.userData.mesh=m;return h;}
+function line(a,b,color){const g=new THREE.BufferGeometry().setFromPoints([a,b]);return new THREE.Line(g,new THREE.LineBasicMaterial({color:color,transparent:true,opacity:.9}));}
+function panel(){const g=new THREE.Group();
+  const p=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.05,0.1),new THREE.MeshStandardMaterial({color:PANELC,roughness:.7}));
+  g.add(p);g.add(new THREE.LineSegments(new THREE.EdgesGeometry(p.geometry),new THREE.LineBasicMaterial({color:0x9aa6b2})));return g;}
+
+const TX={x:-6,y:1.9,z:0}, RX={x:6,y:1.3,z:0};
+const stardust=device(1.5,1.0,0.5,0x161a22);stardust.position.set(TX.x,0,TX.z);scene.add(stardust);
+scene.add(whip(TX.x,TX.z,2.0).translateY(1.0));
+const rxBox=device(0.5,0.4,0.5,0x1a1d24);rxBox.position.set(RX.x,0,RX.z);scene.add(rxBox);
+
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(30,9),new THREE.MeshStandardMaterial({color:0x11161f,roughness:.9,transparent:true,opacity:.5,side:2}));
+wall.position.set(0,4.5,-9);scene.add(wall);
+
+const G0=new THREE.Group(),G1=new THREE.Group(),G2=new THREE.Group();scene.add(G0,G1,G2);
+
+/* ---- MODE 0 : PUISSANCE ---- */
+const patO=omni(2.2,TEAL);patO.position.set(TX.x,1.9,TX.z);G0.add(patO);
+const link0=line(new THREE.Vector3(TX.x,TX.y,TX.z),new THREE.Vector3(RX.x,RX.y,RX.z),GOOD);G0.add(link0);
+
+/* ---- MODE 1 : ANGLE ---- */
+const antA=panel(),antB=panel();
+antA.position.set(TX.x+1,3,TX.z-1.3);antB.position.set(TX.x+1,3,TX.z+1.3);G1.add(antA,antB);
+const lobeA=lobe(8,2.1,AMBER),lobeB=lobe(8,2.1,TEAL);
+lobeA.position.copy(antA.position);lobeB.position.copy(antB.position);G1.add(lobeA,lobeB);
+const overlap=new THREE.Mesh(new THREE.SphereGeometry(1,20,20),
+  new THREE.MeshBasicMaterial({color:GOOD,transparent:true,opacity:.28,depthWrite:false,blending:THREE.AdditiveBlending}));
+G1.add(overlap);
+
+/* ---- MODE 2 : INTERFERENCE ---- */
+const link2=line(new THREE.Vector3(TX.x,TX.y,TX.z),new THREE.Vector3(RX.x,RX.y,RX.z),GOOD);G2.add(link2);
+const refl=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()]),
+  new THREE.LineDashedMaterial({color:AMBER,dashSize:.4,gapSize:.25,transparent:true,opacity:.85}));G2.add(refl);
+const jamBox=device(0.5,0.5,0.5,0x241a2e);jamBox.position.set(0,0,4);G2.add(jamBox);
+const jamField=omni(2.0,VIOLET);jamField.position.set(0,1.2,4);G2.add(jamField);
+const jamLink=line(new THREE.Vector3(0,1.2,4),new THREE.Vector3(RX.x,RX.y,RX.z),VIOLET);G2.add(jamLink);
+
+/* ---- labels ---- */
+const L=[];
+function mkLabel(cls,t){const e=document.createElement('div');e.className='lbl '+cls;e.textContent=t;document.getElementById('labels').appendChild(e);
+  const o={e,p:new THREE.Vector3(),on:true};L.push(o);return o;}
+const lbTX=mkLabel('t-teal','STARDUST');
+const lbRX=mkLabel('t-ink','F1 G6');
+const lbA=mkLabel('t-amber','Antenne A');lbA.on=false;
+const lbB=mkLabel('t-teal','Antenne B');lbB.on=false;
+const lbJ=mkLabel('t-violet','Autre émetteur');lbJ.on=false;
+
+/* ---- orbit ---- */
+const target=new THREE.Vector3(0,1.5,0);let theta=0.8,phi=1.15,rad=18,tt=0.8,pt=1.15,rt=18;
+function cam(){theta+=(tt-theta)*.15;phi+=(pt-phi)*.15;rad+=(rt-rad)*.15;phi=Math.max(.2,Math.min(1.45,phi));
+  camera.position.set(target.x+rad*Math.sin(phi)*Math.sin(theta),target.y+rad*Math.cos(phi),target.z+rad*Math.sin(phi)*Math.cos(theta));
+  camera.lookAt(target);}
+const ptr=new Map();let lx=0,ly=0,pinch=0;const el=renderer.domElement;
+el.addEventListener('pointerdown',e=>{el.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===1){lx=e.clientX;ly=e.clientY;}if(ptr.size===2){const p=[...ptr.values()];pinch=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}});
+el.addEventListener('pointermove',e=>{if(!ptr.has(e.pointerId))return;ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===1){tt-=(e.clientX-lx)*.006;pt-=(e.clientY-ly)*.006;lx=e.clientX;ly=e.clientY;}
+  else if(ptr.size===2){const p=[...ptr.values()];const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(pinch)rt*=1-(d-pinch)*.004;rt=Math.max(8,Math.min(40,rt));pinch=d;}});
+function upp(e){ptr.delete(e.pointerId);pinch=0;}el.addEventListener('pointerup',upp);el.addEventListener('pointercancel',upp);
+el.addEventListener('wheel',e=>{e.preventDefault();rt=Math.max(8,Math.min(40,rt*(1+e.deltaY*.001)));},{passive:false});
+
+/* ================= MODE SWITCH ================= */
+let mode=0;
+function setMode(m){mode=m;
+  [G0,G1,G2].forEach((g,i)=>g.visible=(i===m));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',+t.dataset.m===m));
+  document.querySelectorAll('.pane').forEach((p,i)=>p.classList.toggle('on',i===m));
+  lbA.on=lbB.on=(m===1);lbJ.on=(m===2);
+}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setMode(+t.dataset.m));
+
+function setVerdict(id,level,text){
+  const box=document.getElementById(id), dot=box.querySelector('.dot'), txt=document.getElementById(id+'t');
+  box.className='verdict '+level;dot.className='dot '+level;txt.textContent=text;
+}
+
+/* ---- MODE0 logic ---- */
+let pw='mid';
+document.querySelectorAll('#pwSel .choice').forEach(c=>c.onclick=()=>{
+  document.querySelectorAll('#pwSel .choice').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+  pw=c.dataset.v;updatePw();});
+function updatePw(){
+  const scale=pw==='low'?0.65:pw==='mid'?1.15:1.9;
+  patO.scale.setScalar(scale);
+  patO.userData.mesh.material.color.set(pw==='max'?AMBER:TEAL);
+  if(pw==='low'){setVerdict('v0','mid','Portée courte, mais batterie et robustesse au top. Suffisant à faible distance.');}
+  else if(pw==='mid'){setVerdict('v0','ok','Bon compromis. C\u2019est le réglage à garder par défaut sur la majorité des shows.');}
+  else{setVerdict('v0','bad','Puissance max = portée max, mais tu risques de dépasser la limite autorisée et de brouiller les autres équipes 2,4 GHz autour de toi.');}
+}
+
+/* ---- MODE1 logic ---- */
+let ag='same';
+document.querySelectorAll('#agSel .choice').forEach(c=>c.onclick=()=>{
+  document.querySelectorAll('#agSel .choice').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+  ag=c.dataset.v;updateAg();});
+function updateAg(){
+  if(ag==='same'){
+    lobeA.rotation.set(0,Math.PI/2-0.25,0);lobeB.rotation.set(0,Math.PI/2-0.25,0);
+    antA.rotation.y=Math.PI/2-0.25;antB.rotation.y=Math.PI/2-0.25;
+    overlap.position.set(TX.x+1+5.5,2.2,TX.z);overlap.scale.setScalar(1.6);overlap.material.opacity=.22;overlap.material.color.set(GOOD);
+    setVerdict('v1','ok','Les deux antennes visent la même zone : le signal se renforce là où c\u2019est utile.');
+  } else if(ag==='cross'){
+    lobeA.rotation.set(0,Math.PI/2-0.5,0);lobeB.rotation.set(0,Math.PI/2+0.5,0);
+    antA.rotation.y=Math.PI/2-0.5;antB.rotation.y=Math.PI/2+0.5;
+    overlap.position.set(TX.x+1+4.2,2.2,TX.z);overlap.scale.setScalar(2.2);overlap.material.opacity=.3;overlap.material.color.set(GOOD);
+    setVerdict('v1','ok','Angles croisés en éventail : plus large couverture, et la zone centrale reste bien arrosée par les deux.');
+  } else {
+    lobeA.rotation.set(0,-Math.PI/2,0);lobeB.rotation.set(0,Math.PI/2,0);
+    antA.rotation.y=-Math.PI/2;antB.rotation.y=Math.PI/2;
+    overlap.position.set(TX.x+1,2.2,TX.z);overlap.scale.setScalar(0.5);overlap.material.opacity=.15;overlap.material.color.set(BAD);
+    setVerdict('v1','bad','Face à face : les deux antennes s\u2019envoient leur signal l\u2019une dans l\u2019autre, presque rien ne part vers le vrai récepteur.');
+  }
+}
+
+/* ---- MODE2 logic ---- */
+let it='none';
+document.querySelectorAll('#itSel .choice').forEach(c=>c.onclick=()=>{
+  document.querySelectorAll('#itSel .choice').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+  it=c.dataset.v;updateIt();});
+function updateIt(){
+  refl.visible=(it==='wall');jamBox.visible=jamField.visible=jamLink.visible=(it==='jam');
+  if(it==='none'){
+    link2.material.color.set(GOOD);
+    setVerdict('v2','ok','Rien autour : liaison directe et propre.');
+  } else if(it==='wall'){
+    const txp=new THREE.Vector3(TX.x,TX.y,TX.z), rxp=new THREE.Vector3(RX.x,RX.y,RX.z);
+    const hit=new THREE.Vector3(0,3.5,-9);
+    refl.geometry.setFromPoints([txp,hit,rxp]);refl.computeLineDistances();
+    link2.material.color.set(AMBER);
+    setVerdict('v2','mid','Le mur renvoie une partie du signal. Ça peut créer des zones où ça passe moins bien selon où tu te places — pas grave, mais à savoir si un point précis capte mal.');
+  } else {
+    link2.material.color.set(BAD);
+    setVerdict('v2','bad','Un autre émetteur 2,4 GHz tout près du récepteur peut le saturer, même sur un autre canal. Éloigne les boîtiers ou sépare les antennes physiquement.');
+  }
+}
+
+/* ---------- render ---------- */
+const v3=new THREE.Vector3();
+function proj(p){v3.copy(p).project(camera);return{x:(v3.x*.5+.5)*innerWidth,y:(-v3.y*.5+.5)*innerHeight,vis:v3.z<1};}
+function tick(){cam();
+  lbTX.p.set(TX.x,2.8,TX.z);lbRX.p.set(RX.x,1.9,RX.z);
+  lbA.p.copy(antA.position).add(new THREE.Vector3(0,.85,0));
+  lbB.p.copy(antB.position).add(new THREE.Vector3(0,-.85,0));
+  lbJ.p.copy(jamBox.position).add(new THREE.Vector3(0,1.4,0));
+  L.forEach(o=>{if(!o.on){o.e.style.opacity=0;return;}
+    const s=proj(o.p);if(s.vis){o.e.style.opacity=1;o.e.style.left=s.x+'px';o.e.style.top=s.y+'px';}else o.e.style.opacity=0;});
+  renderer.render(scene,camera);requestAnimationFrame(tick);}
+function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();
+setMode(0);updatePw();updateAg();updateIt();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

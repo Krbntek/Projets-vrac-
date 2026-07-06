@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>CRMX · Diagrammes de rayonnement</title>
+<style>
+  :root{
+    --bg0:#080A0F; --bg1:#0E131C;
+    --ink:#C9D3DE; --ink-dim:#6D7B8C;
+    --teal:#33E0C8;      /* omni */
+    --amber:#FFB020;     /* directionnel */
+    --good:#46E27A;      /* liaison ok */
+    --bad:#FF4D5E;       /* liaison faible */
+    --panel:#E8ECEF;
+    --line:#1B2430;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg0);}
+  #app{position:fixed;inset:0;}
+  canvas{display:block;touch-action:none;}
+
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;}
+
+  /* ---- HUD ---- */
+  .hud{position:fixed;left:0;right:0;pointer-events:none;color:var(--ink);}
+  .top{top:0;padding:calc(env(safe-area-inset-top) + 14px) 16px 10px;}
+  .title{font:700 15px/1.2 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.5px;}
+  .title span{color:var(--teal);}
+  .sub{margin-top:3px;font:500 11px/1.35 ui-monospace,"SF Mono",Menlo,monospace;color:var(--ink-dim);max-width:340px;}
+
+  /* floating labels */
+  .lbl{position:fixed;transform:translate(-50%,-50%);font:600 10.5px/1.25 ui-monospace,"SF Mono",Menlo,monospace;
+       padding:3px 7px;border-radius:6px;white-space:nowrap;pointer-events:none;
+       background:rgba(9,12,18,.72);border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(4px);
+       letter-spacing:.2px;transition:opacity .15s;}
+  .lbl small{display:block;font-weight:500;font-size:9px;color:var(--ink-dim);letter-spacing:.1px;}
+  .lbl.teal{color:var(--teal);}
+  .lbl.amber{color:var(--amber);}
+  .lbl.ink{color:var(--ink);}
+
+  /* ---- bottom control deck ---- */
+  .deck{position:fixed;left:0;right:0;bottom:0;padding:14px 16px calc(env(safe-area-inset-bottom) + 14px);
+        background:linear-gradient(to top,rgba(8,10,15,.96),rgba(8,10,15,.0));}
+  .row{display:flex;gap:8px;margin-bottom:10px;}
+  .btn{flex:1;pointer-events:auto;cursor:pointer;user-select:none;text-align:center;
+       font:600 11px/1 ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.3px;color:var(--ink);
+       padding:11px 8px;border-radius:10px;border:1px solid var(--line);background:rgba(18,24,34,.85);}
+  .btn.active{border-color:var(--teal);color:var(--teal);box-shadow:0 0 0 1px rgba(51,224,200,.25) inset;}
+  .btn:active{transform:scale(.97);}
+
+  .aim{pointer-events:auto;background:rgba(18,24,34,.85);border:1px solid var(--line);border-radius:12px;padding:11px 13px 12px;}
+  .aim .head{display:flex;justify-content:space-between;align-items:baseline;
+             font:600 11px/1 ui-monospace,"SF Mono",Menlo,monospace;color:var(--amber);letter-spacing:.3px;}
+  .aim .head b{font-weight:700;font-size:13px;}
+  .aim .q{color:var(--ink-dim);font-weight:500;}
+  .aim .q em{font-style:normal;font-weight:700;}
+  input[type=range]{-webkit-appearance:none;width:100%;height:26px;background:transparent;margin:2px 0 0;}
+  input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:3px;
+     background:linear-gradient(to right,var(--good),#d9d24a 45%,var(--bad));}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;margin-top:-9px;border-radius:50%;
+     background:#fff;border:3px solid var(--amber);box-shadow:0 2px 6px rgba(0,0,0,.5);}
+  .hint{margin-top:7px;font:500 9.5px/1.4 ui-monospace,"SF Mono",Menlo,monospace;color:var(--ink-dim);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="hud top">
+  <div class="title"><span>CRMX</span> · Diagrammes de rayonnement</div>
+  <div class="sub">Stardust (TX) &nbsp;→&nbsp; F1 G6 sans / avec antenne déportée. Glisse pour tourner · pince pour zoomer.</div>
+</div>
+
+<!-- floating labels injected here -->
+<div id="labels"></div>
+
+<div class="deck">
+  <div class="row">
+    <div class="btn active" id="btnPatterns">Rayonnement</div>
+    <div class="btn active" id="btnLinks">Liaisons</div>
+    <div class="btn" id="btnReset">Recentrer</div>
+  </div>
+  <div class="aim">
+    <div class="head">
+      <span>Pointage antenne directionnelle</span>
+      <span class="q">liaison&nbsp;<em id="qval">100%</em></span>
+    </div>
+    <input type="range" id="aim" min="0" max="120" value="0">
+    <div class="hint" id="aimTxt">Désalignement 0° — lobe pointé sur le Stardust</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const TEAL=0x33E0C8, AMBER=0xFFB020, GOOD=0x46E27A, BAD=0xFF4D5E, PANELC=0xE8ECEF, DEVICE=0x1a1d24;
+
+const scene=new THREE.Scene();
+scene.fog=new THREE.FogExp2(0x080A0F,0.018);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));
+document.getElementById('app').appendChild(renderer.domElement);
+
+const camera=new THREE.PerspectiveCamera(52,1,0.1,300);
+
+/* ---------- background gradient ---------- */
+(function(){const c=document.createElement('canvas');c.width=8;c.height=256;const g=c.getContext('2d');
+ const gr=g.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#0E131C');gr.addColorStop(1,'#070910');
+ g.fillStyle=gr;g.fillRect(0,0,8,256);const t=new THREE.CanvasTexture(c);scene.background=t;})();
+
+/* ---------- lights ---------- */
+scene.add(new THREE.HemisphereLight(0x8fa6c0,0x0a0d13,0.9));
+const key=new THREE.DirectionalLight(0xffffff,0.85);key.position.set(-6,12,8);scene.add(key);
+const rim=new THREE.DirectionalLight(TEAL,0.25);rim.position.set(8,4,-8);scene.add(rim);
+
+/* ---------- ground grid ---------- */
+const grid=new THREE.GridHelper(60,60,0x2a3a4d,0x141c26);
+grid.material.transparent=true;grid.material.opacity=0.55;scene.add(grid);
+const floor=new THREE.Mesh(new THREE.CircleGeometry(30,64),
+  new THREE.MeshBasicMaterial({color:0x0b0f16,transparent:true,opacity:0.6}));
+floor.rotation.x=-Math.PI/2;floor.position.y=-0.01;scene.add(floor);
+
+/* ---------- helpers ---------- */
+function device(w,h,d,color){
+  const g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshStandardMaterial({color:color,roughness:.6,metalness:.25}));
+  body.position.y=h/2;g.add(body);
+  const edge=new THREE.LineSegments(new THREE.EdgesGeometry(body.geometry),
+    new THREE.LineBasicMaterial({color:0x3a4757}));
+  edge.position.y=h/2;g.add(edge);
+  return g;
+}
+function whip(x,z,height){
+  const g=new THREE.Group();g.position.set(x,0,z);
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.05,height,12),
+    new THREE.MeshStandardMaterial({color:0x111418,roughness:.4,metalness:.6}));
+  m.position.y=height/2;g.add(m);
+  const tip=new THREE.Mesh(new THREE.SphereGeometry(0.07,12,12),
+    new THREE.MeshStandardMaterial({color:0x222831,roughness:.4}));
+  tip.position.y=height;g.add(tip);
+  return g;
+}
+
+/* omni pattern = toroidal donut around a vertical whip */
+function omniPattern(x,y,z,R){
+  const g=new THREE.Group();g.position.set(x,y,z);
+  const geo=new THREE.TorusGeometry(R,R*0.42,20,60);
+  const mat=new THREE.MeshBasicMaterial({color:TEAL,transparent:true,opacity:0.16,
+    side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending});
+  const m=new THREE.Mesh(geo,mat);m.rotation.x=Math.PI/2;g.add(m);
+  const wire=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:TEAL,wireframe:true,
+    transparent:true,opacity:0.10,depthWrite:false}));
+  wire.rotation.x=Math.PI/2;g.add(wire);
+  return g;
+}
+
+/* directional lobe via lathe profile (teardrop along +Y, then tipped to +Z) */
+function lobePattern(length,maxR){
+  const pts=[];const N=40;
+  for(let i=0;i<=N;i++){const t=i/N;
+    const r=maxR*Math.pow(Math.sin(Math.PI*t),0.85)*(0.35+0.65*t);
+    pts.push(new THREE.Vector2(r,t*length));}
+  const geo=new THREE.LatheGeometry(pts,48);
+  const mat=new THREE.MeshBasicMaterial({color:AMBER,transparent:true,opacity:0.17,
+    side:THREE.DoubleSide,depthWrite:false,blending:THREE.AdditiveBlending});
+  const m=new THREE.Mesh(geo,mat);
+  const wire=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:AMBER,wireframe:true,
+    transparent:true,opacity:0.12,depthWrite:false}));
+  m.add(wire);
+  m.rotation.x=Math.PI/2; // +Y -> +Z (forward)
+  const holder=new THREE.Group();holder.add(m);
+  return holder;
+}
+
+/* ---------- positions ---------- */
+const P_STAR={x:-6.5,z:0};
+const P_F1O ={x:3.0, z:-3.2};   // F1 G6 sans antenne déportée (omni)
+const P_F1D ={x:2.2, z:3.2};    // F1 G6 avec antenne déportée
+const P_PANEL={x:4.6,z:4.0};    // Spot-S déportée
+
+/* ---------- Stardust (TX, omni) ---------- */
+const stardust=device(1.6,1.0,0.55,0x161a22);stardust.position.set(P_STAR.x,0,P_STAR.z);
+const screen=new THREE.Mesh(new THREE.PlaneGeometry(1.25,0.62),
+  new THREE.MeshStandardMaterial({color:0x0a1c22,emissive:TEAL,emissiveIntensity:0.35,roughness:.3}));
+screen.position.set(0,0.55,0.281);stardust.add(screen);
+scene.add(stardust);
+const starWhip=whip(P_STAR.x,P_STAR.z,2.0);scene.add(starWhip);
+starWhip.position.y=1.0; // sits on top of console
+const omniStar=omniPattern(P_STAR.x,2.0,P_STAR.z,3.4);scene.add(omniStar);
+
+/* ---------- F1 G6 (omni, sans déportée) ---------- */
+const f1o=device(0.55,0.42,0.55,DEVICE);f1o.position.set(P_F1O.x,0,P_F1O.z);scene.add(f1o);
+const f1oWhip=whip(P_F1O.x,P_F1O.z,1.1);f1oWhip.position.y=0.42;scene.add(f1oWhip);
+const omniF1=omniPattern(P_F1O.x,0.95,P_F1O.z,2.0);scene.add(omniF1);
+
+/* ---------- F1 G6 (avec antenne déportée) ---------- */
+const f1d=device(0.55,0.42,0.55,DEVICE);f1d.position.set(P_F1D.x,0,P_F1D.z);scene.add(f1d);
+
+/* stand + Spot-S panel */
+const stand=new THREE.Mesh(new THREE.CylinderGeometry(0.05,0.05,1.5,10),
+  new THREE.MeshStandardMaterial({color:0x2a2f38,roughness:.5,metalness:.5}));
+stand.position.set(P_PANEL.x,0.75,P_PANEL.z);scene.add(stand);
+const panelPivot=new THREE.Group();panelPivot.position.set(P_PANEL.x,1.5,P_PANEL.z);scene.add(panelPivot);
+const panel=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.2,0.12),
+  new THREE.MeshStandardMaterial({color:PANELC,roughness:.7,metalness:.05}));
+panelPivot.add(panel);
+const panelEdge=new THREE.LineSegments(new THREE.EdgesGeometry(panel.geometry),
+  new THREE.LineBasicMaterial({color:0x9aa6b2}));panelPivot.add(panelEdge);
+/* the panel radiates from its +Z face */
+const lobe=lobePattern(7.5,2.3);lobe.position.z=0.1;panelPivot.add(lobe);
+
+/* coax from F1 to panel */
+(function(){const a=new THREE.Vector3(P_F1D.x,0.42,P_F1D.z),b=new THREE.Vector3(P_PANEL.x,1.4,P_PANEL.z);
+ const mid=a.clone().lerp(b,0.5);mid.y=0.15;
+ const curve=new THREE.QuadraticBezierCurve3(a,mid,b);
+ const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,24,0.035,8,false),
+   new THREE.MeshStandardMaterial({color:0x0d0f13,roughness:.5}));scene.add(tube);})();
+
+/* aim so lobe (+Z) points at Stardust when misalignment = 0 */
+const dirToStar=new THREE.Vector3(P_STAR.x-P_PANEL.x,0,P_STAR.z-P_PANEL.z).normalize();
+const baseYaw=Math.atan2(dirToStar.x,dirToStar.z);
+panelPivot.rotation.y=baseYaw;
+
+/* ---------- links ---------- */
+function makeLink(a,b,color){
+  const g=new THREE.BufferGeometry().setFromPoints([a,b]);
+  const m=new THREE.LineBasicMaterial({color:color,transparent:true,opacity:0.9});
+  return new THREE.Line(g,m);
+}
+const A_star=new THREE.Vector3(P_STAR.x,1.9,P_STAR.z);
+const linkOmni=makeLink(A_star,new THREE.Vector3(P_F1O.x,0.9,P_F1O.z),TEAL);scene.add(linkOmni);
+const P_panelWorld=new THREE.Vector3(P_PANEL.x,1.5,P_PANEL.z);
+const linkDir=makeLink(A_star,P_panelWorld,GOOD);scene.add(linkDir);
+
+/* small TX pulse dots on links */
+const pulses=[];
+function addPulse(a,b,color){
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.09,10,10),
+    new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:0.9,
+      blending:THREE.AdditiveBlending,depthWrite:false}));
+  scene.add(m);pulses.push({m,a:a.clone(),b:b.clone(),t:Math.random(),base:color});
+}
+addPulse(A_star,new THREE.Vector3(P_F1O.x,0.9,P_F1O.z),TEAL);
+addPulse(A_star,P_panelWorld,GOOD);
+
+/* ---------- labels ---------- */
+const labelDefs=[
+  {cls:'teal', t:'STARDUST · TX', s:'antenne omni interne', p:new THREE.Vector3(P_STAR.x,2.7,P_STAR.z)},
+  {cls:'teal', t:'F1 G6 · sans déportée', s:'whip omni · 360°', p:new THREE.Vector3(P_F1O.x,1.7,P_F1O.z)},
+  {cls:'ink',  t:'F1 G6 · avec déportée', s:'', p:new THREE.Vector3(P_F1D.x,0.9,P_F1D.z)},
+  {cls:'amber',t:'SENCITY SPOT-S · 9 dBi', s:'directionnelle · à pointer', p:new THREE.Vector3(P_PANEL.x,2.9,P_PANEL.z)},
+];
+const labelBox=document.getElementById('labels');
+const labels=labelDefs.map(d=>{
+  const el=document.createElement('div');el.className='lbl '+d.cls;
+  el.innerHTML=d.t+(d.s?('<small>'+d.s+'</small>'):'');labelBox.appendChild(el);
+  return {el,p:d.p};
+});
+
+/* ---------- custom touch/mouse orbit ---------- */
+const target=new THREE.Vector3(-0.5,1.0,0);
+let radius=17,theta=0.9,phi=1.15,rt=17,tt=0.9,pt=1.15;
+function applyCam(){
+  theta+=(tt-theta)*0.15;phi+=(pt-phi)*0.15;radius+=(rt-radius)*0.15;
+  phi=Math.max(0.25,Math.min(1.45,phi));
+  camera.position.set(
+    target.x+radius*Math.sin(phi)*Math.sin(theta),
+    target.y+radius*Math.cos(phi),
+    target.z+radius*Math.sin(phi)*Math.cos(theta));
+  camera.lookAt(target);
+}
+const pointers=new Map();let lastX=0,lastY=0,pinch0=0;
+const el=renderer.domElement;
+el.addEventListener('pointerdown',e=>{el.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===1){lastX=e.clientX;lastY=e.clientY;}
+  if(pointers.size===2){const p=[...pointers.values()];pinch0=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}
+});
+el.addEventListener('pointermove',e=>{
+  if(!pointers.has(e.pointerId))return;
+  pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(pointers.size===1){
+    tt-=(e.clientX-lastX)*0.006;pt-=(e.clientY-lastY)*0.006;
+    lastX=e.clientX;lastY=e.clientY;
+  }else if(pointers.size===2){
+    const p=[...pointers.values()];const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+    if(pinch0)rt*=1-(d-pinch0)*0.004;rt=Math.max(8,Math.min(38,rt));pinch0=d;
+  }
+});
+function up(e){pointers.delete(e.pointerId);pinch0=0;}
+el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+el.addEventListener('wheel',e=>{e.preventDefault();rt=Math.max(8,Math.min(38,rt*(1+e.deltaY*0.001)));},{passive:false});
+
+/* ---------- controls ---------- */
+let showPatterns=true,showLinks=true;
+const patternGroups=[omniStar,omniF1,lobe];
+const linkGroup=[linkOmni,linkDir];
+document.getElementById('btnPatterns').onclick=function(){
+  showPatterns=!showPatterns;this.classList.toggle('active',showPatterns);
+  patternGroups.forEach(g=>g.visible=showPatterns);
+};
+document.getElementById('btnLinks').onclick=function(){
+  showLinks=!showLinks;this.classList.toggle('active',showLinks);
+  linkGroup.forEach(g=>g.visible=showLinks);
+  pulses.forEach(p=>p.m.visible=showLinks);
+};
+document.getElementById('btnReset').onclick=function(){tt=0.9;pt=1.15;rt=17;};
+
+/* aim slider */
+const aim=document.getElementById('aim'),qval=document.getElementById('qval'),aimTxt=document.getElementById('aimTxt');
+let misalign=0;
+function updateAim(){
+  const deg=+aim.value;misalign=deg*Math.PI/180;
+  panelPivot.rotation.y=baseYaw+misalign;
+  // link quality model: ~cos^2, ~ -3 dB near 33°, near null past 90°
+  let q=Math.max(0,Math.cos(misalign));q=Math.pow(q,2.2);
+  const pct=Math.round(q*100);
+  qval.textContent=pct+'%';
+  // recolor directional link + pulse
+  const col=new THREE.Color(BAD).lerp(new THREE.Color(GOOD),q);
+  linkDir.material.color.copy(col);linkDir.material.opacity=0.25+0.7*q;
+  pulses[1].base=col.getHex();pulses[1].m.material.color.copy(col);
+  qval.style.color= q>0.6?'#46E27A': q>0.3?'#d9d24a':'#FF4D5E';
+  aimTxt.textContent= deg===0?'Désalignement 0° — lobe pointé sur le Stardust'
+     : 'Désalignement '+deg+'° — le lobe s\u2019écarte du TX, la liaison chute';
+}
+aim.addEventListener('input',updateAim);updateAim();
+
+/* ---------- render loop ---------- */
+const v=new THREE.Vector3();
+function project(p){v.copy(p).project(camera);
+  return{x:(v.x*0.5+0.5)*innerWidth,y:(-v.y*0.5+0.5)*innerHeight,vis:v.z<1};}
+function tick(t){
+  applyCam();
+  // pulse travel
+  pulses.forEach(p=>{if(!p.m.visible)return;p.t=(p.t+0.006)%1;
+    p.m.position.lerpVectors(p.a,p.b,p.t);
+    p.m.material.opacity=0.9*(0.4+0.6*Math.sin(p.t*Math.PI));});
+  // subtle breathing on patterns
+  const s=1+Math.sin(t*0.0012)*0.02;
+  patternGroups.forEach(g=>{if(g===lobe)return;});
+  // labels
+  labels.forEach(L=>{const s=project(L.p);
+    if(s.vis){L.el.style.opacity=1;L.el.style.left=s.x+'px';L.el.style.top=s.y+'px';}
+    else L.el.style.opacity=0;});
+  renderer.render(scene,camera);
+  requestAnimationFrame(tick);
+}
+function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h);
+  camera.aspect=w/h;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();requestAnimationFrame(tick);
+</script>
+</body>
+</html>

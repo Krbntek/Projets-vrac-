@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>RF DMX · Puissance · Croisement · Interférences</title>
+<style>
+  :root{
+    --bg0:#070910; --ink:#C9D3DE; --dim:#6D7B8C;
+    --teal:#33E0C8; --amber:#FFB020; --good:#46E27A; --bad:#FF4D5E;
+    --violet:#B16CFF; --panel:#E8ECEF; --line:#1B2430;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg0);
+    font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:var(--ink);}
+  #app{position:fixed;inset:0;} canvas{display:block;touch-action:none;}
+
+  /* top */
+  .top{position:fixed;left:0;right:0;top:0;padding:calc(env(safe-area-inset-top) + 12px) 12px 8px;pointer-events:none;}
+  .title{font-weight:700;font-size:13px;letter-spacing:.4px;}
+  .title span{color:var(--teal);}
+  .tabs{display:flex;gap:6px;margin-top:9px;pointer-events:auto;}
+  .tab{flex:1;text-align:center;font-weight:600;font-size:11px;letter-spacing:.2px;padding:9px 4px;border-radius:9px;
+    border:1px solid var(--line);background:rgba(16,22,32,.85);color:var(--dim);cursor:pointer;user-select:none;}
+  .tab.on{color:#0a0d12;background:var(--teal);border-color:var(--teal);}
+  .tab:active{transform:scale(.97);}
+
+  /* labels */
+  #labels{position:fixed;inset:0;pointer-events:none;}
+  .lbl{position:absolute;transform:translate(-50%,-50%);font-weight:600;font-size:10px;line-height:1.2;
+    padding:3px 6px;border-radius:6px;white-space:nowrap;background:rgba(9,12,18,.72);
+    border:1px solid rgba(255,255,255,.08);backdrop-filter:blur(3px);transition:opacity .15s;}
+  .lbl small{display:block;font-weight:500;font-size:8.5px;color:var(--dim);}
+  .t-teal{color:var(--teal)} .t-amber{color:var(--amber)} .t-violet{color:var(--violet)}
+  .t-good{color:var(--good)} .t-bad{color:var(--bad)} .t-ink{color:var(--ink)}
+
+  /* deck */
+  .deck{position:fixed;left:0;right:0;bottom:0;padding:12px 12px calc(env(safe-area-inset-bottom) + 12px);
+    background:linear-gradient(to top,rgba(7,9,16,.97),rgba(7,9,16,0));}
+  .pane{display:none;} .pane.on{display:block;}
+  .card{background:rgba(16,22,32,.9);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-top:8px;}
+  .k{display:flex;justify-content:space-between;align-items:baseline;font-size:11px;margin:5px 0;}
+  .k label{color:var(--dim);font-weight:500;} .k b{font-weight:700;font-size:12px;}
+  .rowlab{display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-bottom:2px;}
+  input[type=range]{-webkit-appearance:none;width:100%;height:24px;background:transparent;margin:0;}
+  input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:3px;background:#243040;}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;margin-top:-8px;border-radius:50%;
+    background:#fff;border:3px solid var(--teal);box-shadow:0 2px 6px rgba(0,0,0,.5);}
+  input.amber::-webkit-slider-thumb{border-color:var(--amber);}
+  input.violet::-webkit-slider-thumb{border-color:var(--violet);}
+  .seg{display:flex;gap:5px;margin:6px 0;}
+  .seg div{flex:1;text-align:center;font-size:10.5px;font-weight:600;padding:8px 3px;border-radius:8px;
+    border:1px solid var(--line);background:rgba(10,14,20,.8);color:var(--dim);cursor:pointer;user-select:none;}
+  .seg div.on{color:#0a0d12;background:var(--amber);border-color:var(--amber);}
+  .verdict{font-size:10.5px;font-weight:600;padding:8px 10px;border-radius:8px;margin-top:8px;line-height:1.4;}
+  .verdict.ok{color:var(--good);background:rgba(70,226,122,.09);border:1px solid rgba(70,226,122,.3);}
+  .verdict.warn{color:var(--bad);background:rgba(255,77,94,.09);border:1px solid rgba(255,77,94,.3);}
+  .mini{font-size:9.5px;color:var(--dim);line-height:1.4;margin-top:6px;}
+  .flex{display:flex;gap:8px;} .flex>div{flex:1;}
+  .toggle{pointer-events:auto;font-size:10.5px;font-weight:600;padding:9px 8px;border-radius:9px;text-align:center;
+    border:1px solid var(--line);background:rgba(10,14,20,.8);color:var(--dim);cursor:pointer;user-select:none;}
+  .toggle.on{color:#0a0d12;background:var(--violet);border-color:var(--violet);}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="top">
+  <div class="title"><span>RF · 2,4 GHz</span> — DMX sans fil · modélisation de champ</div>
+  <div class="tabs">
+    <div class="tab on" data-m="0">Puissance</div>
+    <div class="tab" data-m="1">Croisement</div>
+    <div class="tab" data-m="2">Interférences</div>
+  </div>
+</div>
+
+<div id="labels"></div>
+
+<div class="deck">
+  <!-- ============ MODE 0 : PUISSANCE / EIRP ============ -->
+  <div class="pane on" id="p0">
+    <div class="seg" id="antSel">
+      <div class="on" data-g="2">Omni 2 dBi (origine)</div>
+      <div data-g="9">Spot-S 9 dBi (dir.)</div>
+    </div>
+    <div class="card">
+      <div class="rowlab"><span>Puissance conduite radio</span><span id="pwL">14 dBm · 25 mW</span></div>
+      <input type="range" id="pw" min="0" max="20" value="14" step="1">
+      <div class="rowlab" style="margin-top:6px"><span>Longueur coax (0,22 dB/m)</span><span id="cbL">0 m · 0 dB</span></div>
+      <input type="range" id="cb" min="0" max="30" value="0" step="1">
+    </div>
+    <div class="card">
+      <div class="flex">
+        <div><div class="k"><label>EIRP</label><b id="eirp">—</b></div>
+             <div class="k"><label>Portée LOS est.</label><b id="range">—</b></div></div>
+        <div><div class="k"><label>Gain ant.</label><b id="gv">2 dBi</b></div>
+             <div class="k"><label>Marge liaison</label><b id="mg">—</b></div></div>
+      </div>
+      <div class="verdict ok" id="v0">—</div>
+      <div class="mini">Réf. Rx : sensibilité −95 dBm · gain Rx 2 dBi · FSPL(1 m)=40,2 dB. Plafond UE : EIRP 20 dBm (ETSI EN 300 328).</div>
+    </div>
+  </div>
+
+  <!-- ============ MODE 1 : CROISEMENT ============ -->
+  <div class="pane" id="p1">
+    <div class="card">
+      <div class="rowlab"><span>Azimut antenne A</span><span id="azAL">−25°</span></div>
+      <input type="range" id="azA" class="amber" min="-70" max="70" value="-25" step="1">
+      <div class="rowlab" style="margin-top:6px"><span>Azimut antenne B</span><span id="azBL">+25°</span></div>
+      <input type="range" id="azB" class="amber" min="-70" max="70" value="25" step="1">
+      <div class="rowlab" style="margin-top:6px"><span>Down-tilt (site)</span><span id="tiL">0°</span></div>
+      <input type="range" id="ti" class="amber" min="0" max="35" value="0" step="1">
+    </div>
+    <div class="card">
+      <div class="rowlab"><span>Polarisation</span><span></span></div>
+      <div class="seg" id="polSel">
+        <div class="on" data-p="V">V / V</div>
+        <div data-p="X">±45° croisée</div>
+        <div data-p="M">V / H</div>
+      </div>
+      <div class="k"><label>Recouvrement des lobes</label><b id="ovl">—</b></div>
+      <div class="k"><label>Adaptation polar.</label><b id="pol">—</b></div>
+      <div class="verdict ok" id="v1">—</div>
+    </div>
+  </div>
+
+  <!-- ============ MODE 2 : INTERFÉRENCES ============ -->
+  <div class="pane" id="p2">
+    <div class="card">
+      <div class="rowlab"><span>Position Rx (profondeur)</span><span id="rxL">2,5 m</span></div>
+      <input type="range" id="rx" min="5" max="60" value="25" step="1">
+      <div class="k"><label>Δ trajet (direct↔réfléchi)</label><b id="dpath">—</b></div>
+      <div class="k"><label>Déphasage</label><b id="dphi">—</b></div>
+      <div class="verdict ok" id="vref">—</div>
+      <div class="mini">Mur + poutre alu = miroirs RF. λ≈12,2 cm : bouger l'antenne de ~6 cm sort d'un creux (fading multipath).</div>
+    </div>
+    <div class="card">
+      <div class="flex">
+        <div class="toggle on" id="tgInt">2ᵉ émetteur 2,4 GHz</div>
+        <div class="toggle" id="tgPim">Jonction non-linéaire</div>
+      </div>
+      <div class="rowlab" style="margin-top:8px"><span>Distance brouilleur → Rx</span><span id="diL">3 m</span></div>
+      <input type="range" id="di" class="violet" min="5" max="60" value="12" step="1">
+      <div class="k"><label>Rapport C/I au Rx</label><b id="ci">—</b></div>
+      <div class="verdict ok" id="vint">—</div>
+      <div class="mini">AFH + TDMA (W-DMX G6 / CRMX) fuient les canaux occupés → l'IM co-canal fixe est esquivée. Restent le near-far (désensibilisation) et l'IM passive sur connecteur corrodé.</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const TEAL=0x33E0C8,AMBER=0xFFB020,GOOD=0x46E27A,BAD=0xFF4D5E,VIOLET=0xB16CFF,PANELC=0xE8ECEF;
+const LAMBDA=0.1224; // m @2450MHz
+const $=id=>document.getElementById(id);
+const dbm2mw=d=>Math.pow(10,d/10);
+const log10=x=>Math.log(x)/Math.LN10;
+const fspl=d=>40.2+20*log10(Math.max(0.1,d));
+
+/* ---------- three base ---------- */
+const scene=new THREE.Scene();scene.fog=new THREE.FogExp2(0x070910,0.014);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2.5));$('app').appendChild(renderer.domElement);
+const camera=new THREE.PerspectiveCamera(52,1,0.1,400);
+(function(){const c=document.createElement('canvas');c.width=8;c.height=256;const g=c.getContext('2d');
+ const gr=g.createLinearGradient(0,0,0,256);gr.addColorStop(0,'#0E131C');gr.addColorStop(1,'#060810');
+ g.fillStyle=gr;g.fillRect(0,0,8,256);scene.background=new THREE.CanvasTexture(c);})();
+scene.add(new THREE.HemisphereLight(0x8fa6c0,0x0a0d13,0.95));
+const key=new THREE.DirectionalLight(0xffffff,0.8);key.position.set(-6,12,8);scene.add(key);
+
+const grid=new THREE.GridHelper(70,70,0x2a3a4d,0x131b25);
+grid.material.transparent=true;grid.material.opacity=0.5;scene.add(grid);
+
+/* ---------- builders ---------- */
+function device(w,h,d,c){const g=new THREE.Group();
+  const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({color:c,roughness:.6,metalness:.25}));
+  b.position.y=h/2;g.add(b);
+  const e=new THREE.LineSegments(new THREE.EdgesGeometry(b.geometry),new THREE.LineBasicMaterial({color:0x3a4757}));
+  e.position.y=h/2;g.add(e);return g;}
+function whip(x,z,h){const g=new THREE.Group();g.position.set(x,0,z);
+  const m=new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.045,h,10),new THREE.MeshStandardMaterial({color:0x111418,roughness:.4,metalness:.6}));
+  m.position.y=h/2;g.add(m);return g;}
+function omni(R){const g=new THREE.Group();
+  const geo=new THREE.TorusGeometry(R,R*0.4,16,52);
+  g.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:TEAL,transparent:true,opacity:0.15,side:2,depthWrite:false,blending:THREE.AdditiveBlending})));
+  g.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:TEAL,wireframe:true,transparent:true,opacity:0.09,depthWrite:false})));
+  g.children.forEach(c=>c.rotation.x=Math.PI/2);return g;}
+function lobe(len,maxR,color){const pts=[];const N=36;
+  for(let i=0;i<=N;i++){const t=i/N;const r=maxR*Math.pow(Math.sin(Math.PI*t),0.85)*(0.35+0.65*t);pts.push(new THREE.Vector2(r,t*len));}
+  const geo=new THREE.LatheGeometry(pts,40);
+  const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:color,transparent:true,opacity:0.17,side:2,depthWrite:false,blending:THREE.AdditiveBlending}));
+  m.add(new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:color,wireframe:true,transparent:true,opacity:0.11,depthWrite:false})));
+  m.rotation.x=Math.PI/2;const h=new THREE.Group();h.add(m);h.userData.mesh=m;return h;}
+function line(a,b,color){const g=new THREE.BufferGeometry().setFromPoints([a,b]);
+  return new THREE.Line(g,new THREE.LineBasicMaterial({color:color,transparent:true,opacity:.9}));}
+function panelMesh(){const g=new THREE.Group();
+  const p=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.05,0.1),new THREE.MeshStandardMaterial({color:PANELC,roughness:.7}));
+  g.add(p);g.add(new THREE.LineSegments(new THREE.EdgesGeometry(p.geometry),new THREE.LineBasicMaterial({color:0x9aa6b2})));return g;}
+
+/* ---------- shared actors ---------- */
+const TX={x:-6,y:1.9,z:2}, RXBASE={x:6,y:1.4,z:2};
+const stardust=device(1.5,1.0,0.5,0x161a22);stardust.position.set(TX.x,0,TX.z);scene.add(stardust);
+scene.add(whip(TX.x,TX.z,2.0).translateY(1.0));
+
+/* environment reflectors */
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(40,10),new THREE.MeshStandardMaterial({color:0x11161f,roughness:.9,transparent:true,opacity:.55,side:2}));
+wall.position.set(0,5,-8);scene.add(wall);
+const wallGrid=new THREE.GridHelper(40,20,0x243244,0x1a2330);wallGrid.rotation.x=Math.PI/2;wallGrid.position.set(0,5,-7.98);
+wallGrid.material.transparent=true;wallGrid.material.opacity=.4;scene.add(wallGrid);
+const truss=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.18,26,12),new THREE.MeshStandardMaterial({color:0x8792a0,roughness:.35,metalness:.85}));
+truss.rotation.z=Math.PI/2;truss.position.set(0,6.2,3);scene.add(truss);
+
+/* mode groups */
+const G0=new THREE.Group(),G1=new THREE.Group(),G2=new THREE.Group();scene.add(G0,G1,G2);
+
+/* ---- MODE0 : one TX antenna + range disc ---- */
+const patO=omni(3);patO.position.set(TX.x,1.9,TX.z);G0.add(patO);
+const patD=lobe(7,2.1,AMBER);patD.position.set(TX.x,1.9,TX.z);G0.add(patD);
+patD.rotation.y=Math.PI/2; // point +X toward RX
+const disc=new THREE.Mesh(new THREE.RingGeometry(0.1,0.2,64),new THREE.MeshBasicMaterial({color:GOOD,transparent:true,opacity:.5,side:2}));
+disc.rotation.x=-Math.PI/2;disc.position.set(TX.x,0.05,TX.z);G0.add(disc);
+const rxM=device(0.5,0.4,0.5,0x1a1d24);rxM.position.set(RXBASE.x,0,RXBASE.z);G0.add(rxM);
+const link0=line(new THREE.Vector3(TX.x,TX.y,TX.z),new THREE.Vector3(RXBASE.x,RXBASE.y,RXBASE.z),GOOD);G0.add(link0);
+
+/* ---- MODE1 : two directional antennas crossing ---- */
+const antA=panelMesh(),antB=panelMesh();
+antA.position.set(TX.x,3,TX.z-1.2);antB.position.set(TX.x,3,TX.z+1.2);G1.add(antA,antB);
+const lobeA=lobe(9,2.3,AMBER),lobeB=lobe(9,2.3,TEAL);
+lobeA.position.copy(antA.position);lobeB.position.copy(antB.position);G1.add(lobeA,lobeB);
+const overlap=new THREE.Mesh(new THREE.SphereGeometry(1,20,20),new THREE.MeshBasicMaterial({color:GOOD,transparent:true,opacity:.28,depthWrite:false,blending:THREE.AdditiveBlending}));
+G1.add(overlap);
+
+/* ---- MODE2 : reflections + interferer ---- */
+const link2d=line(new THREE.Vector3(TX.x,TX.y,TX.z),new THREE.Vector3(RXBASE.x,RXBASE.y,RXBASE.z),GOOD);G2.add(link2d);
+const rx2=device(0.5,0.4,0.5,0x1a1d24);G2.add(rx2);
+/* reflected path via mirror on wall z=-8 */
+const reflGeo=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()]);
+const refl=new THREE.Line(reflGeo,new THREE.LineDashedMaterial({color:AMBER,dashSize:.4,gapSize:.25,transparent:true,opacity:.8}));G2.add(refl);
+const fade=new THREE.Mesh(new THREE.SphereGeometry(0.45,16,16),new THREE.MeshBasicMaterial({color:BAD,transparent:true,opacity:.6,blending:THREE.AdditiveBlending,depthWrite:false}));G2.add(fade);
+/* interferer */
+const interf=device(0.5,0.5,0.5,0x241a2e);G2.add(interf);
+scene.add(whip(0,0,0)); // dummy keep
+const intField=omni(2.2);intField.children.forEach(c=>{c.material.color.set(VIOLET);});G2.add(intField);
+const linkInt=line(new THREE.Vector3(),new THREE.Vector3(),VIOLET);G2.add(linkInt);
+const imMarks=[];for(let i=0;i<4;i++){const m=new THREE.Mesh(new THREE.SphereGeometry(0.16,10,10),new THREE.MeshBasicMaterial({color:BAD,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false}));G2.add(m);imMarks.push(m);}
+
+/* ---------- labels ---------- */
+const L=[];
+function mkLabel(cls,t,s){const e=document.createElement('div');e.className='lbl '+cls;e.innerHTML=t+(s?('<small>'+s+'</small>'):'');$('labels').appendChild(e);const o={e,p:new THREE.Vector3(),vis:()=>true};L.push(o);return o;}
+const lbTX=mkLabel('t-teal','STARDUST · TX','');
+const lbRX=mkLabel('t-ink','F1 G6 · Rx','');
+const lbInt=mkLabel('t-violet','BROUILLEUR','2,4 GHz');
+const lbA=mkLabel('t-amber','Ant. A','');
+const lbB=mkLabel('t-teal','Ant. B','');
+
+/* ---------- orbit ---------- */
+const target=new THREE.Vector3(0,1.6,1);let theta=0.85,phi=1.15,rad=20,tt=0.85,pt=1.15,rt=20;
+function cam(){theta+=(tt-theta)*.15;phi+=(pt-phi)*.15;rad+=(rt-rad)*.15;phi=Math.max(.2,Math.min(1.45,phi));
+  camera.position.set(target.x+rad*Math.sin(phi)*Math.sin(theta),target.y+rad*Math.cos(phi),target.z+rad*Math.sin(phi)*Math.cos(theta));
+  camera.lookAt(target);}
+const ptr=new Map();let lx=0,ly=0,pinch=0;const el=renderer.domElement;
+el.addEventListener('pointerdown',e=>{el.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===1){lx=e.clientX;ly=e.clientY;}if(ptr.size===2){const p=[...ptr.values()];pinch=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);}});
+el.addEventListener('pointermove',e=>{if(!ptr.has(e.pointerId))return;ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptr.size===1){tt-=(e.clientX-lx)*.006;pt-=(e.clientY-ly)*.006;lx=e.clientX;ly=e.clientY;}
+  else if(ptr.size===2){const p=[...ptr.values()];const d=Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);if(pinch)rt*=1-(d-pinch)*.004;rt=Math.max(9,Math.min(46,rt));pinch=d;}});
+function up(e){ptr.delete(e.pointerId);pinch=0;}el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
+el.addEventListener('wheel',e=>{e.preventDefault();rt=Math.max(9,Math.min(46,rt*(1+e.deltaY*.001)));},{passive:false});
+
+/* ================= MODE LOGIC ================= */
+let mode=0;
+function setMode(m){mode=m;
+  [G0,G1,G2].forEach((g,i)=>g.visible=(i===m));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',+t.dataset.m===m));
+  document.querySelectorAll('.pane').forEach((p,i)=>p.classList.toggle('on',i===m));
+  lbA.e.style.display=lbB.e.style.display=(m===1?'block':'none');
+  lbInt.e.style.display=(m===2?'block':'none');
+  if(m===0)updateP();if(m===1)updateCross();if(m===2)updateInt();}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>setMode(+t.dataset.m));
+
+/* ---- MODE0 power ---- */
+let gAnt=2;
+document.querySelectorAll('#antSel div').forEach(d=>d.onclick=()=>{
+  document.querySelectorAll('#antSel div').forEach(x=>x.classList.remove('on'));d.classList.add('on');
+  gAnt=+d.dataset.g;$('gv').textContent=gAnt+' dBi';updateP();});
+$('pw').oninput=updateP;$('cb').oninput=updateP;
+function updateP(){
+  const pw=+$('pw').value, cbm=+$('cb').value, cb=cbm*0.22;
+  $('pwL').textContent=pw+' dBm · '+dbm2mw(pw).toFixed(dbm2mw(pw)<10?1:0)+' mW';
+  $('cbL').textContent=cbm+' m · '+cb.toFixed(1)+' dB';
+  const eirp=pw+gAnt-cb;
+  const rangeM=Math.pow(10,(eirp+2-(-95)-40.2)/20); // Grx2, sens-95
+  const margin=eirp+2-fspl(Math.min(rangeM,rangeM))-(-95); // ~0 at rangeM by def; show at fixed 50m
+  const m50=eirp+2-fspl(50)-(-95);
+  $('eirp').textContent=eirp.toFixed(1)+' dBm · '+dbm2mw(eirp).toFixed(0)+' mW';
+  $('range').textContent=rangeM>1000?(rangeM/1000).toFixed(1)+' km':Math.round(rangeM)+' m';
+  $('mg').textContent='+'+m50.toFixed(0)+' dB @50m';
+  // pattern & disc scaling
+  const isDir=(gAnt===9);patO.visible=!isDir;patD.visible=isDir;
+  const scaleR=Math.max(.3,Math.min(3.2,rangeM/120));
+  patO.scale.setScalar(scaleR);patD.scale.setScalar(scaleR);
+  const dR=Math.max(1,Math.min(24,2+5*log10(rangeM)));
+  disc.geometry.dispose();disc.geometry=new THREE.RingGeometry(dR-0.15,dR,64);
+  const over=eirp>20;
+  disc.material.color.set(over?BAD:GOOD);
+  patO.children[0].material.color.set(over?BAD:TEAL);
+  const v=$('v0');
+  if(over){v.className='verdict warn';v.textContent='EIRP '+eirp.toFixed(1)+' dBm > 20 dBm : hors ETSI EN 300 328 (UE). Baisse la puissance conduite ou le gain.';}
+  else{v.className='verdict ok';v.textContent='EIRP '+eirp.toFixed(1)+' dBm ≤ 20 dBm : conforme UE. '+(isDir?'Le 9 dBi redistribue la puissance vers l\u2019avant — portée+, pas de « watts » gratuits.':'Omni : couverture 360°, portée modérée.');}
+}
+
+/* ---- MODE1 crossing ---- */
+['azA','azB','ti'].forEach(id=>$(id).oninput=updateCross);
+let pol='V';
+document.querySelectorAll('#polSel div').forEach(d=>d.onclick=()=>{
+  document.querySelectorAll('#polSel div').forEach(x=>x.classList.remove('on'));d.classList.add('on');pol=d.dataset.p;updateCross();});
+function updateCross(){
+  const aA=+$('azA').value, aB=+$('azB').value, ti=+$('ti').value;
+  $('azAL').textContent=(aA>0?'+':'')+aA+'°';$('azBL').textContent=(aB>0?'+':'')+aB+'°';$('tiL').textContent=ti+'°';
+  const rA=THREE.MathUtils.degToRad(aA), rB=THREE.MathUtils.degToRad(aB), rt2=THREE.MathUtils.degToRad(ti);
+  lobeA.rotation.set(0, Math.PI/2 - rA, -rt2*0); antA.rotation.y=Math.PI/2-rA;
+  lobeB.rotation.set(0, Math.PI/2 - rB, 0); antB.rotation.y=Math.PI/2-rB;
+  // apply downtilt as x-rotation about local
+  lobeA.rotation.x=rt2;lobeB.rotation.x=rt2;
+  // convergence: how close the two aim directions cross in front
+  const conv=1-Math.min(1,Math.abs(aA-aB)/90); // 1 aligned angles small separation
+  const sep=Math.abs(aA-aB);
+  // overlap point: project both axes to distance 8
+  const dist=7;
+  const pA=new THREE.Vector3(Math.cos(rA),0,-Math.sin(rA)); // approx forward in XZ (forward +X)
+  // simpler: overlap centered between the two forward rays
+  const fwdA=new THREE.Vector3(Math.cos(rA)*dist, 0, -Math.sin(rA)*dist).add(antA.position);
+  const fwdB=new THREE.Vector3(Math.cos(rB)*dist, 0, -Math.sin(rB)*dist).add(antB.position);
+  const mid=fwdA.clone().lerp(fwdB,0.5);mid.y=2.4 - ti*0.04*dist;
+  overlap.position.copy(mid);
+  const near=1-Math.min(1,fwdA.distanceTo(fwdB)/6);
+  overlap.scale.setScalar(0.6+near*2.4);overlap.material.opacity=0.12+near*0.3;
+  $('ovl').textContent=near>0.66?'fort':near>0.33?'partiel':'faible';
+  // polarization
+  let pm, ptxt;
+  if(pol==='V'){pm=0;ptxt='0 dB (alignée)';}
+  else if(pol==='X'){pm=-3;ptxt='−3 dB (diversité ±45°)';}
+  else {pm=-20;ptxt='≈ −20 dB (croisée V/H)';}
+  $('pol').textContent=ptxt;
+  const v=$('v1');
+  if(pol==='M'){v.className='verdict warn';v.textContent='Polarisation croisée V/H : ~20 dB perdus même lobes alignés. À éviter entre Tx et Rx.';}
+  else if(near>0.5){v.className='verdict ok';v.textContent='Bon recouvrement : les lobes se croisent → redondance spatiale, comble les creux multipath. '+(pol==='X'?'Diversité ±45° = robuste.':'');}
+  else{v.className='verdict ok';v.textContent='Lobes écartés ('+sep+'°) : large couverture mais zone centrale peu recouverte. Rapproche les azimuts pour renforcer le centre.';}
+  overlap.material.color.set(pol==='M'?BAD:GOOD);
+}
+
+/* ---- MODE2 interference ---- */
+let intOn=true, pimOn=false;
+$('tgInt').onclick=function(){intOn=!intOn;this.classList.toggle('on',intOn);updateInt();};
+$('tgPim').onclick=function(){pimOn=!pimOn;this.classList.toggle('on',pimOn);updateInt();};
+$('rx').oninput=updateInt;$('di').oninput=updateInt;
+function updateInt(){
+  const rxDepth=+$('rx').value/10; // 0.5..6 m along +z from base
+  const rxPos=new THREE.Vector3(RXBASE.x, RXBASE.y, rxDepth);
+  rx2.position.set(rxPos.x,0,rxPos.z);
+  $('rxL').textContent=rxDepth.toFixed(1)+' m';
+  const txPos=new THREE.Vector3(TX.x,TX.y,TX.z);
+  // direct
+  const dDir=txPos.distanceTo(rxPos);
+  link2d.geometry.setFromPoints([txPos,rxPos]);
+  // reflection off wall z=-8: mirror TX -> z=-16-tz
+  const mir=new THREE.Vector3(TX.x,TX.y,-16-TX.z);
+  const dRef=mir.distanceTo(rxPos);
+  // hit point on wall
+  const tHit=(-8-txPos.z)/(rxPos.z-(-16-TX.z)); // param along mir->rx crossing z=-8
+  const hit=mir.clone().lerp(rxPos,( -8-mir.z)/(rxPos.z-mir.z));hit.z=-8;
+  refl.geometry.setFromPoints([txPos,hit,rxPos]);refl.computeLineDistances();
+  const delta=dRef-dDir;
+  const phi2=2*Math.PI*delta/LAMBDA;
+  const G=0.7;
+  const amp=Math.sqrt((1+G*Math.cos(phi2))**2+(G*Math.sin(phi2))**2);
+  const dbrel=20*log10(amp);
+  $('dpath').textContent=(delta*100).toFixed(1)+' cm';
+  $('dphi').textContent=(((phi2/(2*Math.PI))%1)*360).toFixed(0)+'° · '+(delta/LAMBDA).toFixed(2)+'λ';
+  const isFade=amp<(1-G*0.55);
+  fade.visible=isFade;fade.position.copy(rxPos);
+  link2d.material.color.set(isFade?BAD:GOOD);
+  const vr=$('vref');
+  if(isFade){vr.className='verdict warn';vr.textContent='Évanouissement : direct + réfléchi ~opposition de phase (−'+Math.abs(dbrel).toFixed(0)+' dB). Décale l\u2019antenne ou la hauteur.';}
+  else{vr.className='verdict ok';vr.textContent=(dbrel>=0?'Renforcement +'+dbrel.toFixed(1):'Léger creux '+dbrel.toFixed(1))+' dB. Trajets ~en phase.';}
+  // interferer
+  interf.visible=intOn;intField.visible=intOn;linkInt.visible=intOn;
+  const iDepth=+$('di').value/10;$('diL').textContent=iDepth.toFixed(1)+' m';
+  const iPos=new THREE.Vector3(RXBASE.x+2.5, 0.5, RXBASE.z - iDepth*1.6 + 0.0);
+  // place interferer offset so distance ~ iDepth
+  iPos.set(RXBASE.x, 0.5, rxDepth - iDepth);
+  interf.position.set(iPos.x,0,iPos.z);intField.position.set(iPos.x,0.5,iPos.z);
+  linkInt.geometry.setFromPoints([new THREE.Vector3(iPos.x,0.5,iPos.z),rxPos]);
+  if(intOn){
+    const dWanted=dDir, dInt=Math.max(0.3,iPos.distanceTo(rxPos));
+    const eirpW=20, eirpI=20; // both at limit worst case
+    const CI=(eirpW-fspl(dWanted))-(eirpI-fspl(dInt));
+    $('ci').textContent=CI.toFixed(0)+' dB';
+    const desense=CI<10;
+    const vi=$('vint');
+    if(pimOn){
+      imMarks.forEach((m,i)=>{m.visible=true;const a=i/imMarks.length*Math.PI*2;
+        m.position.set(rxPos.x+Math.cos(a)*0.7,rxPos.y+0.3+Math.sin(a)*0.4,rxPos.z+Math.sin(a)*0.5);});
+      vi.className='verdict warn';vi.textContent='IM passive : 2 porteuses fortes sur une jonction non-linéaire (connecteur corrodé) → produits 2f1−f2 en bande. Refais la connectique N.';
+    } else if(desense){
+      imMarks.forEach(m=>m.visible=false);
+      vi.className='verdict warn';vi.textContent='C/I '+CI.toFixed(0)+' dB (near-far) : le brouilleur désensibilise le front-end. Éloigne-le / sépare les antennes.';
+    } else {
+      imMarks.forEach(m=>m.visible=false);
+      vi.className='verdict ok';vi.textContent='C/I '+CI.toFixed(0)+' dB confortable. AFH/TDMA hoppe hors des canaux occupés — liaison tenue.';
+    }
+  } else {imMarks.forEach(m=>m.visible=false);$('ci').textContent='—';
+    const vi=$('vint');vi.className='verdict ok';vi.textContent='Pas de brouilleur. Spectre libre pour le saut de fréquence.';}
+  lbInt.p.set(iPos.x,1.6,iPos.z);
+}
+
+/* ---------- render ---------- */
+const v3=new THREE.Vector3();
+function proj(p){v3.copy(p).project(camera);return{x:(v3.x*.5+.5)*innerWidth,y:(-v3.y*.5+.5)*innerHeight,vis:v3.z<1};}
+function tick(){cam();
+  // dynamic label anchors
+  lbTX.p.set(TX.x,3.0,TX.z);
+  lbRX.p.copy(mode===2?rx2.position:rxM.position).y=1.6;
+  lbA.p.copy(antA.position).add(new THREE.Vector3(0,.9,0));
+  lbB.p.copy(antB.position).add(new THREE.Vector3(0,-.9,0));
+  L.forEach(o=>{if(o.e.style.display==='none'){o.e.style.opacity=0;return;}
+    const s=proj(o.p);if(s.vis){o.e.style.opacity=1;o.e.style.left=s.x+'px';o.e.style.top=s.y+'px';}else o.e.style.opacity=0;});
+  renderer.render(scene,camera);requestAnimationFrame(tick);}
+function resize(){renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();}
+addEventListener('resize',resize);resize();
+setMode(0);updateP();updateCross();updateInt();setMode(0);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
