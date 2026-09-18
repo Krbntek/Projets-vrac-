@@ -1,0 +1,236 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mini Jeu d'Évitement</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            flex-direction: column;
+        }
+
+        #game-container {
+            width: 400px;
+            height: 600px;
+            border: 2px solid #333;
+            background-color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #player {
+            width: 40px;
+            height: 40px;
+            background-color: #007bff;
+            position: absolute;
+            bottom: 10px;
+            left: 180px; /* Initial position */
+            transition: left 0.05s linear;
+        }
+
+        .obstacle {
+            width: 40px;
+            height: 40px;
+            background-color: #dc3545;
+            position: absolute;
+            top: -40px;
+            left: 0; /* Will be set by JS */
+        }
+
+        #score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 10;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 20px;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="score-board">Score: 0</div>
+        <div id="player"></div>
+
+        <div id="start-screen">
+            <h1>Mini Jeu d'Évitement</h1>
+            <p>Utilisez les flèches Gauche et Droite pour contrôler le carré.</p>
+            <button onclick="startGame()">Start</button>
+        </div>
+
+        <div id="game-over-screen" style="display: none;">
+            <h1>Game Over!</h1>
+            <p id="final-score">Your Score: 0</p>
+            <button onclick="restartGame()">Restart</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const scoreBoard = document.getElementById('score-board');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        let playerX = 180; // Initial X position
+        const playerWidth = 40;
+        const gameWidth = 400;
+        const gameHeight = 600;
+        let score = 0;
+        let gameLoopInterval;
+        let obstacleInterval;
+        let isPlaying = false;
+        let obstacleSpeed = 3; // Initial speed
+        let obstacleDropRate = 1500; // Milliseconds between new obstacles
+
+        // --- Game Setup Functions ---
+
+        function resetGame() {
+            score = 0;
+            obstacleSpeed = 3;
+            scoreBoard.textContent = `Score: 0`;
+            playerX = 180;
+            player.style.left = `${playerX}px`;
+
+            // Clear existing obstacles
+            document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+
+            // Hide game over screen
+            gameOverScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+        }
+
+        function startGame() {
+            if (isPlaying) return;
+
+            startScreen.style.display = 'none';
+            isPlaying = true;
+
+            // Start the main game loop (collision checks)
+            gameLoopInterval = setInterval(gameLoop, 20); 
+
+            // Start generating obstacles
+            obstacleInterval = setInterval(createObstacle, obstacleDropRate);
+        }
+
+        function restartGame() {
+            clearInterval(gameLoopInterval);
+            clearInterval(obstacleInterval);
+            resetGame();
+        }
+
+        // --- Obstacle Management ---
+
+        function createObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            
+            // Random horizontal position
+            const obsX = Math.random() * (gameWidth - 40);
+            obstacle.style.left = `${obsX}px`;
+            
+            gameContainer.appendChild(obstacle);
+        }
+
+        // --- Game Logic ---
+
+        function gameLoop() {
+            if (!isPlaying) return;
+
+            const obstacles = document.querySelectorAll('.obstacle');
+            const playerRect = player.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+
+            obstacles.forEach(obstacle => {
+                let obsY = parseFloat(obstacle.style.top) || -40;
+                
+                // Move obstacle down
+                obsY += obstacleSpeed;
+                obstacle.style.top = `${obsY}px`;
+
+                // Check if obstacle is off-screen (cleanup)
+                if (obsY > gameHeight) {
+                    obstacle.remove();
+                    score++;
+                    scoreBoard.textContent = `Score: ${score}`;
+                }
+
+                // Check for collision
+                const obsRect = obstacle.getBoundingClientRect();
+
+                // Simple AABB collision detection
+                if (
+                    playerRect.left < obsRect.right &&
+                    playerRect.right > obsRect.left &&
+                    playerRect.top < obsRect.bottom &&
+                    playerRect.bottom > obsRect.top
+                ) {
+                    endGame();
+                }
+            });
+        }
+
+        function endGame() {
+            isPlaying = false;
+            clearInterval(gameLoopInterval);
+            clearInterval(obstacleInterval);
+
+            finalScoreDisplay.textContent = `Your Score: ${score}`;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        // --- Input Handling ---
+
+        document.addEventListener('keydown', (e) => {
+            if (!isPlaying) return;
+
+            if (e.key === 'ArrowLeft') {
+                playerX -= 20; // Move left by 20px
+                player.style.left = `${playerX}px`;
+            } else if (e.key === 'ArrowRight') {
+                playerX += 20; // Move right by 20px
+                player.style.left = `${playerX}px`;
+            }
+        });
+
+        // --- Initialization ---
+        resetGame(); 
+    </script>
+
+</body>
+</html>
+```
