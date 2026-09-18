@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu d'Évitement</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        #score {
+            color: #00ff00;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 90vw;
+            max-width: 600px;
+            height: 70vh;
+            max-height: 500px;
+            background: linear-gradient(180deg, #0a1428 0%, #1a2332 100%);
+            border: 3px solid #00ff00;
+            overflow: hidden;
+            margin: 0 auto 20px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        #player {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: #00ff00;
+            border-radius: 3px;
+        }
+
+        .obstacle {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: #ff4444;
+            border-radius: 3px;
+        }
+
+        .buttons {
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            margin: 0 10px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: #ff4444;
+            padding: 30px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            display: none;
+            z-index: 100;
+            border: 2px solid #ff4444;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Jeu d'Évitement</h1>
+        <div id="score">Score: 0</div>
+        <div id="gameContainer">
+            <div id="player"></div>
+            <div id="gameOver"></div>
+        </div>
+        <div class="buttons">
+            <button id="startBtn">Start</button>
+            <button id="restartBtn">Restart</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const player = document.getElementById('player');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverDisplay = document.getElementById('gameOver');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+
+        let playerX = 0;
+        let score = 0;
+        let gameRunning = false;
+        let gameOver = false;
+        let obstacles = [];
+        let obstacleSpeed = 2;
+        let spawnRate = 100;
+        let frameCount = 0;
+        let lastScore = 0;
+
+        const playerSpeed = 20;
+        const playerSize = 50;
+
+        const keys = {};
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            e.preventDefault();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        function getContainerDimensions() {
+            return {
+                width: gameContainer.offsetWidth,
+                height: gameContainer.offsetHeight
+            };
+        }
+
+        function updatePlayer() {
+            const dims = getContainerDimensions();
+            const centerX = (dims.width / 2) - (playerSize / 2);
+
+            if (keys['ArrowLeft'] || keys['a']) {
+                playerX -= playerSpeed;
+            }
+            if (keys['ArrowRight'] || keys['d']) {
+                playerX += playerSpeed;
+            }
+
+            playerX = Math.max(0, Math.min(playerX, dims.width - playerSize));
+            player.style.left = playerX + 'px';
+        }
+
+        function spawnObstacle() {
+            const dims = getContainerDimensions();
+            const randomX = Math.random() * (dims.width - 50);
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            obstacle.style.left = randomX + 'px';
+            obstacle.style.top = '0px';
+            gameContainer.appendChild(obstacle);
+            obstacles.push({
+                element: obstacle,
+                x: randomX,
+                y: 0
+            });
+        }
+
+        function updateObstacles() {
+            const dims = getContainerDimensions();
+            obstacles = obstacles.filter(obs => {
+                obs.y += obstacleSpeed;
+                obs.element.style.top = obs.y + 'px';
+
+                if (checkCollision(playerX, dims.height - 60, obs.x, obs.y)) {
+                    endGame();
+                    return false;
+                }
+
+                if (obs.y > dims.height) {
+                    obs.element.remove();
+                    score += 10;
+                    scoreDisplay.textContent = 'Score: ' + score;
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function checkCollision(px, py, ox, oy) {
+            return px < ox + 50 &&
+                   px + playerSize > ox &&
+                   py < oy + 50 &&
+                   py + playerSize > oy;
+        }
+
+        function gameLoop() {
+            if (!gameRunning || gameOver) return;
+
+            frameCount++;
+
+            updatePlayer();
+            updateObstacles();
+
+            if (frameCount % 30 === 0) {
+                score++;
+                scoreDisplay.textContent = 'Score: ' + score;
+            }
+
+            if (frameCount % 300 === 0 && frameCount > 0) {
+                obstacleSpeed = Math.min(obstacleSpeed + 0.3, 8);
+                spawnRate = Math.max(spawnRate - 2, 30);
+            }
+
+            if (frameCount % spawnRate === 0) {
+                spawnObstacle();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            gameRunning = true;
+            gameOver = false;
+            gameOverDisplay.style.display = 'none';
+            startBtn.disabled = true;
+            gameLoop();
+        }
+
+        function endGame() {
+            gameRunning = false;
+            gameOver = true;
+            gameOverDisplay.textContent = 'GAME OVER\n\nScore: ' + score;
+            gameOverDisplay.style.display = 'block';
+            startBtn.disabled = false;
+        }
+
+        function restartGame() {
+            playerX = 0;
+            score = 0;
+            frameCount = 0;
+            obstacleSpeed = 2;
+            spawnRate = 100;
+            gameRunning = false;
+            gameOver = false;
+            scoreDisplay.textContent = 'Score: 0';
+            gameOverDisplay.style.display = 'none';
+
+            obstacles.forEach(obs => {
+                obs.element.remove();
+            });
+            obstacles = [];
+
+            const dims = getContainerDimensions();
+            playerX = (dims.width / 2) - (playerSize / 2);
+            player.style.left = playerX + 'px';
+            startBtn.disabled = false;
+        }
+
+        startBtn.addEventListener('click', startGame);
+        restartBtn.addEventListener('click', restartGame);
+
+        restartGame();
+    </script>
+</body>
+</html>
