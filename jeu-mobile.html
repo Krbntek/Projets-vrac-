@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu d'Évitement</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+            font-family: Arial, sans-serif;
+            padding: 10px;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 400px;
+            height: 500px;
+            border: 2px solid #00ff00;
+            background-color: #0a0a0a;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        #score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #00ff00;
+            z-index: 5;
+        }
+
+        #player {
+            width: 40px;
+            height: 40px;
+            background-color: #00ff00;
+            position: absolute;
+            bottom: 10px;
+            left: 180px;
+        }
+
+        .obstacle {
+            width: 40px;
+            height: 40px;
+            background-color: #ff4444;
+            position: absolute;
+        }
+
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 100;
+            color: white;
+        }
+
+        #start-screen h1, #game-over-screen h1 {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        #start-screen p, #game-over-screen p {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .btn-action {
+            padding: 12px 30px;
+            font-size: 16px;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+
+        .controls-area {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-move {
+            flex: 1;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .btn-move:active {
+            background-color: #00cc00;
+            transform: scale(0.98);
+        }
+
+        .btn-move:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="score-board">Score: 0</div>
+        <div id="player"></div>
+
+        <div id="start-screen">
+            <h1>🎮 Jeu d'Évitement</h1>
+            <p>Utilisez les boutons pour contrôler</p>
+            <button class="btn-action" onclick="startGame()">Start</button>
+        </div>
+
+        <div id="game-over-screen" style="display: none;">
+            <h1>GAME OVER!</h1>
+            <p id="final-score">Score: 0</p>
+            <button class="btn-action" onclick="restartGame()">Restart</button>
+        </div>
+    </div>
+
+    <div class="controls-area">
+        <button class="btn-move" id="btnLeft" onmousedown="moveLeft()" onmouseup="stopMove()" ontouchstart="moveLeft()" ontouchend="stopMove()">← Gauche</button>
+        <button class="btn-move" id="btnRight" onmousedown="moveRight()" onmouseup="stopMove()" ontouchstart="moveRight()" ontouchend="stopMove()">Droite →</button>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const scoreBoard = document.getElementById('score-board');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        let playerX = 180;
+        const playerWidth = 40;
+        const gameWidth = 400;
+        const gameHeight = 500;
+        let score = 0;
+        let gameLoopInterval;
+        let obstacleInterval;
+        let isPlaying = false;
+        let obstacleSpeed = 2;
+        let obstacleDropRate = 1200;
+        let isMovingLeft = false;
+        let isMovingRight = false;
+
+        function resetGame() {
+            score = 0;
+            obstacleSpeed = 2;
+            scoreBoard.textContent = 'Score: 0';
+            playerX = 180;
+            player.style.left = playerX + 'px';
+            document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+            gameOverScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+            isMovingLeft = false;
+            isMovingRight = false;
+        }
+
+        function startGame() {
+            if (isPlaying) return;
+            startScreen.style.display = 'none';
+            isPlaying = true;
+            gameLoopInterval = setInterval(gameLoop, 20);
+            obstacleInterval = setInterval(createObstacle, obstacleDropRate);
+        }
+
+        function restartGame() {
+            clearInterval(gameLoopInterval);
+            clearInterval(obstacleInterval);
+            resetGame();
+        }
+
+        function createObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            const obsX = Math.random() * (gameWidth - 40);
+            obstacle.style.left = obsX + 'px';
+            obstacle.style.top = '0px';
+            gameContainer.appendChild(obstacle);
+        }
+
+        function gameLoop() {
+            if (!isPlaying) return;
+
+            if (isMovingLeft && playerX > 0) {
+                playerX -= 15;
+            }
+            if (isMovingRight && playerX < gameWidth - playerWidth) {
+                playerX += 15;
+            }
+            player.style.left = playerX + 'px';
+
+            const obstacles = document.querySelectorAll('.obstacle');
+            const playerRect = player.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+
+            obstacles.forEach(obstacle => {
+                let obsY = parseFloat(obstacle.style.top) || 0;
+                obsY += obstacleSpeed;
+                obstacle.style.top = obsY + 'px';
+
+                if (obsY > gameHeight) {
+                    obstacle.remove();
+                    score += 10;
+                    scoreBoard.textContent = 'Score: ' + score;
+
+                    if (score % 50 === 0) {
+                        obstacleSpeed = Math.min(obstacleSpeed + 0.5, 6);
+                        obstacleDropRate = Math.max(obstacleDropRate - 50, 600);
+                    }
+                }
+
+                const obsRect = obstacle.getBoundingClientRect();
+                if (playerRect.left < obsRect.right &&
+                    playerRect.right > obsRect.left &&
+                    playerRect.top < obsRect.bottom &&
+                    playerRect.bottom > obsRect.top) {
+                    endGame();
+                }
+            });
+        }
+
+        function endGame() {
+            isPlaying = false;
+            clearInterval(gameLoopInterval);
+            clearInterval(obstacleInterval);
+            isMovingLeft = false;
+            isMovingRight = false;
+            finalScoreDisplay.textContent = 'Score: ' + score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function moveLeft() {
+            isMovingLeft = true;
+        }
+
+        function moveRight() {
+            isMovingRight = true;
+        }
+
+        function stopMove() {
+            isMovingLeft = false;
+            isMovingRight = false;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!isPlaying) return;
+            if (e.key === 'ArrowLeft') isMovingLeft = true;
+            if (e.key === 'ArrowRight') isMovingRight = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') isMovingLeft = false;
+            if (e.key === 'ArrowRight') isMovingRight = false;
+        });
+
+        resetGame();
+    </script>
+
+</body>
+</html>

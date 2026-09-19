@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Jeu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #1a1a1a;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: Arial, sans-serif;
+            position: fixed;
+            top: 0;
+            left: 0;
+        }
+
+        #game-container {
+            width: 90vw;
+            height: 60vh;
+            max-width: 500px;
+            max-height: 600px;
+            border: 3px solid #00ff00;
+            background: #000;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        #score-board {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #00ff00;
+            z-index: 5;
+        }
+
+        #player {
+            width: 30px;
+            height: 30px;
+            background: #00ff00;
+            position: absolute;
+            border-radius: 2px;
+        }
+
+        .obstacle {
+            width: 30px;
+            height: 30px;
+            background: #ff4444;
+            position: absolute;
+            border-radius: 2px;
+        }
+
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.98);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 100;
+            color: #fff;
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+            color: #00ff00;
+        }
+
+        p {
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: #aaa;
+        }
+
+        .btn-action {
+            padding: 12px 30px;
+            font-size: 16px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            touch-action: manipulation;
+        }
+
+        .btn-action:active {
+            transform: scale(0.95);
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 90vw;
+            max-width: 500px;
+            flex-shrink: 0;
+        }
+
+        .controls-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-move {
+            flex: 1;
+            max-width: 100px;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            -webkit-touch-callout: none;
+        }
+
+        .btn-move:active {
+            background: #00cc00;
+            transform: scale(0.96);
+        }
+
+        .spacer {
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="score-board">Score: 0</div>
+        <div id="player"></div>
+
+        <div id="start-screen">
+            <h1>🎮 Jeu Rapide</h1>
+            <p>Évitez les obstacles rouges!</p>
+            <button class="btn-action" onclick="startGame()">START</button>
+        </div>
+
+        <div id="game-over-screen" style="display: none;">
+            <h1>GAME OVER!</h1>
+            <p id="final-score">Score: 0</p>
+            <button class="btn-action" onclick="restartGame()">RESTART</button>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="controls-row">
+            <div class="spacer"></div>
+            <button class="btn-move" id="btnUp" onmousedown="moveUp()" onmouseup="stopMove()" ontouchstart="moveUp()" ontouchend="stopMove()">↑ Haut</button>
+            <div class="spacer"></div>
+        </div>
+        <div class="controls-row">
+            <button class="btn-move" id="btnLeft" onmousedown="moveLeft()" onmouseup="stopMove()" ontouchstart="moveLeft()" ontouchend="stopMove()">← Gauche</button>
+            <button class="btn-move" id="btnDown" onmousedown="moveDown()" onmouseup="stopMove()" ontouchstart="moveDown()" ontouchend="stopMove()">↓ Bas</button>
+            <button class="btn-move" id="btnRight" onmousedown="moveRight()" onmouseup="stopMove()" ontouchstart="moveRight()" ontouchend="stopMove()">Droite →</button>
+        </div>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const player = document.getElementById('player');
+        const scoreBoard = document.getElementById('score-board');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+
+        let playerX = 0;
+        let playerY = 0;
+        const playerSize = 30;
+        let score = 0;
+        let gameLoopInterval;
+        let obstacleInterval;
+        let isPlaying = false;
+        let obstacleSpeed = 3;
+        let obstacleDropRate = 800;
+        let isMovingLeft = false;
+        let isMovingRight = false;
+        let isMovingUp = false;
+        let isMovingDown = false;
+        const moveSpeed = 12;
+
+        function getGameDimensions() {
+            return {
+                width: gameContainer.offsetWidth,
+                height: gameContainer.offsetHeight
+            };
+        }
+
+        function resetGame() {
+            score = 0;
+            obstacleSpeed = 3;
+            obstacleDropRate = 800;
+            scoreBoard.textContent = 'Score: 0';
+            const dims = getGameDimensions();
+            playerX = (dims.width - playerSize) / 2;
+            playerY = dims.height - 50;
+            player.style.left = playerX + 'px';
+            player.style.top = playerY + 'px';
+            document.querySelectorAll('.obstacle').forEach(obs => obs.remove());
+            gameOverScreen.style.display = 'none';
+            startScreen.style.display = 'flex';
+            isMovingLeft = false;
+            isMovingRight = false;
+            isMovingUp = false;
+            isMovingDown = false;
+        }
+
+        function startGame() {
+            if (isPlaying) return;
+            startScreen.style.display = 'none';
+            isPlaying = true;
+            gameLoopInterval = setInterval(gameLoop, 20);
+            obstacleInterval = setInterval(createObstacle, obstacleDropRate);
+        }
+
+        function restartGame() {
+            clearInterval(gameLoopInterval);
+            clearInterval(obstacleInterval);
+            resetGame();
+        }
+
+        function createObstacle() {
+            const dims = getGameDimensions();
+            const obstacle = document.createElement('div');
+            obstacle.className = 'obstacle';
+            const obsX = Math.random() * (dims.width - playerSize);
+            obstacle.style.left = obsX + 'px';
+            obstacle.style.top = '-30px';
+            gameContainer.appendChild(obstacle);
+        }
+
+        function gameLoop() {
+            if (!isPlaying) return;
+
+            const dims = getGameDimensions();
+
+            if (isMovingLeft && playerX > 0) {
+                playerX -= moveSpeed;
+            }
+            if (isMovingRight && playerX < dims.width - playerSize) {
+                playerX += moveSpeed;
+            }
+            if (isMovingUp && playerY > 0) {
+                playerY -= moveSpeed;
+            }
+            if (isMovingDown && playerY < dims.height - playerSize) {
+                playerY += moveSpeed;
+            }
+
+            player.style.left = playerX + 'px';
+            player.style.top = playerY + 'px';
+
+            const obstacles = document.querySelectorAll('.obstacle');
+            const playerRect = player.getBoundingClientRect();
+            const containerRect = gameContainer.getBoundingClientRect();
+
+            obstacles.forEach(obstacle => {
+                let obsY = parseFloat(obstacle.style.top) || 0;
+                obsY += obstacleSpeed;
+                obstacle.style.top = obsY + 'px';
+
+                if (obsY > dims.height) {
+                    obstacle.remove();
+                    score += 5;
+                    scoreBoard.textContent = 'Score: ' + score;
+
+                    if (score % 25 === 0) {
+                        obstacleSpeed = Math.min(obstacleSpeed + 0.8, 8);
+                        obstacleDropRate = Math.max(obstacleDropRate - 50, 400);
+                        clearInterval(obstacleInterval);
+                        obstacleInterval = setInterval(createObstacle, obstacleDropRate);
+                    }
+                }
+
+                const obsRect = obstacle.getBoundingClientRect();
+                if (playerRect.left < obsRect.right &&
+                    playerRect.right > obsRect.left &&
+                    playerRect.top < obsRect.bottom &&
+                    playerRect.bottom > obsRect.top) {
+                    endGame();
+                }
+            });
+        }
+
+        function endGame() {
+            isPlaying = false;
+            clearInterval(gameLoopInterval);
+            clearInterval(obstacleInterval);
+            isMovingLeft = false;
+            isMovingRight = false;
+            isMovingUp = false;
+            isMovingDown = false;
+            finalScoreDisplay.textContent = 'Score: ' + score;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function moveLeft() {
+            isMovingLeft = true;
+        }
+
+        function moveRight() {
+            isMovingRight = true;
+        }
+
+        function moveUp() {
+            isMovingUp = true;
+        }
+
+        function moveDown() {
+            isMovingDown = true;
+        }
+
+        function stopMove() {
+            isMovingLeft = false;
+            isMovingRight = false;
+            isMovingUp = false;
+            isMovingDown = false;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (!isPlaying) return;
+            if (e.key === 'ArrowLeft') isMovingLeft = true;
+            if (e.key === 'ArrowRight') isMovingRight = true;
+            if (e.key === 'ArrowUp') isMovingUp = true;
+            if (e.key === 'ArrowDown') isMovingDown = true;
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft') isMovingLeft = false;
+            if (e.key === 'ArrowRight') isMovingRight = false;
+            if (e.key === 'ArrowUp') isMovingUp = false;
+            if (e.key === 'ArrowDown') isMovingDown = false;
+        });
+
+        document.addEventListener('touchend', () => {
+            stopMove();
+        });
+
+        resetGame();
+    </script>
+
+</body>
+</html>
