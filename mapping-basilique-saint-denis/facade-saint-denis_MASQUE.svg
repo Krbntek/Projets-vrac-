@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+     width="3250" height="6100" viewBox="0 0 3250 6100" version="1.1">
+  <title>Saint-Denis - masque de silhouette</title>
+  <desc>Basilique-cathedrale de Saint-Denis - facade occidentale - elevation
+  1 unite SVG = 1 cm reel. Largeur 32,50 m. Hauteur document 61,00 m.
+  Sol = bord inferieur du viewBox. Axe de symetrie = x 1625.
+  Releve photogrammetrique approche - A RECALER PAR RELEVE SUR SITE.</desc>
+
+<g inkscape:groupmode="layer" id="MASQUE" inkscape:label="MASQUE" fill="#ffffff" stroke="none" >
+  <path d="M 0.0,6100.0 L 0.0,3260.0 L 0.0,3180.0 L 920.0,3180.0 L 920.0,3180.0 L 1035.0,3180.0 L 1625.0,2370.0 L 2215.0,3180.0 L 2145.0,3180.0 L 2145.0,1040.0 L 2235.0,1040.0 L 2305.0,640.0 L 2675.0,90.0 L 3045.0,640.0 L 3115.0,1040.0 L 3205.0,1040.0 L 3205.0,3180.0 L 3250.0,3180.0 L 3250.0,6100.0 Z" id="silhouette"/>
+</g>
+</svg>
