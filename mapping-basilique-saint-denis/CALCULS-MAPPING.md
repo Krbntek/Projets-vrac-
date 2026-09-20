@@ -238,9 +238,11 @@ qu'une installation « suffisante sur le papier » est grise sur site.
 
 - TR **3,54 : 1** pour les deux, même optique, même distance ;
 - recouvrement vertical **1,70 m** (≈ 190 px en 4K) pour le soft edge ;
-- couverture totale **34,70 × 37,34 m = 1 296 m²**, soit toute la façade hors tour ;
-- **77 % des pixels tombent sur la pierre** (997 m² de pierre sur 1 296 m² éclairés),
-  contre ~45 % avec un projecteur unique réglé sur la hauteur.
+- couverture totale **34,70 × 37,34 m**, soit toute la façade hors tour ;
+- **surface émise 2 × 677 = 1 354 m²** (la bande de blend est comptée deux fois :
+  chaque machine y est atténuée de moitié, cette lumière est perdue) ;
+- **74 % des lumens tombent sur la pierre** (997 m² de pierre sur 1 354 m² émis),
+  contre 40 % avec un projecteur unique réglé sur la hauteur.
 
 Pour la **tour sud** (10,6 m de large × 28,8 m au-dessus du parapet, ratio 0,37) :
 un 3ᵉ projecteur en **portrait** (rotation 90°), largeur d'image 16,3 m pour 29 m de
@@ -249,24 +251,155 @@ la tour en éclairage architectural statique** (quelques découpes / wash LED) e
 concentre la vidéo sur le corps de façade. Visuellement c'est plus lisible, et la
 tour reste habitée par la lumière.
 
-### 3.3 Hauteur d'implantation du projecteur
+### 3.3 Hauteur d'implantation et lens shift
 
-Image de 19,5 m de haut, centre de l'image basse à ~9,7 m, centre de l'image haute à
-~28 m. En exploitant le **lens shift vertical** d'un tri-DLP (typiquement ± 60-70 %) :
+Image de 19,5 m de haut : centre de l'image **basse** à 9,7 m, centre de l'image
+**haute** à 27,6 m. Avec les deux machines posées à la même hauteur *h* :
 
-- projecteur à **7-8 m de haut**, shift maxi vers le haut, **tilt ≈ 0°** →
-  **aucun keystone, aucune perte de pixels, mise au point homogène** ;
-- projecteur au sol (2 m) → il faut incliner de ~7-8° et corriger en numérique :
-  perte de pixels, perte de netteté en haut, et la ligne de vue passe au niveau des
-  têtes du public.
+| Zone | Décalage à rattraper depuis h = 8 m | En % de la hauteur d'image |
+|---|---|---|
+| Basse | 1,7 m | 9 % → **shift seul, trivial** |
+| **Haute** | **19,6 m** | **100 %** → **hors plage de shift usuelle** |
 
-→ **Prévoir une tour de projection (échafaudage/layher) de 6 à 8 m**, avec local
-technique fermé, ou un balcon / une fenêtre d'étage en face. À 122 m avec
-**plusieurs milliers de personnes entre le projecteur et la façade**, la hauteur
-n'est pas un confort : c'est ce qui garantit que personne ne coupe le faisceau.
+Le shift vertical d'un tri-DLP plafonne en général autour de ± 60-70 % (à vérifier
+pour le couple machine + optique retenu, certaines combinaisons montent plus haut).
+Donc pour la zone haute, trois options :
+
+1. **incliner le projecteur haut et corriger au warp** — c'est la pratique courante :
+   tilt de 15,6° à 70 m, 9,0° à 123 m, correction dans Resolume, **coût ≈ 10-15 % de
+   pixels**. La netteté n'est pas affectée (façade plane, tirage long) ;
+2. **surélever la machine haute** à ~15 m pour rester en shift pur — tour lourde,
+   rarement réaliste sur un parvis ;
+3. **reculer** : plus tu es loin, plus le tilt nécessaire est faible. C'est le seul
+   avantage réel des grandes distances.
+
+→ **Tour de projection de 6 à 8 m** avec local technique fermé, ou balcon / fenêtre
+d'étage en face. Avec **plusieurs milliers de personnes entre la machine et la
+façade**, la hauteur n'est pas un confort : c'est ce qui garantit que personne ne
+coupe le faisceau.
+
+⚠️ **Piège du mode portrait** : quand on tourne une machine de 90°, **les axes de
+shift tournent avec elle**. Le grand débattement vertical (± 60-70 %) devient
+horizontal sur le mur — inutile, on est centré — et c'est le petit débattement
+horizontal (± 30-40 %) qui doit rattraper toute la hauteur. Le portrait impose donc
+quasi systématiquement du tilt + warp.
 
 Profondeur de champ : la façade est plane, les contreforts ne saillent que d'environ
 1,9 m sur 123 m de tirage — **aucun problème de netteté**.
+
+### 3.4 Le rapport d'optique ne change PAS le nombre de machines
+
+Point de méthode, parce que c'est contre-intuitif :
+
+```
+TR = distance / largeur d'image
+```
+
+Le rapport d'optique ne relie que **deux** grandeurs : où tu te mets, et quelle
+largeur tu couvres. Il **ne modifie ni le format de l'image, ni sa luminosité**.
+
+- Changer d'optique à image constante = **changer de place**, rien d'autre.
+- La largeur d'image étant imposée par la façade (34,7 m), **le TR n'est plus une
+  variable de conception : c'est une conséquence de la distance que tu choisis.**
+- Et surtout : à image constante, **les lumens arrivant sur la pierre sont les mêmes
+  à 40 m qu'à 123 m.** Une optique courte ne « donne » pas plus de lumière.
+
+Ce qui fixe le nombre de machines, ce sont deux choses seulement :
+
+1. **l'accord de format** entre la machine (16:9 / 16:10) et la façade (0,87) —
+   ça fixe le nombre de **zones** ;
+2. **le flux unitaire** — ça fixe le nombre de machines **empilées par zone**.
+
+### 3.5 Quel arrangement pour le moins de machines ?
+
+Métrique qui compte : **la part des lumens émis qui tombe sur de la pierre.**
+
+| Arrangement | Image unitaire | Zones | Surface émise | Pierre éclairée | **Rendement** |
+|---|---|---|---|---|---|
+| 1× paysage 16:9, calé sur la hauteur | 66,3 × 37,3 m | 1 | 2 473 m² | 997 m² | **40 %** ❌ |
+| 1× portrait 16:9, calé sur la largeur | 34,7 × 61,7 m | 1 | 2 141 m² | 1 302 m² | 61 % |
+| 2× portrait 16:9 côte à côte | 21,0 × 37,3 m | 2 | 1 565 m² | 997 m² | 64 % |
+| 1× portrait 16:10, calé sur la largeur | 34,7 × 55,5 m | 1 | 1 927 m² | 1 276 m² | 66 % |
+| **2× paysage 16:9 empilées** | 34,7 × 19,5 m | 2 | 1 353 m² | 997 m² | **74 %** ✅ |
+| **2× paysage 16:10 empilées** | 34,7 × 21,7 m | 2 | 1 505 m² | 1 129 m² | **75 %** ✅ |
+
+Enseignements :
+
+- **le pire choix est le réflexe naturel** : une machine en paysage calée sur la
+  hauteur jette 60 % de sa lumière à côté du bâtiment ;
+- **le portrait est élégant mais pas plus économe** : une seule machine portrait
+  couvre géométriquement toute la façade **tour comprise** (jusqu'à 55 m de haut),
+  mais comme elle éclaire 1 927 m², il faut autant de lumens au total. Son vrai
+  intérêt est ailleurs : **une seule zone, pas de blend, une seule sortie vidéo** —
+  installation beaucoup plus simple, et la tour est traitée gratuitement ;
+- **l'optimum reste 2 zones paysage empilées** (74-75 %), avec un léger avantage au
+  **16:10** qui monte jusqu'à 41,7 m et attrape le bas de la tour.
+
+### 3.6 Le vrai levier : le flux unitaire
+
+Dans un arrangement à 2 zones (A_zone = 677 m²), l'éclairement ne dépend que du
+nombre de machines **empilées par zone** :
+
+```
+E = S × F × η / A_zone      S = machines par zone,  N total = 2 × S
+```
+
+| Flux unitaire | N = 2 | N = 4 | N = 6 |
+|---|---|---|---|
+| 10 000 lm | 10 lux | 21 lux | 31 lux |
+| 20 000 lm | 21 lux | 41 lux | 62 lux |
+| 30 000 lm | 31 lux | 62 lux | 93 lux |
+| **40 000 lm** | 41 lux | **83 lux** | 124 lux |
+| **50 000 lm** | **52 lux** | 103 lux | 155 lux |
+| **60 000 lm** | **62 lux** | 124 lux | 186 lux |
+
+**Nombre minimal de machines pour la cible :**
+
+| Cible | avec des 20 k | avec des 30 k | avec des 40 k | avec des 50-60 k |
+|---|---|---|---|---|
+| 50 lux | 6 | 4 | 4 | **2** |
+| 80 lux | 8 | 6 | **4** | **4** |
+| 120 lux | 12 | 8 | 6 | **4** |
+
+→ **Pour limiter le nombre de VP, il faut monter en classe de machine, pas changer
+d'optique.** Passer de 30 k à 50-60 k divise le parc par deux à éclairement égal.
+Le minimum absolu utilisable, c'est **2 machines de 50 à 60 000 lm** (une par zone) :
+52-62 lux, une seule optique, un blend unique, deux sorties vidéo. C'est la config
+la plus simple qui tienne debout sur cette façade.
+
+Ces classes existent en location (gamme Barco XDL, Christie Griffyn 4K50-RGB et
+équivalents) — **à faire confirmer par Novelty**, en dispo comme en prix, parce que
+c'est aussi la classe où le coût par machine s'envole.
+
+### 3.7 Et donc, à quelle distance se mettre ?
+
+Le TR découle de la distance. Avec l'arrangement retenu (image de 34,7 m de large) :
+
+| Distance | TR | Classe d'optique |
+|---|---|---|
+| 30 m | 0,86 : 1 | courte — rare et chère sur grosses machines, distorsion |
+| 40 m | 1,15 : 1 | courte |
+| **50 m** | **1,44 : 1** | **zoom standard** ✅ |
+| **60 m** | **1,73 : 1** | **zoom standard** ✅ |
+| **70 m** | **2,02 : 1** | **zoom standard** ✅ |
+| **80 m** | **2,31 : 1** | **zoom standard / long** ✅ |
+| 100 m | 2,88 : 1 | long |
+| 122,88 m | 3,54 : 1 | long |
+| 150 m | 4,32 : 1 | très long |
+
+**Recommandation : 55 à 80 m, soit un TR de 1,6 à 2,3 : 1.** C'est la zone où :
+
+- les optiques sont des **zooms standard** — les plus courantes en parc de location,
+  les moins chères, les mieux corrigées et celles qui transmettent le mieux ;
+- le tilt de la machine haute reste modéré ;
+- on reste loin devant la façade sans traverser tout le parvis, donc **moins de
+  public dans l'axe** et moins de risque de coupure de faisceau.
+
+En dessous de 40 m, l'angle devient raide et les optiques courtes sur machines
+50-60 k sont rares. Au-delà de 100 m, rien ne se gagne : **mêmes lumens sur la
+pierre**, mais optique plus longue, plus de public dans l'axe, et plus d'atmosphère
+traversée (une nuit humide, ça se voit).
+
 
 ---
 
@@ -275,20 +408,22 @@ Profondeur de champ : la façade est plane, les contreforts ne saillent que d'en
 ### 4.1 La formule
 
 ```
-E (lux) = (N × F × η) / S_éclairée
+E (lux) = (N × F × η) / S_émise
 
 N = nombre de projecteurs
 F = flux unitaire (lumens ANSI)
 η = rendement réel de l'installation ≈ 0,70
-    (flux nominal vs flux réel, vieillissement, modes éco, pertes optiques,
-     atténuation dans la zone de blend)
-S_éclairée = surface du RECTANGLE projeté, pas la surface de pierre
+    (flux nominal vs flux réel, vieillissement, modes éco, pertes optiques)
+S_émise = somme des surfaces d'image de TOUTES les machines
+          = zones × (largeur × hauteur d'image)
+          La bande de blend y est donc comptée deux fois : c'est correct,
+          chaque machine y est atténuée de moitié.
 ```
 
 ⚠️ **Le piège classique** : diviser par la surface de pierre. La lumière se répartit
-sur tout le rectangle projeté, débords compris. Sur notre pavage, le rectangle fait
-**1 296 m²** alors que la pierre n'en représente que 997 — diviser par 997 surestime
-l'éclairement de 30 %.
+sur toute la surface émise, débords et blend compris. Sur notre pavage, la surface
+émise fait **1 354 m²** alors que la pierre n'en représente que 997 — diviser par 997
+surestime l'éclairement de 36 %.
 
 Luminance perçue sur la pierre : `L (cd/m²) = E × ρ / π`, avec ρ ≈ 0,55 pour du
 calcaire clair ravalé (la façade a été nettoyée en 2012-2015, tant mieux : une façade
@@ -296,15 +431,16 @@ encrassée descend à ρ ≈ 0,25 et il faut doubler la puissance).
 
 ### 4.2 Ce que donnent 2 × 10 000 lm
 
-Sur le pavage retenu (2 rangées, 1 296 m² éclairés) :
+Sur le pavage retenu (2 zones, 1 354 m² émis) :
 
 | Configuration | Flux installé | Éclairement | Luminance |
 |---|---|---|---|
-| **2 × 10 000 lm** | 20 000 lm | **10,8 lux** | 1,9 cd/m² |
-| 4 × 20 000 lm | 80 000 lm | 43 lux | 7,6 cd/m² |
-| 4 × 30 000 lm | 120 000 lm | 65 lux | 11,4 cd/m² |
-| **5 × 30 000 lm** | 150 000 lm | **81 lux** | 14,2 cd/m² |
-| 6 × 30 000 lm | 180 000 lm | 97 lux | 17,0 cd/m² |
+| **2 × 10 000 lm** | 20 000 lm | **10 lux** | 1,8 cd/m² |
+| 4 × 20 000 lm | 80 000 lm | 41 lux | 7,2 cd/m² |
+| 4 × 30 000 lm | 120 000 lm | 62 lux | 10,9 cd/m² |
+| **4 × 40 000 lm** | 160 000 lm | **83 lux** | 14,5 cd/m² |
+| 6 × 30 000 lm | 180 000 lm | 93 lux | 16,3 cd/m² |
+| 2 × 60 000 lm | 120 000 lm | 62 lux | 10,9 cd/m² |
 
 *(au-delà de 2 machines, on empile plusieurs projecteurs sur la même rangée — le
 pavage reste à 2 zones, seule la puissance monte)*
@@ -326,25 +462,28 @@ central, la grande baie et la rosace-horloge.
 | Éclairage public maintenu | > 250 lux — irréaliste, **il faut éteindre** |
 | Captation vidéo / photo presse | 150 lux et plus |
 
-Flux à installer pour la façade entière hors tour (1 296 m² éclairés, η = 0,70) :
+Flux à installer pour la façade entière hors tour (1 354 m² émis, η = 0,70) :
 
-| Cible | **Flux installé** | Équivalent |
+| Cible | **Flux installé** | Parc le plus court |
 |---|---|---|
-| 30 lux | **55 500 lm** | 2 × 30 k |
-| 50 lux | **92 500 lm** | 3 × 30 k |
-| 80 lux | **148 000 lm** | **5 × 30 k** |
-| 120 lux | **222 000 lm** | 8 × 30 k |
+| 30 lux | **58 000 lm** | 2 × 30 k |
+| 50 lux | **97 000 lm** | **2 × 50 k** |
+| 80 lux | **155 000 lm** | **4 × 40 k** |
+| 120 lux | **232 000 lm** | 4 × 60 k |
+
+Le détail du nombre de machines par classe est au § 3.6.
 
 ### 4.4 Verdict franc
 
-**2 × 10 000 lm, c'est 11 lux sur ta façade. C'est 7 fois trop peu** pour un
+**2 × 10 000 lm, c'est 10 lux sur ta façade. C'est 8 fois trop peu** pour un
 événement à plusieurs milliers de personnes sur un parvis urbain. Le rendu sera un
 gris délavé, et le premier lampadaire non éteint tue le spectacle.
 
 Trois issues, par ordre de préférence :
 
-1. **Monter en puissance.** Cible réaliste : **5 à 6 projecteurs de 30 000 lm**
-   (150 000 à 180 000 lm installés) → 81 à 97 lux. C'est le niveau attendu pour
+1. **Monter en puissance.** Le parc le plus court pour 80 lux : **4 × 40 000 lm**
+   (160 000 lm installés, 83 lux). Avec des 30 k il en faut 6, avec des 20 k il en
+   faut 8 — voir § 3.6. C'est le niveau attendu pour
    un mapping de monument devant ce public. En parc de loueur classique, la gamme est
    là : tri-DLP laser 4K de 20 000 à 40 000 lm (Panasonic PT-RQ22K / PT-RQ35K,
    Barco UDX-4K32, Christie D4K40-RGB). **À faire confirmer par Novelty** — c'est
@@ -515,8 +654,8 @@ Règles pour ce fichier :
 | 2 | Relevé exact | Demander le DWG à l'ACMH/DRAC, ou scan lidar géomètre |
 | 3 | Distance réelle | Re-mesurer au télémètre depuis le nu de la façade |
 | 4 | Surface mappée | **Corps de façade 32,5 × 37,3 m** ; tour en wash |
-| 5 | Nombre de projecteurs | **5 à 6 × 30 000 lm** (81-97 lux). 2 × 10 k ⇒ travée centrale seule (52 lux) |
-| 6 | Implantation | 2 zones empilées, TR 3,54:1, blend 1,70 m, **tour de 6-8 m** |
+| 5 | Nombre de projecteurs | **4 × 40 k (83 lux)** ou **2 × 50-60 k (52-62 lux)** pour le parc minimal. 2 × 10 k ⇒ travée centrale seule (52 lux) |
+| 6 | Implantation | 2 zones empilées, **55-80 m → TR 1,6-2,3:1**, blend 1,70 m, **tour de 6-8 m** |
 | 7 | Composition Resolume | **3840 × 4136**, 111 px/m, DXV3, NVMe |
 | 8 | Logiciels | Resolume **Arena** (vidéo) + MadMapper/MadLaser (laser), sync **timecode** |
 | 9 | Électricité | 63 A tri mini, 125 A tri pour la grosse config, secours |

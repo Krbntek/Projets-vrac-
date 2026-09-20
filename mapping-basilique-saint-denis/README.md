@@ -30,10 +30,10 @@ Sol sur le bord inférieur, axe de symétrie à `x = 1625`.
 | Hauteur au parapet / au pignon | 29,20 m / 37,30 m |
 | Hauteur de la tour sud | 58,00 m (60,10 m à la croix) |
 | Surface de pierre, hors tour | 997 m² |
-| Distance de projection relevée | 122,88 m → **TR 3,54 : 1** |
-| Pavage retenu | 2 zones empilées, blend 1,70 m, 1 296 m² éclairés |
+| Distance conseillée | **55 à 80 m → TR 1,6 à 2,3 : 1** (zooms standard) |
+| Pavage retenu | 2 zones empilées, blend 1,70 m, 1 354 m² émis, 74 % sur la pierre |
 | Composition Resolume | 3840 × 4136 px — **111 px/m** |
-| **Puissance pour 80 lux** | **~148 000 lm installés (5 × 30 k)** |
+| **Puissance pour 80 lux** | **~155 000 lm — parc le plus court : 4 × 40 k** |
 
 ## Deux avertissements
 

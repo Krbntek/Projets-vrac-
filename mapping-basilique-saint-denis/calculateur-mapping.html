@@ -61,14 +61,19 @@
         <option value="11.3,37.3">Travée centrale seule (378 m²)</option>
         <option value="10.6,58">Tour sud seule</option>
       </select>
-      <label>Débord latéral souhaité, par côté (m)</label>
-      <input type="number" id="bleed" value="1.1" step="0.1">
+      <div class="row">
+        <div><label>Débord par côté (m)</label><input type="number" id="bleed" value="1.1" step="0.1"></div>
+        <div><label>Pierre réelle (m²)</label><input type="number" id="stone" value="997" step="1"></div>
+      </div>
+      <p class="note" style="margin-top:6px">La « pierre réelle » est la surface de
+         maçonnerie dans le cadre (997 m² pour le corps + pignon, contre 1 212 m² de
+         rectangle englobant) : c'est elle qui dit combien de lumens sont utiles.</p>
     </div>
 
     <div class="panel" style="margin-top:12px">
       <h2>Implantation</h2>
-      <label>Distance projecteur → façade (m)</label>
-      <input type="number" id="dist" value="122.88" step="0.1">
+      <label>Distance projecteur → façade (m) — libre, 55-80 m conseillé</label>
+      <input type="number" id="dist" value="70" step="0.1">
       <div class="row">
         <div><label>Format machine</label>
           <select id="ar"><option value="1.7778">16:9</option><option value="1.6">16:10</option>
@@ -123,6 +128,14 @@
       <div class="verdict" id="verdictGeo"></div>
     </div>
 
+    <div class="panel" style="margin-top:12px">
+      <h2>Distance ↔ optique</h2>
+      <p class="note" style="margin:0 0 8px">Le rapport d'optique ne change ni le format
+         de l'image ni sa luminosité : il dit seulement <b>où se mettre</b>. À image
+         constante, les lumens sur la pierre sont les mêmes à 40 m qu'à 123 m.</p>
+      <table id="tOpt"></table>
+    </div>
+
     <div class="grid3" style="margin-top:12px">
       <div class="panel"><h2>Bilan lumière</h2><table id="tLum"></table></div>
       <div class="panel"><h2>Bilan machine</h2><table id="tMac"></table></div>
@@ -142,7 +155,7 @@ function calc(){
   const dist=+$('dist').value, ar0=+$('ar').value, portrait=$('orient').value==='P';
   const ar = portrait ? 1/ar0 : ar0;
   const ovl=+$('ovl').value, n=Math.max(1,+$('n').value), lm=+$('lm').value;
-  const eta=+$('eta').value, rho=+$('rho').value, resH=+$('res').value, cible=+$('cible').value;
+  const stone=+$('stone').value, eta=+$('eta').value, rho=+$('rho').value, resH=+$('res').value, cible=+$('cible').value;
 
   // ---- géométrie : on cale la largeur d'image sur la façade + débord
   const iw = fw + 2*bleed;            // largeur image unitaire
@@ -156,15 +169,21 @@ function calc(){
 
   // surfaces
   const S = fw*fh;                                   // surface utile (pierre)
-  const Sproj = iw * hTot;                           // surface éclairée totale
-  const rendGeo = Math.min(1, S/Sproj);              // part des pixels sur la pierre
+  const Sproj = iw * hTot;                           // union éclairée (géométrie)
+  const Semis = rows * iw * ih;                      // surface ÉMISE : compte 2 fois
+                                                     // la zone de blend, qui y est
+                                                     // atténuée -> base des lux
+  const rendCadre = Math.min(1, S/Sproj);            // part des pixels dans le cadre façade
+  const rendGeo = Math.min(1, stone/Semis);          // part des lumens utiles
 
   // ---- lumière
   const flux = n*lm;
-  const E = flux*eta/Sproj;          // l'eclairement se calcule sur la surface ECLAIREE
+  const E = flux*eta/Semis;          // lux = flux / surface EMISE (blend déduit)
   const L = E*rho/Math.PI;
-  const fluxCible = cible*Sproj/eta;
-  const nCible = Math.ceil(fluxCible/lm);
+  const Azone = iw*ih;                       // surface d'UNE zone
+  const stack = Math.ceil(cible*Azone/(lm*eta));   // machines a empiler par zone
+  const nCible = rows*stack;                 // parc total pour la cible
+  const stackNow = Math.max(1, Math.round(n/rows));
 
   // ---- définition
   const pxm = resH/iw;
@@ -182,13 +201,15 @@ function calc(){
   $('mmpx').textContent = F(1000/pxm,1);
 
   $('tLum').innerHTML = `
-    <tr><td>Surface utile</td><td>${F(S,0)} m²</td></tr>
-    <tr><td>Surface éclairée</td><td>${F(Sproj,0)} m²</td></tr>
-    <tr><td>Pixels sur la pierre</td><td>${F(rendGeo*100,0)} %</td></tr>
+    <tr><td>Cadre façade</td><td>${F(S,0)} m²</td></tr>
+    <tr><td>Surface éclairée (union)</td><td>${F(Sproj,0)} m²</td></tr>
+    <tr><td>Surface émise (${rows} zone${rows>1?'s':''})</td><td>${F(Semis,0)} m²</td></tr>
+    <tr><td>Pixels dans le cadre</td><td>${F(rendCadre*100,0)} %</td></tr>
+    <tr><td><b>Lumens sur la pierre</b></td><td>${F(rendGeo*100,0)} %</td></tr>
     <tr><td>Flux installé</td><td>${F(flux,0)} lm</td></tr>
     <tr><td>Flux utile (η=${eta})</td><td>${F(flux*eta,0)} lm</td></tr>
     <tr><td>Éclairement</td><td>${F(E,1)} lux</td></tr>
-    <tr><td>Lumens sur la pierre</td><td>${F(flux*eta*rendGeo,0)} lm</td></tr>`;
+    <tr><td>dont utiles</td><td>${F(flux*eta*rendGeo,0)} lm</td></tr>`;
 
   $('tMac').innerHTML = `
     <tr><td>Machines posées</td><td>${n}</td></tr>
@@ -196,6 +217,7 @@ function calc(){
     <tr><td>Couverture</td><td>${F(iw,1)} × ${F(hTot,1)} m</td></tr>
     <tr><td>Rapport de projection</td><td>${F(tr,2)}:1</td></tr>
     <tr><td>Puissance estimée</td><td>~${F(n*lm*0.00016,1)} kW</td></tr>
+    <tr><td>Machines par zone</td><td>${stackNow}</td></tr>
     <tr><td>Pour ${cible} lux, il faut</td><td>${nCible} × ${F(lm,0)} lm</td></tr>`;
 
   $('tComp').innerHTML = `
@@ -213,15 +235,16 @@ function calc(){
     vg.innerHTML=`<b>Couverture insuffisante.</b> Il faut <b>${rows}</b> rangée(s) de projecteurs
       pour couvrir ${F(fh,1)} m de haut, tu n'en déclares que ${n}.
       Ajoute des machines, réduis la surface, ou passe en portrait.`;
-  } else if (rendGeo < 0.6){
+  } else if (rendCadre < 0.6){
     vg.className='verdict v-warn';
-    vg.innerHTML=`<b>${F((1-rendGeo)*100,0)} % de la lumière tombe à côté du bâtiment.</b>
+    vg.innerHTML=`<b>${F((1-rendCadre)*100,0)} % de la lumière tombe hors du cadre façade.</b>
       Le format machine ne colle pas au format façade : essaie l'autre orientation,
       ou un pavage en plus de rangées avec une optique plus longue.`;
   } else {
     vg.className='verdict v-ok';
-    vg.innerHTML=`<b>Pavage cohérent.</b> ${rows} rangée(s), ${F(rendGeo*100,0)} % des pixels
-      sur la pierre, recouvrement de ${F(ovl,1)} m (${ovlPx} px).`;
+    vg.innerHTML=`<b>Pavage cohérent.</b> ${rows} zone(s), <b>${F(rendGeo*100,0)} % des
+      lumens tombent sur la pierre</b> (${F(rendCadre*100,0)} % dans le cadre),
+      recouvrement de ${F(ovl,1)} m (${ovlPx} px).`;
   }
 
   const vl=$('verdictLum');
@@ -241,6 +264,21 @@ function calc(){
     vl.innerHTML=`<b>${F(E,0)} lux — niveau correct</b> (${F(L,1)} cd/m² sur la pierre).
       Au-delà de 120 lux tu gagnes de la marge pour la captation vidéo.`;
   }
+
+  // --- table distance <-> optique
+  const classe = t => t<1.0 ? 'très courte — rare, chère'
+                  : t<1.4 ? 'courte'
+                  : t<2.4 ? 'zoom standard ✅'
+                  : t<3.2 ? 'long'
+                  : t<4.2 ? 'très long' : 'exotique';
+  let opt='';
+  [30,40,50,60,70,80,90,100,110,120,150].forEach(D=>{
+    const t=D/iw, near=Math.abs(D-dist)<6;
+    opt+=`<tr style="${near?'color:var(--acc)':''}"><td>${D} m${near?' ←':''}</td>
+          <td style="text-align:center;color:var(--dim);font-weight:400">${classe(t)}</td>
+          <td>${F(t,2)} : 1</td></tr>`;
+  });
+  $('tOpt').innerHTML=opt;
 
   dessin(fw,fh,iw,ih,rows,ovl,bleed);
 }
