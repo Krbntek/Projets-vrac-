@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculateur mapping façade</title>
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --line:#2a3138; --txt:#e6edf3; --dim:#8b949e;
+    --acc:#ffb454; --ok:#3fb950; --warn:#f0883e; --bad:#f85149; --beam:#ffb45433;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);
+       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  header{padding:22px 16px 10px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:20px;font-weight:600}
+  header p{margin:6px 0 0;color:var(--dim);font-size:13px}
+  .wrap{display:grid;grid-template-columns:330px 1fr;gap:16px;padding:16px;max-width:1320px;margin:0 auto}
+  @media(max-width:880px){.wrap{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .panel h2{margin:0 0 10px;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--acc)}
+  label{display:block;margin:9px 0 3px;font-size:12px;color:var(--dim)}
+  input,select{width:100%;background:#0b0f14;border:1px solid var(--line);color:var(--txt);
+               border-radius:6px;padding:7px 9px;font-size:14px;font-family:inherit}
+  input:focus,select:focus{outline:none;border-color:var(--acc)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td{padding:6px 2px;border-bottom:1px solid var(--line)}
+  td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+  .big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
+  .unit{font-size:13px;color:var(--dim);font-weight:400}
+  .verdict{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:14px;
+           border-left:3px solid var(--dim);background:#0b0f14}
+  .v-ok{border-color:var(--ok)} .v-warn{border-color:var(--warn)} .v-bad{border-color:var(--bad)}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  @media(max-width:700px){.grid3{grid-template-columns:1fr}}
+  svg{width:100%;height:auto;background:#0b0f14;border-radius:8px}
+  .note{font-size:12px;color:var(--dim);margin-top:10px}
+  .proj{color:var(--acc);font-weight:400}
+  header a{color:var(--acc)}
+  optgroup{color:var(--dim)}
+  code{background:#0b0f14;padding:1px 5px;border-radius:4px;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Calculateur mapping façade <span id="projName" class="proj"></span></h1>
+  <p>Éclairement, optique, pavage des projecteurs et résolution de composition —
+     pour n'importe quelle façade. Outil partagé :
+     <code>outils/calculateur-mapping.html</code> dans
+     <a href="https://github.com/Krbntek/Projets-vrac-" target="_blank" rel="noopener">Krbntek/Projets-vrac-</a>.
+     Les réglages sont mémorisés dans ce navigateur.</p>
+</header>
+
+<div class="wrap">
+  <div>
+    <div class="panel">
+      <h2>Projet</h2>
+      <label>Nom du chantier</label>
+      <input type="text" id="proj" placeholder="ex. Basilique Saint-Denis">
+      <label>Façade de référence</label>
+      <select id="preset">
+        <option value="">— saisie libre —</option>
+        <optgroup label="Basilique Saint-Denis (relevé 2026)">
+          <option value="32.5,37.3,997">Corps de façade + pignon</option>
+          <option value="32.5,60.1,1302">Façade entière, tour comprise</option>
+          <option value="11.3,37.3,378">Travée centrale seule</option>
+          <option value="10.6,58,305">Tour sud seule</option>
+        </optgroup>
+        <optgroup label="Gabarits génériques">
+          <option value="20,15,260">Petite façade urbaine 20 × 15 m</option>
+          <option value="40,25,850">Façade type hôtel de ville 40 × 25 m</option>
+          <option value="60,30,1500">Grande façade 60 × 30 m</option>
+          <option value="100,25,2200">Front bâti large 100 × 25 m</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2>Surface projetée</h2>
+      <div class="row">
+        <div><label>Largeur (m)</label><input type="number" id="fw" value="32.5" step="0.1"></div>
+        <div><label>Hauteur (m)</label><input type="number" id="fh" value="37.3" step="0.1"></div>
+      </div>
+      <div class="row">
+        <div><label>Débord par côté (m)</label><input type="number" id="bleed" value="1.1" step="0.1"></div>
+        <div><label>Pierre réelle (m²)</label><input type="number" id="stone" value="997" step="1"></div>
+      </div>
+      <p class="note" style="margin-top:6px">La « pierre réelle » est la surface de
+         maçonnerie dans le cadre (997 m² pour le corps + pignon, contre 1 212 m² de
+         rectangle englobant) : c'est elle qui dit combien de lumens sont utiles.</p>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2>Implantation</h2>
+      <label>Distance projecteur → façade (m) — libre, 55-80 m conseillé</label>
+      <input type="number" id="dist" value="70" step="0.1">
+      <div class="row">
+        <div><label>Format machine</label>
+          <select id="ar"><option value="1.7778">16:9</option><option value="1.6">16:10</option>
+          <option value="1.9">1.90:1 (DCI)</option></select></div>
+        <div><label>Orientation</label>
+          <select id="orient"><option value="L">Paysage</option><option value="P">Portrait (rot. 90°)</option></select></div>
+      </div>
+      <label>Recouvrement de blend (m)</label>
+      <input type="number" id="ovl" value="1.7" step="0.1">
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2>Parc projecteurs</h2>
+      <div class="row">
+        <div><label>Nombre</label><input type="number" id="n" value="2" min="1" step="1"></div>
+        <div><label>Lumens / unité</label><input type="number" id="lm" value="10000" step="500"></div>
+      </div>
+      <div class="row">
+        <div><label>Rendement η</label><input type="number" id="eta" value="0.70" step="0.05" min="0.3" max="1"></div>
+        <div><label>Réflectance pierre ρ</label><input type="number" id="rho" value="0.55" step="0.05" min="0.1" max="0.9"></div>
+      </div>
+      <div class="row">
+        <div><label>Résolution horiz. (px)</label>
+          <select id="res"><option value="3840">4K UHD 3840</option><option value="1920">WUXGA/HD 1920</option>
+          <option value="2560">WQXGA 2560</option><option value="4096">DCI 4K 4096</option></select></div>
+        <div><label>Cible (lux)</label><input type="number" id="cible" value="80" step="10"></div>
+      </div>
+    </div>
+    <p class="note">Méthode, relevé photogrammétrique et génération du SVG :
+       skill <code>mapping-facade</code>. Étude Saint-Denis :
+       <code>mapping-basilique-saint-denis/CALCULS-MAPPING.md</code>.</p>
+  </div>
+
+  <div>
+    <div class="grid3">
+      <div class="panel"><h2>Éclairement</h2>
+        <div class="big" id="lux">–</div><span class="unit">lux sur la pierre</span>
+        <div style="margin-top:8px" class="unit">Luminance <b id="cdm2">–</b> cd/m²</div>
+      </div>
+      <div class="panel"><h2>Optique</h2>
+        <div class="big" id="tr">–</div><span class="unit">rapport de projection</span>
+        <div style="margin-top:8px" class="unit">Image unitaire <b id="img">–</b></div>
+      </div>
+      <div class="panel"><h2>Définition</h2>
+        <div class="big" id="pxm">–</div><span class="unit">px/m</span>
+        <div style="margin-top:8px" class="unit">soit <b id="mmpx">–</b> mm/pixel</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2>Pavage &amp; couverture</h2>
+      <svg id="diag" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="verdict" id="verdictGeo"></div>
+    </div>
+
+    <div class="panel" style="margin-top:12px">
+      <h2>Distance ↔ optique</h2>
+      <p class="note" style="margin:0 0 8px">Le rapport d'optique ne change ni le format
+         de l'image ni sa luminosité : il dit seulement <b>où se mettre</b>. À image
+         constante, les lumens sur la pierre sont les mêmes à 40 m qu'à 123 m.</p>
+      <table id="tOpt"></table>
+    </div>
+
+    <div class="grid3" style="margin-top:12px">
+      <div class="panel"><h2>Bilan lumière</h2><table id="tLum"></table></div>
+      <div class="panel"><h2>Bilan machine</h2><table id="tMac"></table></div>
+      <div class="panel"><h2>Composition</h2><table id="tComp"></table></div>
+    </div>
+
+    <div class="verdict" id="verdictLum" style="margin-top:12px"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const F = (v,d=1) => (isFinite(v)? v.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d}) : '–');
+
+function calc(){
+  const fw=+$('fw').value, fh=+$('fh').value, bleed=+$('bleed').value;
+  const dist=+$('dist').value, ar0=+$('ar').value, portrait=$('orient').value==='P';
+  const ar = portrait ? 1/ar0 : ar0;
+  const ovl=+$('ovl').value, n=Math.max(1,+$('n').value), lm=+$('lm').value;
+  const stone=+$('stone').value, eta=+$('eta').value, rho=+$('rho').value, resH=+$('res').value, cible=+$('cible').value;
+
+  // ---- géométrie : on cale la largeur d'image sur la façade + débord
+  const iw = fw + 2*bleed;            // largeur image unitaire
+  const ih = iw / ar;                 // hauteur image unitaire
+  const tr = dist / iw;
+
+  // nombre de rangées nécessaires pour couvrir la hauteur avec recouvrement
+  let rows = 1;
+  if (ih < fh) rows = Math.max(1, Math.ceil((fh - ovl) / (ih - ovl)));
+  const hTot = rows*ih - (rows-1)*ovl;
+
+  // surfaces
+  const S = fw*fh;                                   // surface utile (pierre)
+  const Sproj = iw * hTot;                           // union éclairée (géométrie)
+  const Semis = rows * iw * ih;                      // surface ÉMISE : compte 2 fois
+                                                     // la zone de blend, qui y est
+                                                     // atténuée -> base des lux
+  const rendCadre = Math.min(1, S/Sproj);            // part des pixels dans le cadre façade
+  const rendGeo = Math.min(1, stone/Semis);          // part des lumens utiles
+
+  // ---- lumière
+  const flux = n*lm;
+  const E = flux*eta/Semis;          // lux = flux / surface EMISE (blend déduit)
+  const L = E*rho/Math.PI;
+  const Azone = iw*ih;                       // surface d'UNE zone
+  const stack = Math.ceil(cible*Azone/(lm*eta));   // machines a empiler par zone
+  const nCible = rows*stack;                 // parc total pour la cible
+  const stackNow = Math.max(1, Math.round(n/rows));
+
+  // ---- définition
+  const pxm = resH/iw;
+  const compW = Math.round(resH);
+  const ovlPx = Math.round(ovl*pxm);
+  const compH = Math.round(rows*(resH/ar) - (rows-1)*ovlPx);
+  const mpx = compW*compH/1e6;
+
+  // ---- affichage chiffres clés
+  $('lux').textContent = F(E,0);
+  $('cdm2').textContent = F(L,1);
+  $('tr').textContent = F(tr,2)+':1';
+  $('img').textContent = F(iw,1)+' × '+F(ih,1)+' m';
+  $('pxm').textContent = F(pxm,0);
+  $('mmpx').textContent = F(1000/pxm,1);
+
+  $('tLum').innerHTML = `
+    <tr><td>Cadre façade</td><td>${F(S,0)} m²</td></tr>
+    <tr><td>Surface éclairée (union)</td><td>${F(Sproj,0)} m²</td></tr>
+    <tr><td>Surface émise (${rows} zone${rows>1?'s':''})</td><td>${F(Semis,0)} m²</td></tr>
+    <tr><td>Pixels dans le cadre</td><td>${F(rendCadre*100,0)} %</td></tr>
+    <tr><td><b>Lumens sur la pierre</b></td><td>${F(rendGeo*100,0)} %</td></tr>
+    <tr><td>Flux installé</td><td>${F(flux,0)} lm</td></tr>
+    <tr><td>Flux utile (η=${eta})</td><td>${F(flux*eta,0)} lm</td></tr>
+    <tr><td>Éclairement</td><td>${F(E,1)} lux</td></tr>
+    <tr><td>dont utiles</td><td>${F(flux*eta*rendGeo,0)} lm</td></tr>`;
+
+  $('tMac').innerHTML = `
+    <tr><td>Machines posées</td><td>${n}</td></tr>
+    <tr><td>Pavage nécessaire</td><td>${rows} rangée${rows>1?'s':''}</td></tr>
+    <tr><td>Couverture</td><td>${F(iw,1)} × ${F(hTot,1)} m</td></tr>
+    <tr><td>Rapport de projection</td><td>${F(tr,2)}:1</td></tr>
+    <tr><td>Puissance estimée</td><td>~${F(n*lm*0.00016,1)} kW</td></tr>
+    <tr><td>Machines par zone</td><td>${stackNow}</td></tr>
+    <tr><td>Pour ${cible} lux, il faut</td><td>${nCible} × ${F(lm,0)} lm</td></tr>`;
+
+  $('tComp').innerHTML = `
+    <tr><td>Composition</td><td>${compW} × ${compH}</td></tr>
+    <tr><td>Mégapixels</td><td>${F(mpx,1)} Mpx</td></tr>
+    <tr><td>Blend vertical</td><td>${ovlPx} px</td></tr>
+    <tr><td>Échelle SVG (1u=1cm)</td><td>${F(pxm,0)} %</td></tr>
+    <tr><td>Débit DXV3 ~60 fps</td><td>~${F(mpx*0.5*60,0)} Mo/s</td></tr>
+    <tr><td>Densité</td><td>${F(pxm,0)} px/m</td></tr>`;
+
+  // ---- verdicts
+  const vg=$('verdictGeo');
+  if (rows*1 > n){
+    vg.className='verdict v-bad';
+    vg.innerHTML=`<b>Couverture insuffisante.</b> Il faut <b>${rows}</b> rangée(s) de projecteurs
+      pour couvrir ${F(fh,1)} m de haut, tu n'en déclares que ${n}.
+      Ajoute des machines, réduis la surface, ou passe en portrait.`;
+  } else if (rendCadre < 0.6){
+    vg.className='verdict v-warn';
+    vg.innerHTML=`<b>${F((1-rendCadre)*100,0)} % de la lumière tombe hors du cadre façade.</b>
+      Le format machine ne colle pas au format façade : essaie l'autre orientation,
+      ou un pavage en plus de rangées avec une optique plus longue.`;
+  } else {
+    vg.className='verdict v-ok';
+    vg.innerHTML=`<b>Pavage cohérent.</b> ${rows} zone(s), <b>${F(rendGeo*100,0)} % des
+      lumens tombent sur la pierre</b> (${F(rendCadre*100,0)} % dans le cadre),
+      recouvrement de ${F(ovl,1)} m (${ovlPx} px).`;
+  }
+
+  const vl=$('verdictLum');
+  if (E < 30){
+    vl.className='verdict v-bad';
+    vl.innerHTML=`<b>${F(E,0)} lux — très insuffisant.</b> En dessous de 30 lux, l'image est
+      délavée dès qu'il reste de l'éclairage urbain. Il faudrait <b>${nCible} machines</b>
+      de ${F(lm,0)} lm pour atteindre ${cible} lux, ou réduire la surface à
+      <b>${F(flux*eta/cible,0)} m²</b> de surface éclairée à parc constant.`;
+  } else if (E < 60){
+    vl.className='verdict v-warn';
+    vl.innerHTML=`<b>${F(E,0)} lux — limite.</b> Tenable uniquement avec extinction totale
+      de l'éclairage public et des contenus très contrastés. Confort réel à partir de
+      80 lux, soit <b>${nCible} × ${F(lm,0)} lm</b>.`;
+  } else {
+    vl.className='verdict v-ok';
+    vl.innerHTML=`<b>${F(E,0)} lux — niveau correct</b> (${F(L,1)} cd/m² sur la pierre).
+      Au-delà de 120 lux tu gagnes de la marge pour la captation vidéo.`;
+  }
+
+  // --- table distance <-> optique
+  const classe = t => t<1.0 ? 'très courte — rare, chère'
+                  : t<1.4 ? 'courte'
+                  : t<2.4 ? 'zoom standard ✅'
+                  : t<3.2 ? 'long'
+                  : t<4.2 ? 'très long' : 'exotique';
+  let opt='';
+  [30,40,50,60,70,80,90,100,110,120,150].forEach(D=>{
+    const t=D/iw, near=Math.abs(D-dist)<6;
+    opt+=`<tr style="${near?'color:var(--acc)':''}"><td>${D} m${near?' ←':''}</td>
+          <td style="text-align:center;color:var(--dim);font-weight:400">${classe(t)}</td>
+          <td>${F(t,2)} : 1</td></tr>`;
+  });
+  $('tOpt').innerHTML=opt;
+
+  dessin(fw,fh,iw,ih,rows,ovl,bleed);
+}
+
+function dessin(fw,fh,iw,ih,rows,ovl,bleed){
+  const W=900,H=520,pad=46;
+  const hTot=rows*ih-(rows-1)*ovl;
+  const k=Math.min((W-2*pad)/iw,(H-2*pad)/Math.max(fh,hTot));
+  const cx=W/2, y0=H-pad;                       // y0 = sol
+  const X=m=>cx+m*k, Y=m=>y0-m*k;
+  let s='';
+  // faisceaux projecteurs
+  for(let r=0;r<rows;r++){
+    const b=r*(ih-ovl), t=b+ih;
+    s+=`<rect x="${X(-iw/2)}" y="${Y(t)}" width="${iw*k}" height="${ih*k}"
+         fill="var(--beam)" stroke="#ffb454" stroke-width="1" stroke-dasharray="5,4"/>`;
+    s+=`<text x="${X(-iw/2)+8}" y="${Y(t)+18}" fill="#ffb454" font-size="12">
+         projo ${rows-r} — ${iw.toFixed(1)} × ${ih.toFixed(1)} m</text>`;
+    if(r>0) s+=`<rect x="${X(-iw/2)}" y="${Y(b+ovl)}" width="${iw*k}" height="${ovl*k}"
+         fill="#ffb45433" stroke="none"/>`;
+  }
+  // façade
+  s+=`<rect x="${X(-fw/2)}" y="${Y(fh)}" width="${fw*k}" height="${fh*k}"
+       fill="#e6edf314" stroke="#e6edf3" stroke-width="2"/>`;
+  s+=`<line x1="${X(-fw/2)-30}" y1="${y0}" x2="${X(fw/2)+30}" y2="${y0}" stroke="#8b949e" stroke-width="2"/>`;
+  // cotes
+  s+=`<text x="${cx}" y="${y0+28}" fill="#8b949e" font-size="13" text-anchor="middle">${fw.toFixed(1)} m</text>`;
+  s+=`<text x="${X(fw/2)+10}" y="${Y(fh/2)}" fill="#8b949e" font-size="13">${fh.toFixed(1)} m</text>`;
+  s+=`<text x="${cx}" y="22" fill="#8b949e" font-size="12" text-anchor="middle">
+       couverture totale ${iw.toFixed(1)} × ${hTot.toFixed(1)} m — débord ${bleed.toFixed(1)} m/côté</text>`;
+  $('diag').innerHTML=s;
+}
+
+$('preset').addEventListener('change',e=>{
+  if(!e.target.value) return;
+  const [w,h,st]=e.target.value.split(',');
+  $('fw').value=w; $('fh').value=h; if(st) $('stone').value=st;
+  sauver(); calc();
+});
+
+// --- persistance locale : on retrouve son chantier en revenant sur la page
+const CHAMPS=['proj','fw','fh','bleed','stone','dist','ar','orient','ovl','n','lm','eta','rho','res','cible'];
+function sauver(){
+  try{ const o={}; CHAMPS.forEach(k=>o[k]=$(k).value);
+       localStorage.setItem('mapping-facade', JSON.stringify(o)); }catch(e){}
+}
+function charger(){
+  try{ const o=JSON.parse(localStorage.getItem('mapping-facade')||'{}');
+       CHAMPS.forEach(k=>{ if(o[k]!==undefined && o[k]!=='') $(k).value=o[k]; }); }catch(e){}
+}
+charger();
+document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{sauver();calc();}));
+$('proj').addEventListener('input',()=>{ $('projName').textContent =
+  $('proj').value ? '— '+$('proj').value : ''; });
+$('projName').textContent = $('proj').value ? '— '+$('proj').value : '';
+calc();
+</script>
+</body>
+</html>
