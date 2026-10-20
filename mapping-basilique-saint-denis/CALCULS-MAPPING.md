@@ -136,6 +136,8 @@ donc plus large que le massif occidental).
 | `facade-saint-denis_MASQUE.svg` | Silhouette pleine, blanc sur transparent. Masque alpha pour Resolume / AE. |
 | `facade-saint-denis_LASER.svg` | Tracé simplifié, **trait seul, sans remplissage, ~35 primitives**. Fichier de départ pour MadMapper + MadLaser. |
 | `generer_facade_svg.py` | Le générateur. **Toutes les cotes sont en tête de fichier** : tu changes une valeur après relevé sur site, tu relances, les 3 SVG sont régénérés cohérents. |
+| `svg_facade.py` | Bibliothèque de primitives d'élévation (baies, portails, rosaces, crénelages…), copiée depuis la skill `mapping-facade` pour que ce dossier reste autonome. |
+| `../outils/calculateur-mapping.html` | Calculateur interactif **partagé** entre tous les projets de mapping. Source unique : on ne le duplique pas, on l'améliore là où il est. |
 
 **Convention du SVG : 1 unité SVG = 1 cm réel.**
 viewBox `0 0 3250 6100` = 32,50 m × 61,00 m.

@@ -13,8 +13,9 @@ Kit de préparation d'un mapping vidéo + laser sur la **façade occidentale** :
 | `facade-saint-denis_ELEVATION.svg` | Élévation complète, 12 calques nommés — fichier de travail |
 | `facade-saint-denis_MASQUE.svg` | Silhouette pleine → masque alpha Resolume / AE |
 | `facade-saint-denis_LASER.svg` | Tracé simplifié trait seul → MadMapper / MadLaser |
-| `calculateur-mapping.html` | Calculateur interactif : lux, rapport de projection, pavage, résolution de comp |
+| [`../outils/calculateur-mapping.html`](../outils/calculateur-mapping.html) | Calculateur interactif **partagé** (lux, optique, pavage, comp). Source unique pour tous les projets de mapping — ne pas dupliquer |
 | `generer_facade_svg.py` | Générateur des 3 SVG — toutes les cotes en tête de fichier |
+| `svg_facade.py` | Bibliothèque de primitives (copie de la skill `mapping-facade`, pour que ce dossier reste autonome) |
 | `apercu-*.png` | Rendus de contrôle |
 
 ## Convention SVG
@@ -47,3 +48,9 @@ Sol sur le bord inférieur, axe de symétrie à `x = 1625`.
 ```bash
 python3 generer_facade_svg.py
 ```
+
+## Méthode
+
+Ce dossier applique la skill [`mapping-facade`](../.claude/skills/mapping-facade/),
+qui contient la méthode généralisée (relevé, calage d'échelle, optique, puissance,
+Resolume/laser, autorisations) et les scripts réutilisables.

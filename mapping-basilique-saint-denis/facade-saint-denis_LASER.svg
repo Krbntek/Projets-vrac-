@@ -2,15 +2,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
      width="3250" height="6100" viewBox="0 0 3250 6100" version="1.1">
   <title>Saint-Denis - facade occidentale - trace laser simplifie</title>
-  <desc>Basilique-cathedrale de Saint-Denis - facade occidentale - elevation
-  1 unite SVG = 1 cm reel. Largeur 32,50 m. Hauteur document 61,00 m.
-  Sol = bord inferieur du viewBox. Axe de symetrie = x 1625.
-  Releve photogrammetrique approche - A RECALER PAR RELEVE SUR SITE.</desc>
+  <desc>Basilique-cathedrale de Saint-Denis - facade occidentale - elevation.
+  Releve photogrammetrique approche (+/- 3 a 5 %) - A RECALER SUR SITE.
+  1 unite SVG = 1 cm reel. Largeur 32.50 m. Hauteur document 61.00 m.
+  Sol = bord inferieur du viewBox. Axe de symetrie = x 1625.</desc>
 
-<g inkscape:groupmode="layer" id="LASER-CONTOUR" inkscape:label="LASER-CONTOUR" fill="none" stroke="#00ff00" stroke-width="6" >
-  <path d="M 0.0,6100.0 L 0.0,3260.0 L 0.0,3180.0 L 920.0,3180.0 L 920.0,3180.0 L 1035.0,3180.0 L 1625.0,2370.0 L 2215.0,3180.0 L 2145.0,3180.0 L 2145.0,1040.0 L 2235.0,1040.0 L 2305.0,640.0 L 2675.0,90.0 L 3045.0,640.0 L 3115.0,1040.0 L 3205.0,1040.0 L 3205.0,3180.0 L 3250.0,3180.0 L 3250.0,6100.0 Z" id="silhouette"/>
+<g inkscape:groupmode="layer" id="LASER-CONTOUR" inkscape:label="LASER-CONTOUR" fill="none" stroke="#00ff00" stroke-width="6">
+  <path d="M 0.0,6100.0 L 0.0,3260.0 L 0.0,3180.0 L 1035.0,3180.0 L 1625.0,2370.0 L 2215.0,3180.0 L 2145.0,3180.0 L 2145.0,1040.0 L 2235.0,1040.0 L 2305.0,640.0 L 2675.0,90.0 L 3045.0,640.0 L 3115.0,1040.0 L 3205.0,1040.0 L 3205.0,3180.0 L 3250.0,3180.0 L 3250.0,6100.0 Z" id="silhouette"/>
 </g>
-<g inkscape:groupmode="layer" id="LASER-STRUCTURE" inkscape:label="LASER-STRUCTURE" fill="none" stroke="#00ff00" stroke-width="6" >
+<g inkscape:groupmode="layer" id="LASER-STRUCTURE" inkscape:label="LASER-STRUCTURE" fill="none" stroke="#00ff00" stroke-width="6">
   <line x1="0.0" y1="5040.0" x2="3250.0" y2="5040.0"/>
   <line x1="0.0" y1="4880.0" x2="3250.0" y2="4880.0"/>
   <line x1="0.0" y1="3260.0" x2="3250.0" y2="3260.0"/>
@@ -19,7 +19,7 @@
   <line x1="195.0" y1="6100.0" x2="195.0" y2="3180.0"/>
   <line x1="3055.0" y1="6100.0" x2="3055.0" y2="3180.0"/>
 </g>
-<g inkscape:groupmode="layer" id="LASER-ROSACE" inkscape:label="LASER-ROSACE" fill="none" stroke="#00ff00" stroke-width="6" >
+<g inkscape:groupmode="layer" id="LASER-ROSACE" inkscape:label="LASER-ROSACE" fill="none" stroke="#00ff00" stroke-width="6">
   <circle cx="1625.0" cy="3850.0" r="300.0"/>
   <circle cx="1625.0" cy="3850.0" r="215.0"/>
   <circle cx="1625.0" cy="3850.0" r="95.0"/>
@@ -36,12 +36,12 @@
   <line x1="1542.7" y1="3897.5" x2="1438.8" y2="3957.5"/>
   <line x1="1577.5" y1="3932.3" x2="1517.5" y2="4036.2"/>
 </g>
-<g inkscape:groupmode="layer" id="LASER-PORTAILS" inkscape:label="LASER-PORTAILS" fill="none" stroke="#00ff00" stroke-width="6" >
+<g inkscape:groupmode="layer" id="LASER-PORTAILS" inkscape:label="LASER-PORTAILS" fill="none" stroke="#00ff00" stroke-width="6">
   <path d="M 1365.0,6100.0 L 1365.0,5560.0 A 260.0,260.0 0 0 1 1885.0,5560.0 L 1885.0,6100.0 Z"/>
   <path d="M 530.0,6100.0 L 530.0,5610.0 A 135.0,135.0 0 0 1 800.0,5610.0 L 800.0,6100.0 Z"/>
   <path d="M 2450.0,6100.0 L 2450.0,5610.0 A 135.0,135.0 0 0 1 2720.0,5610.0 L 2720.0,6100.0 Z"/>
 </g>
-<g inkscape:groupmode="layer" id="LASER-PIGNON-TOUR" inkscape:label="LASER-PIGNON-TOUR" fill="none" stroke="#00ff00" stroke-width="6" >
+<g inkscape:groupmode="layer" id="LASER-PIGNON-TOUR" inkscape:label="LASER-PIGNON-TOUR" fill="none" stroke="#00ff00" stroke-width="6">
   <path d="M 1035.0,3180.0 L 1625.0,2370.0 L 2215.0,3180.0 Z"/>
   <rect x="2145.0" y="1040.0" width="1060.0" height="2140.0"/>
   <path d="M 2305.0,1040.0 L 2675.0,90.0 L 3045.0,1040.0 Z"/>
