@@ -154,6 +154,8 @@
     <button id="swap">⇄ Inverser A / B</button>
   </div>
 
+  <div class="panel" id="harmo"></div>
+
   <div class="projs" id="projs">
     <div class="card A" id="cardA"></div>
     <div class="card B" id="cardB"></div>
@@ -237,16 +239,18 @@ const U_RES = 230, COS_PHI = 0.9, CIRC_KW = 230*16*0.8/1000;
 /* ---------- Catalogue optiques ---------- */
 // verif:false = donnée issue de sources secondaires, à recouper avec le manuel
 const LENSES = {
-  sd:     {nom:'SD-800 standard',       trMin:2.26, trMax:2.93, fMin:60, fMax:78, proj:['x10000'],  verif:true},
+  sd:     {nom:'SD-800 standard (SD-804)', trMin:2.26, trMax:2.93, fMin:60, fMax:78, proj:['x10000'], verif:true},
   sl:     {nom:'SL-802 courte focale',  trMin:1.27, trMax:1.53, fMin:34, fMax:41, proj:['x10000'],  verif:true},
+  sl803:  {nom:'SL-803 courte focale',  trMin:1.50, trMax:2.20, fMin:null,fMax:null,proj:['x10000'], verif:false},
+  ll805:  {nom:'LL-805 longue focale',  trMin:2.92, trMax:5.33, fMin:null,fMax:null,proj:['x10000'], verif:false},
   ah32021:{nom:'AH-32021 courte fixe',  trMin:0.82, trMax:0.82, fMin:30, fMax:30, proj:['hdt1000'], verif:false},
   lu04:   {nom:'ELPLU04 courte focale', trMin:0.64, trMax:0.77, fMin:null,fMax:null,proj:['pu2220b'],verif:false},
   lm15:   {nom:'ELPLM15 standard',      trMin:1.57, trMax:2.56, fMin:null,fMax:null,proj:['pu2220b'],verif:false}
 };
 /* ---------- Modèles de projecteurs ---------- */
-// lm = flux annoncé ; N = contraste natif ; W = puissance absorbée (estimée sauf LC-HDT1000)
+// lm = flux annoncé ; N = contraste natif ; W = puissance absorbée ; shiftV/shiftH = décalage d'optique (fraction de la hauteur / largeur de l'image)
 const MODELS = {
-  x10000: {nom:'Hitachi CP-X10000', court:'CP-X10000',  lm:7500,  w:1024, h:768,  N:1000, W:1000, lamp:true,  verif:false},
+  x10000: {nom:'Hitachi CP-X10000', court:'CP-X10000',  lm:7500,  w:1024, h:768,  N:1000, W:540,  shiftV:0.85, shiftH:0.60, lamp:true,  verif:true},
   hdt1000:{nom:'Eiki LC-HDT1000',   court:'LC-HDT1000', lm:10000, w:2048, h:1080, N:3000, W:1000, lamp:true,  verif:true},
   pu2220b:{nom:'Epson EB-PU2220B',  court:'EB-PU2220B', lm:20000, w:1920, h:1200, N:2500, W:1100, lamp:false, verif:false}
 };
@@ -260,19 +264,20 @@ const PARC = [
 const STORE = 'mapping-parc-v2';
 try{
   const saved = JSON.parse(localStorage.getItem(STORE)||'{}');
-  for(const u of PARC){ const s=saved[u.id]; if(s){ if(s.owner!=null) u.owner=s.owner; if(s.W!=null) u.W=s.W; } }
+  for(const u of PARC){ const s=saved[u.id]; if(s){ if(s.owner!=null) u.owner=s.owner; if(s.W!=null) u.W=s.W; if(s.lm!=null) u.lm=s.lm; } }
 }catch(e){}
 function saveParc(){
-  try{ localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(PARC.map(u=>[u.id,{owner:u.owner,W:u.W}])))); }catch(e){}
+  try{ localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(PARC.map(u=>[u.id,{owner:u.owner,W:u.W,lm:u.lm}])))); }catch(e){}
 }
 const unitById = id => PARC.find(u=>u.id===id);
 const unitW = u => u.W ?? MODELS[u.model].W;
+const unitLm = u => u.lm ?? MODELS[u.model].lm;
 const ownerTxt = u => (u.owner||'').trim() || 'Propriétaire à renseigner';
-const unitLabel = u => `${ownerTxt(u)} · ${MODELS[u.model].court} · ${F(MODELS[u.model].lm,0)} lm`;
+const unitLabel = u => `${ownerTxt(u)} · ${MODELS[u.model].court} · ${F(unitLm(u),0)} lm`;
 const nameKey = u => ((u.owner||'').trim() ? '0' : '1') + (u.owner||'').trim();
 const byOwner = (a,b)=> nameKey(a).localeCompare(nameKey(b),'fr') || MODELS[a.model].court.localeCompare(MODELS[b.model].court,'fr');
 const byModel = (a,b)=> MODELS[a.model].court.localeCompare(MODELS[b.model].court,'fr') || nameKey(a).localeCompare(nameKey(b),'fr');
-const byLm    = (a,b)=> MODELS[b.model].lm-MODELS[a.model].lm || nameKey(a).localeCompare(nameKey(b),'fr');
+const byLm    = (a,b)=> unitLm(b)-unitLm(a) || nameKey(a).localeCompare(nameKey(b),'fr');
 const SORTS = {owner:byOwner, model:byModel, lm:byLm};
 const sortedUnits = () => [...PARC].sort(SORTS[$('sort').value]);
 
@@ -302,6 +307,7 @@ const MATS = {
   pgris:  {g:'Scénographie peinte',           nom:'Peinture gris moyen (18 %)',  rho:0.18},
   pnoir:  {g:'Scénographie peinte',           nom:'Peinture noir scénique mat',  rho:0.04},
   pnoirv: {g:'Scénographie peinte',           nom:'Velours / tissu noir',        rho:0.02},
+  pantheree:{g:'Scénographie peinte',         nom:'Décor Panthère (bleus + blanc)', rho:0.33, note:'moyenne estimée des 4 teintes de la fiche'},
   perso:  {g:'Autre',                         nom:'Réflectance personnalisée…',  rho:0.50}
 };
 const currentMat = () => {
@@ -329,6 +335,10 @@ const AMBS = [
 ];
 /* ---------- Surfaces ---------- */
 const SURFACES = [
+  {nom:'Panthère — ensemble avec pattes 5,5 × 5,0 m (estimé)', w:5.5,h:5.0,recul:10.5,reculMin:5.5, mat:'pantheree',tex:'lisse',amb:20,
+   note:"Panthère : dimensions estimées d'après la fiche (cotes 290 cm et 500 cm), à confirmer. Recul de 5,5 m (bord du cercle côté scène) à 10,5 m (bord opposé). Les LED et néons du décor s'ajoutent à la lumière parasite : les couper pendant le mapping."},
+  {nom:'Panthère — visage seul 3,5 × 4,7 m (estimé)', w:3.5,h:4.7,recul:10.5,reculMin:5.5, mat:'pantheree',tex:'lisse',amb:20,
+   note:"Panthère : dimensions estimées d'après la fiche, à confirmer. Recul de 5,5 m à 10,5 m. Les LED et néons du décor s'ajoutent à la lumière parasite."},
   {nom:'Façade Saint-Denis 32,5 × 37,3 m', w:32.5,h:37.3,recul:50, mat:'pierre',tex:'gran', amb:20},
   {nom:'Travée centrale 11,3 × 37,3 m',    w:11.3,h:37.3,recul:50, mat:'pierre',tex:'gran', amb:20},
   {nom:'Mur 10 × 6 m — recul 15 m',        w:10,  h:6,   recul:15, mat:'mur',   tex:'fin',  amb:5},
@@ -360,10 +370,10 @@ const PAIRS = [
 
 /* ---------- État ---------- */
 const P = {
-  A:{unit:'cpx-1', lens:'sd', dist:40, zoom:0, orient:'L', x:0, y:0},
-  B:{unit:'cpx-2', lens:'sl', dist:40, zoom:0, orient:'L', x:0, y:0}
+  A:{unit:'cpx-1', lens:'sd', dist:40, zoom:0, orient:'L', x:0, y:0, ph:0, px:0},
+  B:{unit:'cpx-2', lens:'sl', dist:40, zoom:0, orient:'L', x:0, y:0, ph:0, px:0}
 };
-let S = {w:32.5, h:37.3, recul:50};
+let S = {w:5.5, h:5.0, recul:10.5, reculMin:5.5, note:''};
 let nb = 2, curLay = 'side';
 const mkey = k => unitById(P[k].unit).model;
 const lensesFor = m => Object.keys(LENSES).filter(id=>LENSES[id].proj.includes(m));
@@ -399,10 +409,14 @@ function card(k){
       <input type="range" id="${k}_x" step="0.05"></div>
     <div class="ctl"><div class="lab">Hauteur du centre <b id="${k}_yV"></b></div>
       <input type="range" id="${k}_y" step="0.05"></div>
+    <div class="ctl"><div class="lab">Hauteur du projecteur (par rapport au bas de la surface) <b id="${k}_phV"></b></div>
+      <input type="range" id="${k}_ph" step="0.1"></div>
+    <div class="ctl"><div class="lab">Décalage latéral du projecteur <b id="${k}_pxV"></b></div>
+      <input type="range" id="${k}_px" step="0.1"></div>
     <div class="seg"><button id="${k}_L"></button><button id="${k}_P"></button></div>
     <div class="gauge" id="${k}_gauge"></div>
     <div class="res" id="${k}_res"></div>`;
-  ['dist','zoom','x','y'].forEach(p=>$(`${k}_${p}`).addEventListener('input',e=>{P[k][p]=+e.target.value;calc();}));
+  ['dist','zoom','x','y','ph','px'].forEach(p=>$(`${k}_${p}`).addEventListener('input',e=>{P[k][p]=+e.target.value;calc();}));
   $(`${k}_L`).onclick=()=>{P[k].orient='L';calc();};
   $(`${k}_P`).onclick=()=>{P[k].orient='P';calc();};
   $(`${k}_unit`).addEventListener('change',e=>{
@@ -440,16 +454,17 @@ function renderParc(){
     return `<tr>
       <td><input type="text" data-own="${u.id}" value="${esc(u.owner)}" placeholder="Propriétaire à renseigner"></td>
       <td>${m.court}</td>
-      <td>${F(m.lm,0)} lm</td>
+      <td><input type="number" data-lm="${u.id}" value="${unitLm(u)}" step="100" min="0"> lm</td>
       <td><input type="number" data-w="${u.id}" value="${unitW(u)}" step="10" min="0"> W</td>
       <td><b>${used}</b></td></tr>`;
   }).join('');
 }
 $('parcBody').addEventListener('input',e=>{
-  const u=unitById(e.target.dataset.own || e.target.dataset.w);
+  const d=e.target.dataset, u=unitById(d.own || d.w || d.lm);
   if(!u) return;
-  if(e.target.dataset.own!=null) u.owner=e.target.value;
-  else { const w=+e.target.value; if(isFinite(w)&&w>=0) u.W=w; }
+  if(d.own!=null) u.owner=e.target.value;
+  else if(d.w!=null){ const w=+e.target.value; if(isFinite(w)&&w>=0) u.W=w; }
+  else { const l=+e.target.value; if(isFinite(l)&&l>0) u.lm=l; }
   saveParc(); syncSelects(); calc();
 });
 
@@ -471,13 +486,13 @@ const area=r=>Math.max(0,r.x1-r.x0)*Math.max(0,r.y1-r.y0);
 function setSurface(){
   const s=SURFACES[+$('surf').value];
   $('customBox').classList.toggle('on',!!s.custom);
-  if(s.custom) S={w:+$('cw').value,h:+$('ch').value,recul:Math.min(50,+$('cr').value)};
+  if(s.custom) S={w:+$('cw').value,h:+$('ch').value,recul:Math.min(50,+$('cr').value),reculMin:1,note:''};
   else {
-    S={w:s.w,h:s.h,recul:s.recul};
+    S={w:s.w,h:s.h,recul:s.recul,reculMin:s.reculMin||1,note:s.note||''};
     $('mat').value=s.mat; $('tex').value=s.tex; setAmb(s.amb);
   }
   for(const k of ['A','B']){
-    P[k].dist = Math.min(S.recul, S.recul>=50 ? 40 : S.recul);
+    P[k].dist = s.reculMin ?? Math.min(S.recul, S.recul>=50 ? 40 : S.recul);
     P[k].zoom = 0; P[k].orient='L';
   }
   layout(curLay);
@@ -515,28 +530,36 @@ function calc(){
   $('texInfo').textContent=`perte liée au relief : ${tex.txt} → ρ effectif ${F(rhoEff,2)}`;
 
   const surf={x0:-S.w/2,x1:S.w/2,y0:0,y1:S.h}, Sa=S.w*S.h;
-  const G={}, E={}, Lm={}, Cc={}, Lv={}, LM={}, Req={}, Wt={}, spill={};
+  const G={}, E={}, Lm={}, Cc={}, Lv={}, LM={}, Req={}, Wt={}, spill={}, shift={};
   for(const k of ACT){
     const g=geom(k), p=P[k], pr=g.pr, u=unitById(p.unit);
     G[k]=g;
     const loss=pr.lamp?wear:LASER_DERATE;
-    const lmMode=pr.lm*mode, lmEff=lmMode*(1-loss), lmScr=lmEff*eta;
+    const lmNom=unitLm(u), lmMode=lmNom*mode, lmEff=lmMode*(1-loss), lmScr=lmEff*eta;
     E[k]=lmScr/(g.w*g.h);
     Lm[k]=E[k]*rhoEff*gain/Math.PI;
     Cc[k]=contrast(E[k],Ea,pr.N); Lv[k]=levelOf(Cc[k]);
     const eReq=needE(qual.min,pr.N,Ea);
-    LM[k]={nom:pr.lm,eff:lmEff,scr:lmScr,ren:lmScr*rhoEff*gain,amb:Ea*g.w*g.h*rhoEff};
+    LM[k]={nom:lmNom,eff:lmEff,scr:lmScr,ren:lmScr*rhoEff*gain,amb:Ea*g.w*g.h*rhoEff};
     Req[k]={E:eReq, lm:eReq*g.w*g.h/eta/(1-loss)/mode, maxArea:lmScr/eReq};
     Wt[k]=unitW(u)*mode;
+    const portrait=p.orient==='P';
+    const limV=pr.shiftV!=null ? (portrait?pr.shiftH:pr.shiftV)*g.h : null;
+    const limH=pr.shiftH!=null ? (portrait?pr.shiftV:pr.shiftH)*g.w : null;
+    shift[k]={needV:Math.abs(p.y-p.ph), needH:Math.abs(p.x-p.px), limV, limH};
+    shift[k].uV=limV?shift[k].needV/limV:null; shift[k].uH=limH?shift[k].needH/limH:null;
     spill[k]=1-area(inter(g,surf))/(g.w*g.h);
 
     // carte du projecteur
     const set=(id,min,max,val)=>{const el=$(id);el.min=min;el.max=max;el.value=val;};
     const span=Math.max(S.w,g.w)*1.2, vspan=Math.max(S.h,g.h)*1.3;
-    set(`${k}_dist`,1,S.recul,p.dist);
+    set(`${k}_dist`,S.reculMin,S.recul,p.dist);
     $(`${k}_zoom`).value=p.zoom; $(`${k}_zoom`).disabled=g.L.trMin===g.L.trMax;
     set(`${k}_x`,(-span/2).toFixed(2),(span/2).toFixed(2),p.x);
     set(`${k}_y`,0,vspan.toFixed(2),p.y);
+    set(`${k}_ph`,-6,10,p.ph); set(`${k}_px`,-8,8,p.px);
+    $(`${k}_phV`).textContent=(p.ph>=0?'+':'')+F(p.ph,1)+' m';
+    $(`${k}_pxV`).textContent=(p.px>=0?'+':'')+F(p.px,1)+' m';
     $(`${k}_own`).textContent=`— ${ownerTxt(u)}`;
     $(`${k}_lens`).textContent=`${pr.nom} · ${g.L.nom}`+((pr.verif&&g.L.verif)?'':' · ⚠ données à vérifier');
     $(`${k}_distV`).textContent=F(p.dist,1)+' m'+(p.dist>=S.recul?' (max)':'');
@@ -555,12 +578,13 @@ function calc(){
     $(`${k}_res`).innerHTML=`Image <b>${F(g.w,2)} × ${F(g.h,2)} m</b> · <b>${F(E[k],0)} lux</b> ·
       <b>${F(Lm[k],0)} nits</b><br>Définition <b>${F(g.pxm,0)} px/m</b> (${F(1000/g.pxm,0)} mm/px)<br>
       Contraste effectif <b style="color:${Lv[k].col}">${F(Cc[k],1)}:1 — ${Lv[k].nom}</b> (natif ${F(pr.N,0)}:1)<br>
+      ${shift[k].uV!=null?`Décalage d'optique requis <b>${F(shift[k].uV*100,0)} %</b> vertical · <b>${F(shift[k].uH*100,0)} %</b> horizontal de la plage<br>`:''}
       Consommation <b>${F(Wt[k],0)} W</b>`;
   }
 
   // couverture et recouvrement
   const ab = nb===2 ? inter(G.A,G.B) : {x0:0,x1:0,y0:0,y1:0};
-  const hasAB = nb===2 && area(ab)>0;
+  const hasAB = nb===2 && area(ab)>0.01;
   const covered = ACT.reduce((s,k)=>s+area(inter(G[k],surf)),0) - (nb===2 ? area(inter(ab,surf)) : 0);
   const cov=covered/Sa;
   const Eab = hasAB ? E.A+E.B : NaN;
@@ -592,6 +616,7 @@ function calc(){
   const uncovered=Sa-covered;
   if(cov>=0.995) V.push(['ok',`<b>Surface entièrement couverte.</b>`]);
   else V.push([cov<0.8?'bad':'warn',`<b>${F(uncovered,1)} m² non couverts</b> (${F((1-cov)*100,0)} % de la surface) — ajuste zoom, recul ou positions.`]);
+  if(S.note) V.push(['warn',S.note]);
   for(const k of ACT){
     if(spill[k]>0.25) V.push(['warn',`Lumière hors surface ${k} : ${F(spill[k]*100,0)} %. Réduis le zoom ou rapproche.`]);
   }
@@ -606,6 +631,12 @@ function calc(){
       `Image ${k} : pour « ${qual.nom} » il faut ${F(Req[k].E,0)} lux (${F(Req[k].lm,0)} lm annoncés) ; il y en a ${F(E[k],0)}. Surface max avec cette machine : <b>${F(Req[k].maxArea,1)} m²</b> (l'image fait ${F(G[k].w*G[k].h,1)} m²).`]);
     if(E[k]<cible) V.push([E[k]<cible/2?'bad':'warn',`Image ${k} : <b>${F(E[k],0)} lux</b> pour une cible de ${cible}.`]);
     if(G[k].pr.verif===false||G[k].L.verif===false) V.push(['warn',`Image ${k} : certaines données de ${G[k].pr.court} / ${G[k].L.nom} sont à recouper (voir tableau des sources).`]);
+    const sh=shift[k];
+    if(sh.uV!=null){
+      const m=Math.max(sh.uV,sh.uH);
+      if(m>1) V.push(['bad',`Image ${k} : le décalage d'optique requis dépasse la plage de l'optique (vertical ${F(sh.uV*100,0)} %, horizontal ${F(sh.uH*100,0)} % de la plage). Monte ou descends le projecteur, ou recentre-le sur l'image.`]);
+      else if(m>0.8) V.push(['warn',`Image ${k} : décalage d'optique à ${F(m*100,0)} % de la plage : proche de la butée, peu de marge de réglage.`]);
+    }
   }
   if(tex.k<0.8) V.push(['warn',`Relief marqué (${tex.nom.toLowerCase()}) : l'image perd ${F((1-tex.k)*100,0)} % de luminosité et en finesse. Les détails plus petits que le relief disparaissent : prévoir un contenu à gros traits.`]);
   if(rhoEff<0.2) V.push(['warn',`Matière très absorbante (ρ effectif ${F(rhoEff,2)}) : seul ${F(rhoEff*100,0)} % de la lumière revient vers le public.`]);
@@ -627,6 +658,7 @@ function calc(){
   dessin(G,surf,ab,{E,Lm,Cc,Lv,Eab,Cab,Lab,hasAB},ACT);
   scaleLux(G,E,Ea,qual,ACT);
   cascade(G,LM,ACT);
+  renderHarmo(G,E,Lm);
 }
 
 /* ---------- Schéma : couleur = qualité de rendu, échelle en mètres ---------- */
@@ -684,7 +716,7 @@ function dessin(G,surf,ab,R,ACT){
     const cx=X((ab.x0+ab.x1)/2), cy=Y((ab.y0+ab.y1)/2);
     s+=`<text class="t" x="${cx}" y="${cy}" fill="#fff" font-size="14" text-anchor="middle">A+B : ${F(R.Eab,0)} lx · ${F(R.Cab,1)}:1 ${R.Lab.nom}</text>`;
   }
-  s+=`<text class="t" x="${X(0)}" y="${Y(0)+38}" fill="#f8fafc" font-size="13" text-anchor="middle">surface ${F(S.w,1)} × ${F(S.h,1)} m · recul max ${F(S.recul,1)} m</text>`;
+  s+=`<text class="t" x="${X(0)}" y="${Y(0)+38}" fill="#f8fafc" font-size="13" text-anchor="middle">surface ${F(S.w,1)} × ${F(S.h,1)} m · recul ${S.reculMin>1?F(S.reculMin,1)+' à ':'max '}${F(S.recul,1)} m</text>`;
   $('diag').innerHTML=s;
 }
 
@@ -733,14 +765,80 @@ function cascade(G,LM,ACT){
   ACT.forEach(k=>{
     const c=k==='A'?'#ffb454':'#4cc9f0', m=LM[k], pr=G[k].pr;
     h+=`<div class="casT" style="color:${c}">Projecteur ${k} · ${pr.court}</div>`+
-      row('Annoncés (fiche technique)',pr.lm,c,0)+
-      row(pr.lamp?'Après mode & usure lampe':'Après mode & dérive laser',m.eff,c,pr.lm)+
-      row('Sur la surface (rendement η)',m.scr,c,pr.lm)+
-      row('Renvoyés par la matière (ρ × texture)',m.ren,c,pr.lm)+
+      row('Annoncés (fiche technique)',m.nom,c,0)+
+      row(pr.lamp?'Après mode & usure lampe':'Après mode & dérive laser',m.eff,c,m.nom)+
+      row('Sur la surface (rendement η)',m.scr,c,m.nom)+
+      row('Renvoyés par la matière (ρ × texture)',m.ren,c,m.nom)+
       row('Lumière parasite renvoyée (même zone)',m.amb,'#ff3b6b',0);
   });
   $('cascade').innerHTML=h+`<div class="note">Les barres rouges comparent ce que la surface renvoie du projecteur à ce qu'elle renvoie déjà de la lumière ambiante sur la même zone : plus la barre colorée domine, meilleur est le contraste.</div>`;
 }
+
+/* ---------- Harmonisation des deux projecteurs ---------- */
+function widthRange(k){
+  const L=LENSES[P[k].lens];
+  return {wmin:(S.reculMin||1)/L.trMax, wmax:S.recul/L.trMin};
+}
+function renderHarmo(G,E,Lm){
+  const box=$('harmo');
+  if(nb!==2){ box.style.display='none'; return; }
+  box.style.display='';
+  const dmin=S.reculMin||1, dmax=S.recul;
+  const rA=widthRange('A'), rB=widthRange('B');
+  const lo=Math.max(rA.wmin,rB.wmin), hi=Math.min(rA.wmax,rB.wmax), feasible=lo<=hi;
+  const hiK=E.A>=E.B?'A':'B', loK=hiK==='A'?'B':'A';
+  const f=E[loK]/E[hiK], R=1/f, lvl=Math.pow(f,1/2.2);
+  const row=(lab,a,b)=>`<tr><th>${lab}</th><td>${a}</td><td>${b}</td></tr>`;
+  let h=`<div class="casT">Calibrage et harmonisation des deux projecteurs</div>
+    <table><thead><tr><th></th><th style="color:#ffb454">A · ${G.A.pr.court}</th><th style="color:#4cc9f0">B · ${G.B.pr.court}</th></tr></thead><tbody>`+
+    row('Optique',G.A.L.nom,G.B.L.nom)+
+    row('Recul',`${F(P.A.dist,1)} m`,`${F(P.B.dist,1)} m`)+
+    row('Image',`${F(G.A.w,2)} × ${F(G.A.h,2)} m`,`${F(G.B.w,2)} × ${F(G.B.h,2)} m`)+
+    row('Éclairement',`${F(E.A,0)} lux`,`${F(E.B,0)} lux`)+
+    row('Luminance',`${F(Lm.A,0)} nits`,`${F(Lm.B,0)} nits`)+
+    row('Finesse',`${F(1000/G.A.pxm,1)} mm/px`,`${F(1000/G.B.pxm,1)} mm/px`)+
+    `</tbody></table>`;
+  if(R<1.1) h+=`<div class="v ok" style="margin-top:8px">Puissances harmonisées : écart de ×${F(R,2)} seulement.</div>`;
+  else h+=`<div class="v ${R>1.5?'bad':'warn'}" style="margin-top:8px">Écart de puissance <b>×${F(R,2)}</b> : ${hiK} reçoit plus de lumière que ${loK}.
+    Pour les égaliser sans toucher à ${loK}, atténuer ${hiK} à <b>${F(f*100,0)} %</b> de luminance (filtre ND ${F(-Math.log10(f),2)}, soit ${F(-Math.log2(f),1)} diaph),
+    ce qui correspond à environ <b>${F(lvl*100,0)} %</b> de niveau vidéo avec un gamma de 2,2. Préférer une atténuation optique (mode éco, iris, filtre) au niveau vidéo : les noirs restent comparables entre les deux machines.</div>`;
+  h+= feasible
+    ? `<div class="v ok" style="margin-top:8px">Avec un recul de ${F(dmin,1)} à ${F(dmax,1)} m, les deux optiques peuvent donner la <b>même taille d'image</b> (largeur en paysage) entre <b>${F(lo,2)} et ${F(hi,2)} m</b>. Deux images de même taille donnent le même éclairement et la même finesse.</div>`
+    : `<div class="v bad" style="margin-top:8px">Aucune taille d'image commune dans la fenêtre de recul ${F(dmin,1)}–${F(dmax,1)} m : A peut faire ${F(rA.wmin,1)}–${F(rA.wmax,1)} m, B ${F(rB.wmin,1)}–${F(rB.wmax,1)} m de large. Il faudra atténuer le plus brillant ou changer d'optique.</div>`;
+  h+=`<div style="margin-top:8px"><button id="harmoBtn" ${feasible?'':'disabled'}>Harmoniser les tailles automatiquement</button></div>`;
+  box.innerHTML=h;
+}
+function harmonize(){
+  if(nb!==2) return;
+  const dmin=S.reculMin||1, dmax=S.recul;
+  const rA=widthRange('A'), rB=widthRange('B');
+  const lo=Math.max(rA.wmin,rB.wmin), hi=Math.min(rA.wmax,rB.wmax);
+  if(lo>hi) return;
+  const surf={x0:-S.w/2,x1:S.w/2,y0:0,y1:S.h}, cy=S.h/2;
+  let best=null;
+  for(const orient of ['L','P']) for(const lay of ['side','vert']) for(let i=0;i<=60;i++){
+    const w0=lo+(hi-lo)*i/60;
+    const sz=k=>{const pr=modelOf(k), h0=w0*pr.h/pr.w; return orient==='P'?{w:h0,h:w0}:{w:w0,h:h0};};
+    const a=sz('A'), b=sz('B');
+    let A,B;
+    if(lay==='side'){ const t=a.w+b.w; A={x0:-t/2,x1:-t/2+a.w,y0:cy-a.h/2,y1:cy+a.h/2}; B={x0:t/2-b.w,x1:t/2,y0:cy-b.h/2,y1:cy+b.h/2}; }
+    else { const t=a.h+b.h; A={x0:-a.w/2,x1:a.w/2,y0:cy+t/2-a.h,y1:cy+t/2}; B={x0:-b.w/2,x1:b.w/2,y0:cy-t/2,y1:cy-t/2+b.h}; }
+    const aS=area(inter(A,surf)), bS=area(inter(B,surf)), abS=area(inter(inter(A,B),surf));
+    const cov=(aS+bS-abS)/(S.w*S.h), spill=1-(aS+bS)/(a.w*a.h+b.w*b.h);
+    const score=cov*100-spill*5;
+    if(!best||score>best.score+1e-9) best={score,orient,lay,w0};
+  }
+  for(const k of ['A','B']){
+    const L=LENSES[P[k].lens];
+    const d0=Math.max(dmin,best.w0*L.trMin), d1=Math.min(dmax,best.w0*L.trMax);
+    const D=(d0+d1)/2, tr=D/best.w0;
+    P[k].dist=Math.round(D*100)/100;
+    P[k].zoom=L.trMax===L.trMin?0:Math.min(100,Math.max(0,(tr-L.trMin)/(L.trMax-L.trMin)*100));
+    P[k].orient=best.orient;
+  }
+  layout(best.lay);
+}
+$('harmo').addEventListener('click',e=>{ if(e.target.id==='harmoBtn') harmonize(); });
 
 /* ---------- Initialisation ---------- */
 opt('surf', SURFACES.map((s,i)=>[i,s.nom]));
@@ -761,7 +859,10 @@ $('sources').innerHTML = `
   Vérifier dans le manuel les plages de shift et les inclinaisons autorisées avant un usage en portrait.
   <table>
     <tr><th>Référence</th><th>Données retenues</th><th>Fiabilité</th></tr>
-    <tr><td>CP-X10000 + SD-800 / SL-802</td><td>7500 lm, XGA 1024×768 4:3, TR 2,26–2,93 / 1,27–1,53, contraste 1000:1, ~1000 W</td><td>TR d'après ProjectorCentral ; contraste et puissance <b>estimés</b></td></tr>
+    <tr><td>Hitachi CP-X10000</td><td>7500 lm ANSI (toutes les sources), XGA 1024×768 4:3, 540 W (lampe 350 W), contraste 2500:1 avec iris (natif retenu : 1000:1), décalage d'optique ±85 % vertical / ±60 % horizontal</td><td>flux, résolution, puissance, décalage : fiche Hitachi et ProjectorCentral ; <b>contraste natif estimé</b></td></tr>
+    <tr><td>SD-800 (= SD-804 chez ProjectorCentral)</td><td>60–78 mm, TR 2,26–2,93 (revendeur : 2,2–2,9)</td><td>deux sources concordantes ; nom à confirmer sur l'optique</td></tr>
+    <tr><td>SL-802</td><td>34–41 mm, TR 1,27–1,53, 4,4 kg</td><td>fiche Hitachi (focale) et ProjectorCentral (TR)</td></tr>
+    <tr><td>SL-803, LL-805</td><td>TR 1,50–2,20 et 2,92–5,33</td><td>⚠ ProjectorCentral seul</td></tr>
     <tr><td>Eiki LC-HDT1000</td><td>10 000 lm (avec l'optique AH-22051), 2K 2048×1080, 3000:1, 1000 W, lampe 380 W</td><td>fiche constructeur et ProjectorCentral</td></tr>
     <tr><td>Eiki AH-32021</td><td>fixe, TR 0,82:1, f 30 mm</td><td>⚠ source secondaire (base projector-database), <b>à recouper</b></td></tr>
     <tr><td>Epson EB-PU2220B</td><td>20 000 lm laser, WUXGA 1920×1200 16:10, contraste natif 2500:1, ~1100 W</td><td>lumens et résolution confirmés ; contraste, puissance et dérive laser (10 %) <b>estimés</b></td></tr>
