@@ -28,7 +28,8 @@
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0}
   .env{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   @media(max-width:720px){.env{grid-template-columns:1fr}}
-  .env label{font-size:12px;color:var(--dim);display:flex;flex-direction:column;gap:4px}
+  .env label{font-size:12px;color:var(--dim);display:flex;flex-direction:column;gap:4px;min-width:0}
+  .env select{width:100%;min-width:0}
   .env .amb{display:flex;gap:6px}.env .amb input{width:80px}.env .amb select{flex:1;min-width:0}
   .env small{color:var(--dim);font-size:12px}
   .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 2px;font-size:12px}
@@ -95,7 +96,7 @@
 <div class="wrap">
 
   <div class="top">
-    <h1>Mapping — calculateur de couverture et de rendu</h1>
+    <h1>Mapping — calculateur de couverture et de rendu <span id="mois" style="color:var(--a);font-weight:600"></span></h1>
     <select id="surf" aria-label="Surface"></select>
   </div>
   <div class="custom" id="customBox">
@@ -569,6 +570,7 @@ function cascade(G,LM,Ea){
   $('cascade').innerHTML=h+`<div class="note">Les barres rouges comparent ce que la surface renvoie du projecteur à ce qu'elle renvoie déjà de la lumière ambiante sur la même zone : plus la barre colorée domine, meilleur est le contraste.</div>`;
 }
 
+$('mois').textContent = '· ' + new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
 card('A'); card('B'); syncSelects();
 $('surf').addEventListener('change',()=>{ $('mat').dataset.touched=''; setSurface(); });
 ['cw','ch','cr'].forEach(id=>$(id).addEventListener('change',setSurface));
