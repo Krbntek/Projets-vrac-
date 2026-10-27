@@ -5,7 +5,9 @@
   Donnees editables : blocs LENSES / MODELS / PARC / MATS / TEXS / SURFACES en tete du code JavaScript.
   Historique : v1 base 2xCP-X10000 - v2 photometrie, references, contrastes - v3 parc nominatif,
   consommation, decor Panthere, harmonisation - v4 themes et tailles de texte, cartes visuelles
-  surfaces/projecteurs, exports (impression PDF, rapport HTML, config JSON), encart transparence.
+  surfaces/projecteurs, exports (impression PDF, rapport HTML, config JSON), encart transparence -
+  v4.1 barre d'outils unique collante (configuration, dispositions, prereglages du parc, menus
+  Exporter et Affichage), titres de sections, etat actif de la disposition.
 -->
 <html lang="fr">
 <head>
@@ -128,6 +130,27 @@
   .surfCard small{font-size:.72em;color:var(--dim)}
   .surfCard.on{border-color:var(--a);border-width:2px;padding:7px 5px}
   .card{min-width:0}
+  .toolbar{position:sticky;top:0;z-index:40;display:flex;gap:10px;row-gap:6px;align-items:center;flex-wrap:wrap;
+    background:var(--bg);padding:8px 0;margin-bottom:6px;border-bottom:1px solid var(--line)}
+  .tgroup{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .toolbar select{font-size:.87em;max-width:190px}
+  details.menu{position:relative;margin:0;padding:0;background:none;border:none}
+  details.menu>summary{list-style:none;cursor:pointer;background:var(--panel);border:1px solid #5a6676;
+    border-radius:6px;padding:7px 11px;font-size:.87em;color:var(--txt);user-select:none}
+  details.menu>summary::-webkit-details-marker{display:none}
+  details.menu>summary::after{content:" ▾";color:var(--dim)}
+  details.menu[open]>summary{border-color:#fff;background:#232d3a}
+  :root[data-theme="clair"] details.menu[open]>summary{background:#d9e4f0}
+  details.menu>div{position:absolute;right:0;top:calc(100% + 6px);z-index:60;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:272px;
+    box-shadow:0 10px 28px #000b;display:flex;flex-direction:column;gap:8px}
+  #menuExport>div button{width:100%;text-align:left}
+  @media(max-width:720px){
+    details.menu{position:static}
+    details.menu>div{position:fixed;left:12px;right:12px;top:auto;bottom:12px;max-height:70vh;overflow:auto}
+  }
+  [data-lay].on{border-color:#fff;background:#232d3a;font-weight:700}
+  :root[data-theme="clair"] [data-lay].on{background:#d9e4f0}
   #sources table,#harmo table{display:block;overflow-x:auto;max-width:100%}
   .unitRow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;-webkit-overflow-scrolling:touch}
   .unitCard{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:94px;padding:6px;flex-shrink:0}
@@ -160,6 +183,45 @@
     <h1>Mapping — calculateur de couverture et de rendu <span id="mois" style="color:var(--a);font-weight:600"></span></h1>
     <select id="surf" aria-label="Surface"></select>
   </div>
+  <div class="toolbar" id="toolbar">
+    <div class="tgroup">
+      <button id="n1" title="Un seul projecteur">1 VP</button>
+      <button id="n2" title="Deux projecteurs">2 VP</button>
+    </div>
+    <div class="tgroup" id="layRow">
+      <button data-lay="side" title="Images côte à côte">Côte à côte</button>
+      <button data-lay="vert" title="L'une au-dessus de l'autre">Empilées</button>
+      <button data-lay="stack" title="Exactement superposées">Superposées</button>
+      <button id="swap" title="Échanger les projecteurs A et B">⇄ A/B</button>
+    </div>
+    <select id="pairSel" aria-label="Préréglages du parc"></select>
+    <details class="menu" id="menuExport"><summary>Exporter</summary><div>
+      <button id="btnPrint">Imprimer / PDF</button>
+      <button id="btnReport">Rapport HTML</button>
+      <button id="btnCfg">Config JSON</button>
+      <button id="btnImp">Importer une config</button>
+      <input type="file" id="impFile" accept="application/json,.json" style="display:none">
+    </div></details>
+    <details class="menu" id="menuDisp"><summary>Affichage</summary><div>
+      <div class="dispRow"><span>Palette</span>
+        <button data-th="sombre">Sombre</button><button data-th="clair">Clair</button>
+        <button data-th="max">Contraste max</button><button data-th="perso">Personnalisée</button></div>
+      <div class="dispRow" id="palBox" style="display:none">
+        <label>Image A<input type="color" id="palA"></label>
+        <label>Image B<input type="color" id="palB"></label>
+        <label>Fond<input type="color" id="palBg"></label>
+        <label>Panneaux<input type="color" id="palPanel"></label>
+        <label>Texte<input type="color" id="palTxt"></label>
+      </div>
+      <div class="dispRow"><span>Texte</span>
+        <button data-fsz="s">A−</button><button data-fsz="m">A</button>
+        <button data-fsz="l">A+</button><button data-fsz="xl">A++</button></div>
+      <div class="dispRow"><span>Étiquettes</span>
+        <button data-dn="full">Complètes</button><button data-dn="ess">Essentielles</button></div>
+    </div></details>
+  </div>
+
+  <h3>Surface</h3>
   <div class="surfRow" id="surfRow" aria-label="Choix de la surface"></div>
   <div class="custom" id="customBox">
     <label>Largeur (m)<input type="number" id="cw" value="8" step="0.1"></label>
@@ -167,25 +229,7 @@
     <label>Recul max (m)<input type="number" id="cr" value="12" step="0.1" max="50"></label>
   </div>
 
-  <details>
-    <summary>Affichage — palette, taille du texte, densité</summary>
-    <div class="dispRow"><span>Palette</span>
-      <button data-th="sombre">Sombre</button><button data-th="clair">Clair</button>
-      <button data-th="max">Contraste max</button><button data-th="perso">Personnalisée</button></div>
-    <div class="dispRow" id="palBox" style="display:none">
-      <label>Image A<input type="color" id="palA"></label>
-      <label>Image B<input type="color" id="palB"></label>
-      <label>Fond<input type="color" id="palBg"></label>
-      <label>Panneaux<input type="color" id="palPanel"></label>
-      <label>Texte<input type="color" id="palTxt"></label>
-    </div>
-    <div class="dispRow"><span>Texte</span>
-      <button data-fsz="s">A−</button><button data-fsz="m">A</button>
-      <button data-fsz="l">A+</button><button data-fsz="xl">A++</button></div>
-    <div class="dispRow"><span>Étiquettes</span>
-      <button data-dn="full">Complètes</button><button data-dn="ess">Essentielles</button></div>
-  </details>
-
+  <h3>Conditions de projection</h3>
   <div class="panel">
     <div class="env">
       <label title="Lumière qui éclaire déjà la surface avant que le projecteur ne s'allume : éclairage public, enseignes, lune, crépuscule.">
@@ -208,36 +252,14 @@
     </div>
   </div>
 
-  <div class="modes">
-    <span style="font-size:calc(12px*var(--fscale,1));color:var(--dim)">Configuration :</span>
-    <button id="n1">1 projecteur</button>
-    <button id="n2">2 projecteurs</button>
-  </div>
-
-  <div class="pairs" id="pairsRow"><b>Comparer le parc :</b></div>
-
   <svg id="diag" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Schéma de la surface et des images projetées"></svg>
   <div class="legend" id="legend"></div>
 
   <div class="chips" id="chips"></div>
 
-  <div class="layout" aria-label="Exports">
-    <button id="btnPrint">Imprimer / PDF</button>
-    <button id="btnReport">Rapport HTML</button>
-    <button id="btnCfg">Config JSON</button>
-    <button id="btnImp">Importer une config</button>
-    <input type="file" id="impFile" accept="application/json,.json" style="display:none">
-  </div>
-
-  <div class="layout" id="layRow">
-    <button data-lay="side">Côte à côte</button>
-    <button data-lay="vert">L'une sur l'autre</button>
-    <button data-lay="stack">Superposées</button>
-    <button id="swap">⇄ Inverser A / B</button>
-  </div>
-
   <div class="panel" id="harmo"></div>
 
+  <h3>Projecteurs</h3>
   <div class="projs" id="projs">
     <div class="card A" id="cardA"></div>
     <div class="card B" id="cardB"></div>
@@ -260,6 +282,7 @@
     <div class="note" style="margin-top:8px">Puissance par projecteur : éditable dans le tableau du parc. Circuit de référence : 230 V, 16 A, 80 % utilisable (2,94 kW). Facteur de puissance 0,9 (estimation).</div>
   </div>
 
+  <h3>Points d'attention</h3>
   <div class="verdicts" id="verdicts"></div>
 
   <h3>Parc — propriétaires et références</h3>
@@ -354,7 +377,7 @@ const F = (v,d=1) => (isFinite(v)? v.toLocaleString('fr-FR',{minimumFractionDigi
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const LASER_DERATE = 0.10;
 const U_RES = 230, COS_PHI = 0.9, CIRC_KW = 230*16*0.8/1000;
-const VERSION='4.0';
+const VERSION='4.1';
 
 /* ---------- Préférences d'affichage (v4) ---------- */
 const UISTORE='mapping-ui-v4';
@@ -596,7 +619,7 @@ function applyNb(n){
   $('n1').classList.toggle('on',n===1); $('n2').classList.toggle('on',n===2);
   $('cardB').style.display = n===2?'':'none';
   $('projs').classList.toggle('single', n===1);
-  $('pairsRow').style.display = n===2?'flex':'none';
+  $('pairSel').style.display = n===2?'':'none';
   $('layRow').style.display = n===2?'flex':'none';
   renderParc(); layout(curLay);
 }
@@ -661,6 +684,7 @@ function setAmb(v){
 
 function layout(type){
   curLay=type;
+  document.querySelectorAll('[data-lay]').forEach(b=>b.classList.toggle('on',b.dataset.lay===type));
   if(nb===1){ P.A.x=0; P.A.y=S.h/2; calc(); return; }
   const a=geom('A'), b=geom('B'), cy=S.h/2;
   if(type==='stack'){ P.A.x=P.B.x=0; P.A.y=P.B.y=cy; }
@@ -1200,6 +1224,11 @@ function initUIControls(){
                    catch(err){ alert('Fichier invalide : '+err.message); } };
     r.readAsText(file); e.target.value='';
   });
+  document.addEventListener('click',e=>{
+    document.querySelectorAll('details.menu[open]').forEach(d=>{ if(!d.contains(e.target)) d.open=false; });
+  });
+  $('menuExport').querySelectorAll('button').forEach(b=>
+    b.addEventListener('click',()=>{ $('menuExport').open=false; }));
 }
 
 /* ---------- Initialisation ---------- */
@@ -1235,11 +1264,9 @@ $('sources').innerHTML = `
 $('mois').textContent = '· ' + new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}) + ' · v'+VERSION;
 $('n1').onclick=()=>applyNb(1);
 $('n2').onclick=()=>applyNb(2);
-PAIRS.forEach(([label,spec])=>{
-  const b=document.createElement('button'); b.textContent=label;
-  b.onclick=()=>applyPair(spec);
-  $('pairsRow').appendChild(b);
-});
+$('pairSel').innerHTML='<option value="">Parc : préréglages…</option>'
+  +PAIRS.map((p,i)=>`<option value="${i}">${esc(p[0])}</option>`).join('');
+$('pairSel').addEventListener('change',e=>{ if(e.target.value!=='') applyPair(PAIRS[+e.target.value][1]); });
 card('A'); card('B');
 $('sort').addEventListener('change',()=>{ renderParc(); syncSelects(); });
 $('surf').addEventListener('change',setSurface);
