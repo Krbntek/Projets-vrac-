@@ -1,9 +1,21 @@
 <!DOCTYPE html>
+<!--
+  Calculateur mapping - v4.0 (octobre 2026)
+  Code libre (licence MIT) : https://github.com/krbntek/projets-vrac-
+  Donnees editables : blocs LENSES / MODELS / PARC / MATS / TEXS / SURFACES en tete du code JavaScript.
+  Historique : v1 base 2xCP-X10000 - v2 photometrie, references, contrastes - v3 parc nominatif,
+  consommation, decor Panthere, harmonisation - v4 themes et tailles de texte, cartes visuelles
+  surfaces/projecteurs, exports (impression PDF, rapport HTML, config JSON), encart transparence.
+-->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Calculateur mapping — parc projecteurs</title>
+<meta name="description" content="Calculateur libre de mapping vidéo : couverture, photométrie, harmonisation de projecteurs, consommation.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#07090d">
+<title>Calculateur mapping v4</title>
 <style>
   :root{
     --bg:#07090d; --panel:#121820; --panel2:#0a0e14; --line:#3a4552; --txt:#f8fafc; --dim:#b9c3cf;
@@ -11,92 +23,134 @@
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--txt);
-       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+       font:calc(15px*var(--fscale,1))/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   .wrap{max-width:1100px;margin:0 auto;padding:12px 16px 40px}
   .top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-  .top h1{margin:0;font-size:18px;font-weight:700;flex:1;min-width:180px}
+  .top h1{margin:0;font-size:calc(18px*var(--fscale,1));font-weight:700;flex:1;min-width:180px}
   select,input[type=number],input[type=text]{background:var(--panel2);border:1px solid #5a6676;color:var(--txt);
-       border-radius:6px;padding:7px 9px;font-size:14px;font-family:inherit;max-width:100%}
+       border-radius:6px;padding:7px 9px;font-size:calc(14px*var(--fscale,1));font-family:inherit;max-width:100%}
   select:focus,input:focus,button:focus-visible{outline:2px solid #fff;outline-offset:1px}
   #surf{min-width:220px}
   .custom{display:none;gap:8px;margin-bottom:10px;flex-wrap:wrap}
   .custom.on{display:flex}
-  .custom label{font-size:12px;color:var(--dim);display:flex;flex-direction:column;gap:3px}
+  .custom label{font-size:calc(12px*var(--fscale,1));color:var(--dim);display:flex;flex-direction:column;gap:3px}
   .custom input{width:90px}
-  svg{width:100%;height:auto;display:block;background:var(--panel2);border-radius:10px;border:1px solid var(--line)}
-  h3{margin:18px 0 6px;font-size:14px;letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
+  svg{width:100%;height:auto;display:block;background:#0a0e14;border-radius:10px;border:1px solid var(--line)}
+  h3{margin:18px 0 6px;font-size:calc(14px*var(--fscale,1));letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0}
   .env{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   @media(max-width:720px){.env{grid-template-columns:1fr}}
-  .env label{font-size:12px;color:var(--dim);display:flex;flex-direction:column;gap:4px;min-width:0}
+  .env label{font-size:calc(12px*var(--fscale,1));color:var(--dim);display:flex;flex-direction:column;gap:4px;min-width:0}
   .env select{width:100%;min-width:0}
   .env .amb{display:flex;gap:6px}.env .amb input{width:80px}.env .amb select{flex:1;min-width:0}
-  .env small{color:var(--dim);font-size:12px}
+  .env small{color:var(--dim);font-size:calc(12px*var(--fscale,1))}
   .rhoBox{display:none}
-  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 2px;font-size:12px}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 2px;font-size:calc(12px*var(--fscale,1))}
   .legend span{display:inline-flex;align-items:center;gap:6px;color:var(--txt)}
   .legend i{width:14px;height:14px;border-radius:3px;display:inline-block;border:1px solid #fff6}
   .chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
   .chip{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--dim);border-radius:8px;padding:8px 10px}
-  .chip b{display:block;font-size:22px;font-variant-numeric:tabular-nums;line-height:1.2}
-  .chip span{display:block;font-size:12px;color:var(--dim)}
-  .chip em{display:block;font-style:normal;font-size:13px;font-weight:700;margin-top:2px}
+  .chip b{display:block;font-size:calc(22px*var(--fscale,1));font-variant-numeric:tabular-nums;line-height:1.2}
+  .chip span{display:block;font-size:calc(12px*var(--fscale,1));color:var(--dim)}
+  .chip em{display:block;font-style:normal;font-size:calc(13px*var(--fscale,1));font-weight:700;margin-top:2px}
   .modes,.layout{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
   button{background:var(--panel);color:var(--txt);border:1px solid #5a6676;border-radius:6px;
-         padding:7px 11px;font-size:13px;font-family:inherit;cursor:pointer}
+         padding:7px 11px;font-size:calc(13px*var(--fscale,1));font-family:inherit;cursor:pointer}
   button:hover{border-color:#fff}
   button.on{background:#232d3a;border-color:#fff;font-weight:700}
   .pairs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
-  .pairs b{font-size:12px;color:var(--dim);font-weight:600;margin-right:4px}
+  .pairs b{font-size:calc(12px*var(--fscale,1));color:var(--dim);font-weight:600;margin-right:4px}
   .projs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .projs.single{grid-template-columns:1fr}
   @media(max-width:720px){.projs{grid-template-columns:1fr}}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;border-top:4px solid}
   .card.A{border-top-color:var(--a)} .card.B{border-top-color:var(--b)}
-  .card h2{margin:0 0 6px;font-size:15px}
-  .card h2 span{color:var(--dim);font-weight:400;font-size:13px}
+  .card h2{margin:0 0 6px;font-size:calc(15px*var(--fscale,1))}
+  .card h2 span{color:var(--dim);font-weight:400;font-size:calc(13px*var(--fscale,1))}
   .card .unit{width:100%;margin-bottom:6px}
   .card .lensRow{width:100%}
-  .card .lens{font-size:12px;color:var(--dim);margin:6px 0}
+  .card .lens{font-size:calc(12px*var(--fscale,1));color:var(--dim);margin:6px 0}
   .ctl{margin:8px 0}
-  .ctl .lab{display:flex;justify-content:space-between;font-size:12px;color:var(--dim)}
+  .ctl .lab{display:flex;justify-content:space-between;font-size:calc(12px*var(--fscale,1));color:var(--dim)}
   .ctl .lab b{color:var(--txt);font-variant-numeric:tabular-nums;font-weight:600}
   input[type=range]{width:100%;margin:4px 0 0}
   .A input[type=range]{accent-color:var(--a)} .B input[type=range]{accent-color:var(--b)}
   .seg{display:flex;gap:6px;margin-top:6px}
   .seg button{flex:1;padding:6px}
-  .gauge{margin-top:10px;font-size:12px;color:var(--dim)}
+  .gauge{margin-top:10px;font-size:calc(12px*var(--fscale,1));color:var(--dim)}
   .gauge .track{position:relative;height:14px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;margin-top:4px}
   .gauge .track i{display:block;height:100%;border-radius:6px}
   .gauge .track u{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff}
-  .res{font-size:13px;color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+  .res{font-size:calc(13px*var(--fscale,1));color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
   .res b{color:var(--txt)}
   .verdicts{margin-top:12px;display:grid;gap:8px}
-  .v{padding:9px 12px;border-radius:8px;background:var(--panel2);border-left:5px solid var(--dim);font-size:14px}
+  .v{padding:9px 12px;border-radius:8px;background:var(--panel2);border-left:5px solid var(--dim);font-size:calc(14px*var(--fscale,1))}
   .v.ok{border-color:var(--ok)} .v.warn{border-color:var(--warn)} .v.bad{border-color:var(--bad)}
-  .cas{display:grid;grid-template-columns:200px 1fr 120px;gap:8px;align-items:center;margin:3px 0;font-size:12px}
+  .cas{display:grid;grid-template-columns:200px 1fr 120px;gap:8px;align-items:center;margin:3px 0;font-size:calc(12px*var(--fscale,1))}
   @media(max-width:720px){.cas{grid-template-columns:110px 1fr 90px}}
   .cas .tr{height:16px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;overflow:hidden}
   .cas .tr i{display:block;height:100%}
   .cas b{font-variant-numeric:tabular-nums;text-align:right}
-  .casT{font-weight:700;margin:10px 0 2px;font-size:13px}
+  .casT{font-weight:700;margin:10px 0 2px;font-size:calc(13px*var(--fscale,1))}
   details{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
-  summary{cursor:pointer;font-size:13px;color:var(--dim)}
+  summary{cursor:pointer;font-size:calc(13px*var(--fscale,1));color:var(--dim)}
   .adv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
   @media(max-width:640px){.adv{grid-template-columns:1fr 1fr}}
-  .adv label{font-size:12px;color:var(--dim);display:flex;flex-direction:column;gap:3px}
+  .adv label{font-size:calc(12px*var(--fscale,1));color:var(--dim);display:flex;flex-direction:column;gap:3px}
   .adv label{min-width:0} .adv input,.adv select{width:100%;min-width:0}
-  dl{margin:8px 0 0;display:grid;grid-template-columns:150px 1fr;gap:6px 14px;font-size:13px}
+  dl{margin:8px 0 0;display:grid;grid-template-columns:150px 1fr;gap:6px 14px;font-size:calc(13px*var(--fscale,1))}
   @media(max-width:640px){dl{grid-template-columns:1fr}}
   dt{font-weight:700;color:var(--txt)} dd{margin:0;color:var(--dim)} dd b{color:var(--txt)}
-  .note{font-size:12px;color:var(--dim);margin-top:10px}
-  table{border-collapse:collapse;width:100%;font-size:13px;margin-top:8px}
+  .note{font-size:calc(12px*var(--fscale,1));color:var(--dim);margin-top:10px}
+  table{border-collapse:collapse;width:100%;font-size:calc(13px*var(--fscale,1));margin-top:8px}
   th,td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:middle}
-  th{color:var(--dim);font-weight:600;font-size:12px}
+  th{color:var(--dim);font-weight:600;font-size:calc(12px*var(--fscale,1))}
   td input[type=text]{width:100%;min-width:140px}
   td input[type=number]{width:100px}
   .parcWrap{overflow-x:auto}
-  .sortRow{display:flex;gap:8px;align-items:center;margin:6px 0;font-size:13px;color:var(--dim)}
+  .sortRow{display:flex;gap:8px;align-items:center;margin:6px 0;font-size:calc(13px*var(--fscale,1));color:var(--dim)}
+
+  /* ===== v4 : themes, affichage, cartes, exports ===== */
+  :root{--fscale:1}
+  :root[data-theme="clair"]{--bg:#eef1f5;--panel:#ffffff;--panel2:#dde3ea;--line:#9fb0c0;--txt:#131a22;--dim:#45515e}
+  :root[data-theme="clair"] :is(.chip em,.gauge b){filter:brightness(.6) saturate(1.5)}
+  :root[data-theme="clair"] button.on{background:#d9e4f0}
+  :root[data-theme="max"]{--bg:#000;--panel:#000;--panel2:#05070a;--line:#fff;--txt:#fff;--dim:#e2e8f0}
+  .gauge .track u{background:var(--txt)}
+  .dispRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:.87em;color:var(--dim)}
+  .dispRow>span{min-width:72px}
+  .dispRow label{display:flex;flex-direction:column;font-size:.78em;gap:2px;align-items:center}
+  input[type=color]{width:46px;height:32px;padding:2px;background:var(--panel2);border:1px solid #5a6676;border-radius:6px}
+  .surfRow{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;margin-bottom:6px;-webkit-overflow-scrolling:touch}
+  .surfCard{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:106px;padding:8px 6px;flex-shrink:0}
+  .surfCard svg{color:var(--dim)} .surfCard.on svg{color:var(--a)}
+  .surfCard span{font-size:.8em;font-weight:700;line-height:1.15;text-align:center}
+  .surfCard small{font-size:.72em;color:var(--dim)}
+  .surfCard.on{border-color:var(--a);border-width:2px;padding:7px 5px}
+  .card{min-width:0}
+  #sources table,#harmo table{display:block;overflow-x:auto;max-width:100%}
+  .unitRow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;-webkit-overflow-scrolling:touch}
+  .unitCard{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:94px;padding:6px;flex-shrink:0}
+  .unitCard b{font-size:.78em;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .unitCard small{font-size:.7em;color:var(--dim)}
+  .unitCard em{font-style:normal;font-size:.75em;font-weight:700;color:var(--a)}
+  .unitCard.on{border-width:2px;padding:5px}
+  .A .unitCard.on{border-color:var(--a)} .B .unitCard.on{border-color:var(--b)}
+  #surf{display:none} .card .unit{display:none}
+  .cone{margin-left:6px}
+  [data-dens="ess"] :is(.d2,.chip span,.legend){display:none}
+  .eq{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.87em}
+  .eq b{font-variant-numeric:tabular-nums}
+  .eq .f{color:var(--a);font-weight:700}
+  #report{display:none}
+  @media print{
+    body{background:#fff!important;color:#000!important}
+    body.printing .wrap>*:not(#report){display:none!important}
+    body.printing #report{display:block!important}
+    #report table{border-collapse:collapse;font-size:12px}
+    #report td,#report th{border:1px solid #666;padding:3px 6px;text-align:left}
+    #report a{color:#000}
+  }
 </style>
 </head>
 <body>
@@ -106,11 +160,31 @@
     <h1>Mapping — calculateur de couverture et de rendu <span id="mois" style="color:var(--a);font-weight:600"></span></h1>
     <select id="surf" aria-label="Surface"></select>
   </div>
+  <div class="surfRow" id="surfRow" aria-label="Choix de la surface"></div>
   <div class="custom" id="customBox">
     <label>Largeur (m)<input type="number" id="cw" value="8" step="0.1"></label>
     <label>Hauteur (m)<input type="number" id="ch" value="4" step="0.1"></label>
     <label>Recul max (m)<input type="number" id="cr" value="12" step="0.1" max="50"></label>
   </div>
+
+  <details>
+    <summary>Affichage — palette, taille du texte, densité</summary>
+    <div class="dispRow"><span>Palette</span>
+      <button data-th="sombre">Sombre</button><button data-th="clair">Clair</button>
+      <button data-th="max">Contraste max</button><button data-th="perso">Personnalisée</button></div>
+    <div class="dispRow" id="palBox" style="display:none">
+      <label>Image A<input type="color" id="palA"></label>
+      <label>Image B<input type="color" id="palB"></label>
+      <label>Fond<input type="color" id="palBg"></label>
+      <label>Panneaux<input type="color" id="palPanel"></label>
+      <label>Texte<input type="color" id="palTxt"></label>
+    </div>
+    <div class="dispRow"><span>Texte</span>
+      <button data-fsz="s">A−</button><button data-fsz="m">A</button>
+      <button data-fsz="l">A+</button><button data-fsz="xl">A++</button></div>
+    <div class="dispRow"><span>Étiquettes</span>
+      <button data-dn="full">Complètes</button><button data-dn="ess">Essentielles</button></div>
+  </details>
 
   <div class="panel">
     <div class="env">
@@ -135,7 +209,7 @@
   </div>
 
   <div class="modes">
-    <span style="font-size:12px;color:var(--dim)">Configuration :</span>
+    <span style="font-size:calc(12px*var(--fscale,1));color:var(--dim)">Configuration :</span>
     <button id="n1">1 projecteur</button>
     <button id="n2">2 projecteurs</button>
   </div>
@@ -146,6 +220,14 @@
   <div class="legend" id="legend"></div>
 
   <div class="chips" id="chips"></div>
+
+  <div class="layout" aria-label="Exports">
+    <button id="btnPrint">Imprimer / PDF</button>
+    <button id="btnReport">Rapport HTML</button>
+    <button id="btnCfg">Config JSON</button>
+    <button id="btnImp">Importer une config</button>
+    <input type="file" id="impFile" accept="application/json,.json" style="display:none">
+  </div>
 
   <div class="layout" id="layRow">
     <button data-lay="side">Côte à côte</button>
@@ -192,7 +274,7 @@
     </div>
     <div class="parcWrap">
       <table>
-        <thead><tr><th>Propriétaire</th><th>Projecteur</th><th>Flux</th><th>Puissance</th><th>Utilisé dans</th></tr></thead>
+        <thead><tr><th></th><th>Propriétaire</th><th>Projecteur</th><th>Flux</th><th>Puissance</th><th>Utilisé dans</th></tr></thead>
         <tbody id="parcBody"></tbody>
       </table>
     </div>
@@ -226,7 +308,44 @@
     </dl>
   </details>
 
+  <details class="meta">
+    <summary>Transparence &amp; méta — contexte, IA, méthodes de calcul, références</summary>
+    <dl>
+      <dt>Contexte de production</dt><dd>Outil développé en octobre 2026 pour préparer des mappings vidéo
+        événementiels (façades, scénographies suspendues). Code libre sous licence MIT, versionné sur
+        <a href="https://github.com/krbntek/projets-vrac-" style="color:var(--b)">GitHub — krbntek/projets-vrac-</a> :
+        chaque évolution est consultable dans l'historique git.</dd>
+      <dt>Rôle de l'IA</dt><dd>Co-écrit avec l'assistant IA <b>Claude</b> (Anthropic) via Claude Code, en sessions
+        itératives : l'humain fixe les besoins, fournit les données de terrain (plans, fiches techniques, photos)
+        et valide ; l'IA écrit le code, recoupe les spécifications sur plusieurs sources, simule et teste dans un
+        navigateur. Toute donnée non recoupée est marquée ⚠ dans l'interface. À l'usage, aucun calcul n'est fait
+        par une IA : tout est exécuté par les formules ci-dessous, lisibles dans le source de cette page.</dd>
+      <dt>Technologies</dt><dd>Un seul fichier HTML + CSS + SVG + JavaScript sans aucune bibliothèque. Aucune
+        requête réseau, aucune télémétrie : la page fonctionne hors-ligne et rien ne quitte l'appareil
+        (préférences et parc stockés dans le navigateur, exportables en JSON).</dd>
+      <dt>Méthode &amp; limites</dt><dd>Modèle photométrique simplifié : surface plane, éclairement moyen uniforme
+        (flux utile ÷ aire), support diffus lambertien, lumière parasite uniforme. Le décalage d'optique est
+        contrôlé mais la projection oblique (keystone) n'est pas modélisée. Les pertes (η = 0,70 par défaut,
+        usure lampe, dérive laser 10 %) et les contrastes natifs non documentés sont des <b>estimations
+        d'ingénierie</b>, toutes réglables. La vérification au luxmètre sur site reste indispensable.</dd>
+    </dl>
+    <div class="casT">Les équations, recalculées en direct avec les valeurs du projecteur A</div>
+    <div id="eqLive"></div>
+    <div class="casT">Références</div>
+    <ul style="font-size:.87em;color:var(--dim);padding-left:18px;margin:6px 0">
+      <li>CIE S 017 — Vocabulaire international de l'éclairage (définitions du lumen, du lux, de la cd/m²)</li>
+      <li>IES Lighting Handbook, 10ᵉ édition — photométrie des surfaces, réflectances des matériaux</li>
+      <li>Relation lambertienne L = E·ρ∕π pour une surface diffuse idéale (photométrie classique)</li>
+      <li>ISO/IEC 21118 et ANSI IT7.228 — mesure du flux des projecteurs (« lumens ANSI »)</li>
+      <li>ANSI/AVIXA 3M-2011 — rapport de contraste utile d'une image projetée selon l'usage</li>
+      <li>IEC 61966-2-1 (sRGB) — gamma ≈ 2,2 utilisé pour convertir niveau vidéo ↔ luminance</li>
+      <li>Densité optique d'un filtre ND : D = −log₁₀(T)</li>
+      <li>Fiches produits recoupées : tableau des sources en bas de page (Hitachi, Eiki, Epson, ProjectorCentral, B&amp;H)</li>
+    </ul>
+  </details>
+
   <div class="note" id="sources"></div>
+  <div id="report"></div>
 </div>
 
 <script>
@@ -235,6 +354,37 @@ const F = (v,d=1) => (isFinite(v)? v.toLocaleString('fr-FR',{minimumFractionDigi
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const LASER_DERATE = 0.10;
 const U_RES = 230, COS_PHI = 0.9, CIRC_KW = 230*16*0.8/1000;
+const VERSION='4.0';
+
+/* ---------- Préférences d'affichage (v4) ---------- */
+const UISTORE='mapping-ui-v4';
+const UI={theme:'sombre', fs:'m', dens:'full', pal:{a:'#ffb454',b:'#4cc9f0',bg:'#07090d',panel:'#121820',txt:'#f8fafc'}};
+try{ const u=JSON.parse(localStorage.getItem(UISTORE)||'{}'); Object.assign(UI,u); UI.pal=Object.assign({a:'#ffb454',b:'#4cc9f0',bg:'#07090d',panel:'#121820',txt:'#f8fafc'},u.pal||{}); }catch(e){}
+let CA='#ffb454', CB='#4cc9f0', APP_READY=false;
+const FSALL={s:0.9,m:1,l:1.15,xl:1.3};
+let FSC=1;
+const fs=v=>Math.round(v*FSC*10)/10;
+function applyUI(save=true){
+  const r=document.documentElement;
+  r.dataset.theme=UI.theme; r.dataset.dens=UI.dens;
+  FSC=FSALL[UI.fs]||1; r.style.setProperty('--fscale',FSC);
+  if(UI.theme==='perso'){
+    r.style.setProperty('--a',UI.pal.a); r.style.setProperty('--b',UI.pal.b);
+    r.style.setProperty('--bg',UI.pal.bg); r.style.setProperty('--panel',UI.pal.panel);
+    r.style.setProperty('--txt',UI.pal.txt);
+    CA=UI.pal.a; CB=UI.pal.b;
+  } else {
+    ['--a','--b','--bg','--panel','--txt'].forEach(v=>r.style.removeProperty(v));
+    CA='#ffb454'; CB='#4cc9f0';
+  }
+  document.querySelectorAll('[data-th]').forEach(b=>b.classList.toggle('on',b.dataset.th===UI.theme));
+  document.querySelectorAll('[data-fsz]').forEach(b=>b.classList.toggle('on',b.dataset.fsz===UI.fs));
+  document.querySelectorAll('[data-dn]').forEach(b=>b.classList.toggle('on',b.dataset.dn===UI.dens));
+  const pb=$('palBox'); if(pb) pb.style.display=UI.theme==='perso'?'flex':'none';
+  if(save) try{localStorage.setItem(UISTORE,JSON.stringify(UI));}catch(e){}
+  if(APP_READY){ syncSelects(); calc(); }
+}
+
 
 /* ---------- Catalogue optiques ---------- */
 // verif:false = donnée issue de sources secondaires, à recouper avec le manuel
@@ -335,16 +485,16 @@ const AMBS = [
 ];
 /* ---------- Surfaces ---------- */
 const SURFACES = [
-  {nom:'Panthère — ensemble avec pattes 5,5 × 5,0 m (estimé)', w:5.5,h:5.0,recul:10.5,reculMin:5.5, mat:'pantheree',tex:'lisse',amb:20,
+  {nom:'Panthère — ensemble avec pattes 5,5 × 5,0 m (estimé)', court:'Panthère entière', silh:'panthere', w:5.5,h:5.0,recul:10.5,reculMin:5.5, mat:'pantheree',tex:'lisse',amb:20,
    note:"Panthère : dimensions estimées d'après la fiche (cotes 290 cm et 500 cm), à confirmer. Recul de 5,5 m (bord du cercle côté scène) à 10,5 m (bord opposé). Les LED et néons du décor s'ajoutent à la lumière parasite : les couper pendant le mapping."},
-  {nom:'Panthère — visage seul 3,5 × 4,7 m (estimé)', w:3.5,h:4.7,recul:10.5,reculMin:5.5, mat:'pantheree',tex:'lisse',amb:20,
+  {nom:'Panthère — visage seul 3,5 × 4,7 m (estimé)', court:'Panthère visage', silh:'visage', w:3.5,h:4.7,recul:10.5,reculMin:5.5, mat:'pantheree',tex:'lisse',amb:20,
    note:"Panthère : dimensions estimées d'après la fiche, à confirmer. Recul de 5,5 m à 10,5 m. Les LED et néons du décor s'ajoutent à la lumière parasite."},
-  {nom:'Façade Saint-Denis 32,5 × 37,3 m', w:32.5,h:37.3,recul:50, mat:'pierre',tex:'gran', amb:20},
-  {nom:'Travée centrale 11,3 × 37,3 m',    w:11.3,h:37.3,recul:50, mat:'pierre',tex:'gran', amb:20},
-  {nom:'Mur 10 × 6 m — recul 15 m',        w:10,  h:6,   recul:15, mat:'mur',   tex:'fin',  amb:5},
-  {nom:'Surface 5 × 5 m — recul 5,6 m',    w:5,   h:5,   recul:5.6,mat:'mur',   tex:'lisse',amb:5},
-  {nom:'Écran 3 × 2 m — recul 4 m',        w:3,   h:2,   recul:4,  mat:'toile', tex:'lisse',amb:5},
-  {nom:'Personnalisée…', custom:true, mat:'mur',tex:'lisse',amb:20}
+  {nom:'Façade Saint-Denis 32,5 × 37,3 m', court:'Façade St-Denis', silh:'cathedrale', w:32.5,h:37.3,recul:50, mat:'pierre',tex:'gran', amb:20},
+  {nom:'Travée centrale 11,3 × 37,3 m', court:'Travée centrale', silh:'travee', w:11.3,h:37.3,recul:50, mat:'pierre',tex:'gran', amb:20},
+  {nom:'Mur 10 × 6 m — recul 15 m', court:'Mur 10 × 6', silh:'mur', w:10,  h:6,   recul:15, mat:'mur',   tex:'fin',  amb:5},
+  {nom:'Surface 5 × 5 m — recul 5,6 m', court:'Carré 5 × 5', silh:'carre', w:5,   h:5,   recul:5.6,mat:'mur',   tex:'lisse',amb:5},
+  {nom:'Écran 3 × 2 m — recul 4 m', court:'Écran 3 × 2', silh:'ecran', w:3,   h:2,   recul:4,  mat:'toile', tex:'lisse',amb:5},
+  {nom:'Personnalisée…', court:'Personnalisée', silh:'perso', custom:true, mat:'mur',tex:'lisse',amb:20}
 ];
 /* ---------- Échelle de rendu (contraste effectif) ---------- */
 const LEVELS = [
@@ -392,15 +542,18 @@ function syncSelects(){
     if(!lensesFor(m).includes(P[k].lens)) P[k].lens=lensesFor(m)[0];
     opt(`${k}_lensSel`, lensesFor(m).map(id=>[id,LENSES[id].nom+(LENSES[id].verif?'':' ⚠')]));
     $(`${k}_lensSel`).value=P[k].lens;
+    renderUnitRow(k);
+    $(`${k}_cone`).innerHTML=coneSVG(LENSES[P[k].lens], k==='A'?CA:CB);
   }
 }
 function card(k){
   const c=$('card'+k);
   c.innerHTML=`
     <h2>Projecteur ${k} <span id="${k}_own"></span></h2>
+    <div class="unitRow" id="${k}_units"></div>
     <select class="unit" id="${k}_unit" aria-label="Projecteur ${k}"></select>
     <select class="lensRow" id="${k}_lensSel" aria-label="Optique ${k}"></select>
-    <div class="lens" id="${k}_lens"></div>
+    <div class="lens"><span id="${k}_lens"></span><span class="cone" id="${k}_cone"></span></div>
     <div class="ctl"><div class="lab">Recul <b id="${k}_distV"></b></div>
       <input type="range" id="${k}_dist" min="1" step="0.1"></div>
     <div class="ctl"><div class="lab">Zoom <b id="${k}_zoomV"></b></div>
@@ -423,7 +576,9 @@ function card(k){
     P[k].unit=e.target.value; P[k].lens=unitById(P[k].unit).lens; P[k].zoom=0; P[k].orient='L';
     syncSelects(); renderParc(); layout(curLay);
   });
-  $(`${k}_lensSel`).addEventListener('change',e=>{P[k].lens=e.target.value; P[k].zoom=0; layout(curLay);});
+  $(`${k}_lensSel`).addEventListener('change',e=>{P[k].lens=e.target.value; P[k].zoom=0; syncSelects(); layout(curLay);});
+  $(`${k}_units`).addEventListener('click',e=>{const b=e.target.closest('[data-u]');if(!b)return;
+    const sel=$(`${k}_unit`); sel.value=b.dataset.u; sel.dispatchEvent(new Event('change'));});
 }
 
 function applyPair(spec){
@@ -452,6 +607,7 @@ function renderParc(){
     const m=MODELS[u.model];
     const used=['A','B'].filter(k=>P[k].unit===u.id && (nb===2 || k==='A')).join(' + ')||'—';
     return `<tr>
+      <td>${vpIcon(u.model,44)}</td>
       <td><input type="text" data-own="${u.id}" value="${esc(u.owner)}" placeholder="Propriétaire à renseigner"></td>
       <td>${m.court}</td>
       <td><input type="number" data-lm="${u.id}" value="${unitLm(u)}" step="100" min="0"> lm</td>
@@ -486,11 +642,12 @@ const area=r=>Math.max(0,r.x1-r.x0)*Math.max(0,r.y1-r.y0);
 function setSurface(){
   const s=SURFACES[+$('surf').value];
   $('customBox').classList.toggle('on',!!s.custom);
-  if(s.custom) S={w:+$('cw').value,h:+$('ch').value,recul:Math.min(50,+$('cr').value),reculMin:1,note:''};
+  if(s.custom) S={w:+$('cw').value,h:+$('ch').value,recul:Math.min(50,+$('cr').value),reculMin:1,note:'',silh:'perso'};
   else {
-    S={w:s.w,h:s.h,recul:s.recul,reculMin:s.reculMin||1,note:s.note||''};
+    S={w:s.w,h:s.h,recul:s.recul,reculMin:s.reculMin||1,note:s.note||'',silh:s.silh};
     $('mat').value=s.mat; $('tex').value=s.tex; setAmb(s.amb);
   }
+  renderSurfCards();
   for(const k of ['A','B']){
     P[k].dist = s.reculMin ?? Math.min(S.recul, S.recul>=50 ? 40 : S.recul);
     P[k].zoom = 0; P[k].orient='L';
@@ -530,7 +687,7 @@ function calc(){
   $('texInfo').textContent=`perte liée au relief : ${tex.txt} → ρ effectif ${F(rhoEff,2)}`;
 
   const surf={x0:-S.w/2,x1:S.w/2,y0:0,y1:S.h}, Sa=S.w*S.h;
-  const G={}, E={}, Lm={}, Cc={}, Lv={}, LM={}, Req={}, Wt={}, spill={}, shift={};
+  const G={}, E={}, Lm={}, Cc={}, Lv={}, LM={}, Req={}, Wt={}, spill={}, shift={}; let EQD=null;
   for(const k of ACT){
     const g=geom(k), p=P[k], pr=g.pr, u=unitById(p.unit);
     G[k]=g;
@@ -549,6 +706,7 @@ function calc(){
     shift[k]={needV:Math.abs(p.y-p.ph), needH:Math.abs(p.x-p.px), limV, limH};
     shift[k].uV=limV?shift[k].needV/limV:null; shift[k].uH=limH?shift[k].needH/limH:null;
     spill[k]=1-area(inter(g,surf))/(g.w*g.h);
+    if(k==='A') EQD={lmNom,mode,loss,eta,g,N:pr.N};
 
     // carte du projecteur
     const set=(id,min,max,val)=>{const el=$(id);el.min=min;el.max=max;el.value=val;};
@@ -659,6 +817,7 @@ function calc(){
   scaleLux(G,E,Ea,qual,ACT);
   cascade(G,LM,ACT);
   renderHarmo(G,E,Lm);
+  renderEq(EQD,{Ea,rho:rhoEff,EA:E.A,EB:nb===2?E.B:null,C:Cc.A,L:Lm.A,Wtot,Amp});
 }
 
 /* ---------- Schéma : couleur = qualité de rendu, échelle en mètres ---------- */
@@ -678,20 +837,25 @@ function dessin(G,surf,ab,R,ACT){
       <line x1="0" y1="0" x2="0" y2="10" stroke="#ffffffaa" stroke-width="2"/></pattern>
       <style>.t{paint-order:stroke;stroke:#000;stroke-width:3.5px;stroke-linejoin:round;font-weight:700}</style></defs>`;
   s+=rect(surf,'#f8fafc','#f8fafc','',0.10,2);
+  if(S.silh && S.silh!=='perso'){
+    const sw=(surf.x1-surf.x0)*k/100, sh=(surf.y1-surf.y0)*k/100;
+    s+=`<g transform="translate(${X(surf.x0)},${Y(surf.y1)}) scale(${sw},${sh})" fill="none" stroke="#f8fafc" stroke-opacity="0.5" stroke-width="2.5">`
+      +(SILH[S.silh]||[]).map(d=>`<path d="${d}" vector-effect="non-scaling-stroke"/>`).join('')+`</g>`;
+  }
   // sol
   s+=`<line x1="${X(minX)-20}" y1="${Y(0)}" x2="${X(maxX)+20}" y2="${Y(0)}" stroke="#b9c3cf" stroke-width="1.5"/>`;
   // repère horizontal tous les 10 m, origine = centre de la surface
   for(let t=Math.ceil(minX/10)*10; t<=maxX; t+=10){
     const lab = t===0 ? '0' : (t<0?'−':'+')+Math.abs(t)+' m';
     s+=`<line x1="${X(t)}" x2="${X(t)}" y1="${Y(0)}" y2="${Y(0)+6}" stroke="#b9c3cf" stroke-width="1.5"/>
-        <text x="${X(t)}" y="${Y(0)+18}" fill="#b9c3cf" font-size="11" text-anchor="middle">${lab}</text>`;
+        <text x="${X(t)}" y="${Y(0)+18}" fill="#b9c3cf" font-size="${fs(11)}" text-anchor="middle">${lab}</text>`;
   }
   // règle verticale tous les 10 m
   const rx=16;
   s+=`<line x1="${rx}" x2="${rx}" y1="${Y(0)}" y2="${Y(Math.min(maxY,60))}" stroke="#b9c3cf" stroke-width="1.5"/>`;
   for(let h=0; h<=maxY; h+=10){
     s+=`<line x1="${rx}" x2="${rx+6}" y1="${Y(h)}" y2="${Y(h)}" stroke="#b9c3cf" stroke-width="1.5"/>
-        <text x="${rx+8}" y="${Y(h)+4}" fill="#b9c3cf" font-size="11">${h} m</text>`;
+        <text x="${rx+8}" y="${Y(h)+4}" fill="#b9c3cf" font-size="${fs(11)}">${h} m</text>`;
   }
   // repère humain : 1,75 m
   s+=`<g fill="#f8fafc" transform="translate(${X(px)},${Y(0)}) scale(${k},${-k})">
@@ -699,24 +863,24 @@ function dessin(G,surf,ab,R,ACT){
         <rect x="-0.22" y="0.85" width="0.44" height="0.62" rx="0.08"/>
         <rect x="-0.2" y="0" width="0.4" height="0.88"/>
       </g>
-      <text class="t" x="${X(px)}" y="${Y(1.75)-8}" fill="#f8fafc" font-size="12" text-anchor="middle">1,75 m</text>`;
+      <text class="t" x="${X(px)}" y="${Y(1.75)-8}" fill="#f8fafc" font-size="${fs(12)}" text-anchor="middle">1,75 m</text>`;
   for(const key of ACT){
-    s+=rect(G[key],R.Lv[key].col,key==='A'?'#ffb454':'#4cc9f0','8,5',0.55);
+    s+=rect(G[key],R.Lv[key].col,key==='A'?CA:CB,'8,5',0.55);
   }
   if(R.hasAB){ s+=rect(ab,R.Lab.col,'none','',0.80); s+=rect(ab,'url(#hatch)','#fff','',1,1.5); }
   const lab=(g,key,col,anchor)=>{
     const x=anchor==='end'?X(g.x1)-8:X(g.x0)+8;
     const y1=anchor==='end'?Y(g.y0)-26:Y(g.y1)+18, y2=y1+16;
-    return `<text class="t" x="${x}" y="${y1}" fill="${col}" font-size="14" text-anchor="${anchor}">${key} · ${g.pr.court} · ${g.L.nom.split(' ')[0]} · ${g.w.toFixed(1)}×${g.h.toFixed(1)} m</text>
-      <text class="t" x="${x}" y="${y2}" fill="#fff" font-size="13" text-anchor="${anchor}">${F(R.E[key],0)} lx · ${F(R.Lm[key],0)} nits · ${F(R.Cc[key],1)}:1 ${R.Lv[key].nom}</text>`;
+    return `<text class="t" x="${x}" y="${y1}" fill="${col}" font-size="${fs(14)}" text-anchor="${anchor}">${key} · ${g.pr.court} · ${g.L.nom.split(' ')[0]} · ${g.w.toFixed(1)}×${g.h.toFixed(1)} m</text>
+      <text class="t d2" x="${x}" y="${y2}" fill="#fff" font-size="${fs(13)}" text-anchor="${anchor}">${F(R.E[key],0)} lx · ${F(R.Lm[key],0)} nits · ${F(R.Cc[key],1)}:1 ${R.Lv[key].nom}</text>`;
   };
-  s+=lab(G.A,'A','#ffb454','start');
-  if(ACT.includes('B')) s+=lab(G.B,'B','#4cc9f0','end');
+  s+=lab(G.A,'A',CA,'start');
+  if(ACT.includes('B')) s+=lab(G.B,'B',CB,'end');
   if(R.hasAB){
     const cx=X((ab.x0+ab.x1)/2), cy=Y((ab.y0+ab.y1)/2);
-    s+=`<text class="t" x="${cx}" y="${cy}" fill="#fff" font-size="14" text-anchor="middle">A+B : ${F(R.Eab,0)} lx · ${F(R.Cab,1)}:1 ${R.Lab.nom}</text>`;
+    s+=`<text class="t" x="${cx}" y="${cy}" fill="#fff" font-size="${fs(14)}" text-anchor="middle">A+B : ${F(R.Eab,0)} lx · ${F(R.Cab,1)}:1 ${R.Lab.nom}</text>`;
   }
-  s+=`<text class="t" x="${X(0)}" y="${Y(0)+38}" fill="#f8fafc" font-size="13" text-anchor="middle">surface ${F(S.w,1)} × ${F(S.h,1)} m · recul ${S.reculMin>1?F(S.reculMin,1)+' à ':'max '}${F(S.recul,1)} m</text>`;
+  s+=`<text class="t" x="${X(0)}" y="${Y(0)+38}" fill="#f8fafc" font-size="${fs(13)}" text-anchor="middle">surface ${F(S.w,1)} × ${F(S.h,1)} m · recul ${S.reculMin>1?F(S.reculMin,1)+' à ':'max '}${F(S.recul,1)} m</text>`;
   $('diag').innerHTML=s;
 }
 
@@ -724,28 +888,28 @@ function dessin(G,surf,ab,R,ACT){
 function scaleLux(G,E,Ea,qual,ACT){
   const Wd=900, padL=24, padR=24, lo=0.3, hi=5000, rowH=106, H=rowH*ACT.length+10;
   const X=e=>padL+(Math.log10(Math.min(hi,Math.max(lo,e)))-Math.log10(lo))/(Math.log10(hi)-Math.log10(lo))*(Wd-padL-padR);
-  let s=`<svg viewBox="0 0 ${Wd} ${H}" role="img" aria-label="Échelle de puissance en lux" style="border:none;background:none">
+  let s=`<svg viewBox="0 0 ${Wd} ${H}" role="img" aria-label="Échelle de puissance en lux" style="border:1px solid var(--line);background:#0a0e14;border-radius:8px">
     <style>.t{paint-order:stroke;stroke:#000;stroke-width:3px;font-weight:700}</style>`;
   ACT.forEach((k,i)=>{
-    const y=i*rowH, N=G[k].pr.N, col=k==='A'?'#ffb454':'#4cc9f0';
+    const y=i*rowH, N=G[k].pr.N, col=k==='A'?CA:CB;
     const th=LEVELS.slice(1).map(l=>needE(l.min,N,Ea));
     const edges=[lo,...th.map(t=>Math.min(hi,Math.max(lo,t)))];
-    s+=`<text x="${padL}" y="${y+14}" fill="${col}" font-size="14" font-weight="700">Projecteur ${k} · ${G[k].pr.court} — lumière parasite ${F(Ea,0)} lx · contraste natif ${F(N,0)}:1</text>`;
+    s+=`<text x="${padL}" y="${y+14}" fill="${col}" font-size="${fs(14)}" font-weight="700">Projecteur ${k} · ${G[k].pr.court} — lumière parasite ${F(Ea,0)} lx · contraste natif ${F(N,0)}:1</text>`;
     LEVELS.forEach((l,j)=>{
       const x0=X(edges[j]), x1=j+1<edges.length?X(edges[j+1]):X(hi);
       const startsAbove = j>0 && th[j-1]>=hi;
       if(x1-x0<0.5||startsAbove) return;
       s+=`<rect x="${x0}" y="${y+44}" width="${x1-x0}" height="30" fill="${l.col}"/>`;
-      if(x1-x0>62) s+=`<text x="${(x0+x1)/2}" y="${y+64}" fill="#07090d" font-size="12" font-weight="700" text-anchor="middle">${l.nom}</text>`;
+      if(x1-x0>62) s+=`<text x="${(x0+x1)/2}" y="${y+64}" fill="#07090d" font-size="${fs(12)}" font-weight="700" text-anchor="middle">${l.nom}</text>`;
     });
     [1,3,10,30,100,300,1000,3000].forEach(t=>{
       s+=`<line x1="${X(t)}" x2="${X(t)}" y1="${y+74}" y2="${y+80}" stroke="#b9c3cf"/>
-          <text x="${X(t)}" y="${y+93}" fill="#b9c3cf" font-size="11" text-anchor="middle">${t>=1000?t/1000+' k':t} lx</text>`;
+          <text x="${X(t)}" y="${y+93}" fill="#b9c3cf" font-size="${fs(11)}" text-anchor="middle">${t>=1000?t/1000+' k':t} lx</text>`;
     });
     const mx=X(E[k]);
     s+=`<line x1="${mx}" x2="${mx}" y1="${y+38}" y2="${y+78}" stroke="#fff" stroke-width="4"/>
         <line x1="${mx}" x2="${mx}" y1="${y+38}" y2="${y+78}" stroke="#000" stroke-width="1.5"/>
-        <text class="t" x="${Math.min(Wd-80,Math.max(80,mx))}" y="${y+34}" fill="#fff" font-size="13" text-anchor="middle">${k} reçoit ${F(E[k],0)} lx</text>`;
+        <text class="t" x="${Math.min(Wd-80,Math.max(80,mx))}" y="${y+34}" fill="#fff" font-size="${fs(13)}" text-anchor="middle">${k} reçoit ${F(E[k],0)} lx</text>`;
     const need=needE(qual.min,N,Ea);
     if(isFinite(need)&&need<hi){
       const q=X(need);
@@ -763,7 +927,7 @@ function cascade(G,LM,ACT){
     <b>${F(v,0)} lm${ref?` <span style="color:#b9c3cf;font-weight:400">(${F(v/ref*100,0)} %)</span>`:''}</b></div>`;
   let h='';
   ACT.forEach(k=>{
-    const c=k==='A'?'#ffb454':'#4cc9f0', m=LM[k], pr=G[k].pr;
+    const c=k==='A'?CA:CB, m=LM[k], pr=G[k].pr;
     h+=`<div class="casT" style="color:${c}">Projecteur ${k} · ${pr.court}</div>`+
       row('Annoncés (fiche technique)',m.nom,c,0)+
       row(pr.lamp?'Après mode & usure lampe':'Après mode & dérive laser',m.eff,c,m.nom)+
@@ -790,7 +954,7 @@ function renderHarmo(G,E,Lm){
   const f=E[loK]/E[hiK], R=1/f, lvl=Math.pow(f,1/2.2);
   const row=(lab,a,b)=>`<tr><th>${lab}</th><td>${a}</td><td>${b}</td></tr>`;
   let h=`<div class="casT">Calibrage et harmonisation des deux projecteurs</div>
-    <table><thead><tr><th></th><th style="color:#ffb454">A · ${G.A.pr.court}</th><th style="color:#4cc9f0">B · ${G.B.pr.court}</th></tr></thead><tbody>`+
+    <table><thead><tr><th></th><th style="color:${CA}">A · ${G.A.pr.court}</th><th style="color:${CB}">B · ${G.B.pr.court}</th></tr></thead><tbody>`+
     row('Optique',G.A.L.nom,G.B.L.nom)+
     row('Recul',`${F(P.A.dist,1)} m`,`${F(P.B.dist,1)} m`)+
     row('Image',`${F(G.A.w,2)} × ${F(G.A.h,2)} m`,`${F(G.B.w,2)} × ${F(G.B.h,2)} m`)+
@@ -840,6 +1004,204 @@ function harmonize(){
 }
 $('harmo').addEventListener('click',e=>{ if(e.target.id==='harmoBtn') harmonize(); });
 
+
+/* ---------- Silhouettes des surfaces (v4) ---------- */
+const SILH={
+  cathedrale:['M10,100 V34 H24 V10 H40 V34 H90 V100',
+    'M20,100 v-16 a7,9 0 0 1 14,0 v16','M42,100 v-20 a8,11 0 0 1 16,0 v20','M66,100 v-16 a7,9 0 0 1 14,0 v16',
+    'M50,38 m-9,0 a9,9 0 1 0 18,0 a9,9 0 1 0 -18,0','M50,38 m-4,0 a4,4 0 1 0 8,0 a4,4 0 1 0 -8,0',
+    'M10,66 H90','M27,16 v10','M35,16 v10'],
+  travee:['M34,100 V10 H66 V100','M50,32 m-10,0 a10,10 0 1 0 20,0 a10,10 0 1 0 -20,0',
+    'M42,100 v-18 a8,10 0 0 1 16,0 v18','M34,55 H66'],
+  panthere:['M30,100 V46 H38 V100','M62,100 V46 H70 V100',
+    'M28,46 Q26,16 50,12 Q74,16 72,46 Q72,56 50,56 Q28,56 28,46 Z',
+    'M33,22 L28,6 L43,15','M67,22 L72,6 L57,15',
+    'M41,34 a3,3 0 1 0 6,0 a3,3 0 1 0 -6,0','M53,34 a3,3 0 1 0 6,0 a3,3 0 1 0 -6,0',
+    'M40,56 l3,7 l4,-7 l3,7 l4,-7 l3,7 l3,-7',
+    'M2,62 q-3,-16 11,-18 q14,-2 14,11 q0,12 -12,13 q-11,1 -13,-6 Z',
+    'M98,62 q3,-16 -11,-18 q-14,-2 -14,11 q0,12 12,13 q11,1 13,-6 Z'],
+  visage:['M22,88 Q18,22 50,16 Q82,22 78,88 Q78,98 50,98 Q22,98 22,88 Z',
+    'M28,30 L20,6 L42,20','M72,30 L80,6 L58,20',
+    'M38,52 a4,4 0 1 0 8,0 a4,4 0 1 0 -8,0','M54,52 a4,4 0 1 0 8,0 a4,4 0 1 0 -8,0',
+    'M34,80 l4,10 l5,-10 l5,10 l5,-10 l5,10 l4,-10'],
+  mur:['M8,100 V30 H92 V100','M8,52 H92','M8,76 H92','M30,30 V52','M60,30 V52','M45,52 V76','M75,52 V76','M30,76 V100'],
+  carre:['M20,95 H80 V35 H20 Z','M20,28 H80','M24,24 l-4,4 l4,4','M76,24 l4,4 l-4,4'],
+  ecran:['M12,20 H88 V66 H12 Z','M16,24 H84 V62 H16 Z','M50,66 V84','M34,88 H66'],
+  perso:['M15,95 H85 V30 H15 Z']
+};
+function silhSVG(key,w,h){
+  const paths=SILH[key]||SILH.perso;
+  const dash=key==='perso'?' stroke-dasharray="7,5"':'';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 100 104" style="background:none;border:none" aria-hidden="true">
+    <g fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"${dash}>
+    ${paths.map(d=>`<path d="${d}"/>`).join('')}</g>
+    ${key==='perso'?'<text x="50" y="74" font-size="36" fill="currentColor" text-anchor="middle" font-weight="700">?</text>':''}</svg>`;
+}
+function renderSurfCards(){
+  const row=$('surfRow'); if(!row) return;
+  const cur=+$('surf').value;
+  row.innerHTML=SURFACES.map((x,i)=>`<button class="surfCard${cur===i?' on':''}" data-si="${i}" aria-label="${esc(x.nom)}">
+    ${silhSVG(x.silh||'perso',68,52)}<span>${esc(x.court||x.nom)}</span>
+    <small>${x.custom?'à définir':F(x.w,1)+' × '+F(x.h,1)+' m'}</small></button>`).join('');
+}
+
+/* ---------- Pictogrammes projecteurs (v4) ---------- */
+const VPCOLORS={x10000:'#8fa6c0', hdt1000:'#4db6ac', pu2220b:'#9575cd'};
+function vpIcon(model,w){
+  const h=Math.round(w*0.58), c=VPCOLORS[model]||'#999', m=MODELS[model];
+  return `<svg width="${w}" height="${h}" viewBox="0 0 100 58" style="background:none;border:none" aria-hidden="true">
+    <rect x="6" y="16" width="70" height="30" rx="6" fill="${c}" opacity="0.92"/>
+    <rect x="12" y="22" width="26" height="4" rx="2" fill="#0009"/>
+    <rect x="12" y="29" width="26" height="4" rx="2" fill="#0009"/>
+    <circle cx="84" cy="31" r="11" fill="#141a22" stroke="${c}" stroke-width="3"/>
+    <circle cx="84" cy="31" r="4.5" fill="${c}"/>
+    <rect x="12" y="46" width="9" height="5" rx="1" fill="${c}"/><rect x="58" y="46" width="9" height="5" rx="1" fill="${c}"/>
+    ${m&&!m.lamp?`<text x="40" y="12" font-size="11" fill="${c}" text-anchor="middle" font-weight="700" letter-spacing="1">LASER</text>`:''}
+  </svg>`;
+}
+const ownShort=u=>((u.owner||'').trim().split(/\s+/)[0])||'proprio ?';
+function renderUnitRow(k){
+  const el=$(`${k}_units`); if(!el) return;
+  el.innerHTML=sortedUnits().map(u=>{const m=MODELS[u.model];
+    return `<button class="unitCard${P[k].unit===u.id?' on':''}" data-u="${u.id}" title="${esc(unitLabel(u))}">
+      ${vpIcon(u.model,58)}<b>${esc(ownShort(u))}</b><small>${m.court}</small><em>${F(unitLm(u)/1000,1)}k lm</em></button>`;}).join('');
+}
+function coneSVG(L,color){
+  const w=92,h=36,cy=h/2,len=w-14;
+  const half=tr=>Math.min(cy-2,len*0.5/tr);
+  const y1=half(L.trMin), y2=half(L.trMax);
+  const tri=(yy,op)=>`<path d="M8 ${cy} L${w-4} ${(cy-yy).toFixed(1)} L${w-4} ${(cy+yy).toFixed(1)} Z" fill="${color}" fill-opacity="${op}"/>`;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="background:none;border:none;vertical-align:middle" aria-hidden="true">
+    <rect x="1" y="${cy-5}" width="8" height="10" rx="2" fill="${color}"/>
+    ${tri(y1,0.22)}${L.trMax>L.trMin?tri(y2,0.55):''}</svg>`;
+}
+
+/* ---------- Exports statiques (v4) ---------- */
+const stamp=()=>new Date().toISOString().slice(0,10);
+function dlBlob(name,txt,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type}));
+  a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+function buildReport(){
+  const d=new Date();
+  const date=d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' · '
+            +d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const ACT=nb===2?['A','B']:['A'];
+  const mat=currentMat(), tex=TEXS[$('tex').value];
+  const svg=$('diag').outerHTML.replace('<svg ','<svg style="background:#0a0e14;border-radius:8px;max-width:100%;height:auto" ');
+  const rows=ACT.map(k=>{const g=geom(k), u=unitById(P[k].unit);
+    return `<tr><td><b>${k}</b></td><td>${esc(ownerTxt(u))}</td><td>${g.pr.nom}</td><td>${g.L.nom}</td>
+      <td>${F(P[k].dist,1)} m</td><td>TR ${F(g.tr,2)}:1</td><td>${F(g.w,2)} × ${F(g.h,2)} m</td>
+      <td>${P[k].orient==='P'?'portrait':'paysage'}</td><td>${F(unitW(u),0)} W</td></tr>`;}).join('');
+  const chips=[...document.querySelectorAll('#chips .chip')].map(c=>`<li>${esc(c.innerText).replace(/\n/g,' — ')}</li>`).join('');
+  const verd=[...document.querySelectorAll('#verdicts .v')].map(v=>`<li>${esc(v.innerText)}</li>`).join('');
+  return `<h1>Rapport mapping — ${esc(SURFACES[+$('surf').value].nom)}</h1>
+  <p>Généré le ${date} · Calculateur mapping v${VERSION} ·
+    <a href="https://github.com/krbntek/projets-vrac-">code source (MIT)</a></p>
+  <h2>Contexte</h2>
+  <p>Surface ${F(S.w,1)} × ${F(S.h,1)} m · recul ${F(S.reculMin,1)}–${F(S.recul,1)} m ·
+     lumière parasite ${F(+$('amb').value,0)} lx · ${esc(mat.nom)} (ρ ${F(mat.rho,2)}) · ${esc(tex.nom)}</p>
+  ${svg}
+  <h2>Projecteurs</h2>
+  <table><tr><th></th><th>Propriétaire</th><th>Machine</th><th>Optique</th><th>Recul</th><th>Rapport</th><th>Image</th><th>Orientation</th><th>Puissance</th></tr>${rows}</table>
+  <h2>Résultats</h2><ul>${chips}</ul>
+  <h2>Points d'attention</h2><ul>${verd}</ul>
+  <p style="font-size:12px;color:#555">Valeurs théoriques à vérifier au luxmètre sur site. Outil libre co-développé
+  avec l'assistant IA Claude (Anthropic) ; équations et sources détaillées dans l'application.</p>`;
+}
+function exportCfg(){
+  const cfg={v:4, date:new Date().toISOString(), ui:UI,
+    parc:Object.fromEntries(PARC.map(u=>[u.id,{owner:u.owner,W:u.W,lm:u.lm}])),
+    surf:+$('surf').value, custom:{w:+$('cw').value,h:+$('ch').value,r:+$('cr').value},
+    env:{amb:+$('amb').value,mat:$('mat').value,tex:$('tex').value,rhoPerso:+$('rhoPerso').value},
+    nb, P:JSON.parse(JSON.stringify(P)), sort:$('sort').value,
+    adv:{mode:$('mode').value,usure:+$('usure').value,cible:+$('cible').value,eta:+$('eta').value,
+         qual:$('qual').value,acc:+$('acc').value,hours:+$('hours').value}};
+  dlBlob(`config-mapping-${stamp()}.json`, JSON.stringify(cfg,null,2), 'application/json');
+}
+function importCfg(c){
+  if(!c || c.v!==4) throw new Error('version de config attendue : 4');
+  if(c.parc) for(const u of PARC){const x=c.parc[u.id];
+    if(x){ u.owner=x.owner??u.owner; if(x.W!=null)u.W=x.W; if(x.lm!=null)u.lm=x.lm; }}
+  saveParc();
+  if(c.ui){ Object.assign(UI,c.ui); applyUI(); }
+  if(c.sort && SORTS[c.sort]) $('sort').value=c.sort;
+  if(c.custom){ $('cw').value=c.custom.w; $('ch').value=c.custom.h; $('cr').value=c.custom.r; }
+  if(c.surf!=null) $('surf').value=Math.min(SURFACES.length-1,Math.max(0,+c.surf||0));
+  setSurface();
+  if(c.env){
+    $('amb').value=c.env.amb; const m=AMBS.find(a=>a[2]===+c.env.amb); $('ambSel').value=m?m[0]:'perso';
+    if(MATS[c.env.mat]) $('mat').value=c.env.mat;
+    if(TEXS[c.env.tex]) $('tex').value=c.env.tex;
+    if(c.env.rhoPerso) $('rhoPerso').value=c.env.rhoPerso;
+  }
+  if(c.adv){ $('mode').value=c.adv.mode; $('usure').value=c.adv.usure; $('cible').value=c.adv.cible;
+    $('eta').value=c.adv.eta; $('qual').value=c.adv.qual; $('acc').value=c.adv.acc; $('hours').value=c.adv.hours; }
+  applyNb(c.nb===1?1:2);
+  if(c.P) for(const k of ['A','B']){ const q=c.P[k]; if(!q) continue;
+    if(unitById(q.unit)) P[k].unit=q.unit;
+    Object.assign(P[k],{dist:+q.dist||P[k].dist, zoom:+q.zoom||0, orient:q.orient==='P'?'P':'L',
+      x:+q.x||0, y:+q.y||0, ph:+q.ph||0, px:+q.px||0});
+    if(LENSES[q.lens] && LENSES[q.lens].proj.includes(unitById(P[k].unit).model)) P[k].lens=q.lens; }
+  syncSelects(); renderParc(); calc();
+}
+
+/* ---------- Équations en direct (v4) ---------- */
+function renderEq(d,t){
+  const el=$('eqLive'); if(!el) return;
+  if(!d){ el.innerHTML=''; return; }
+  const g=d.g, Si=g.w*g.h, port=P.A.orient==='P';
+  const wPay=port?g.h:g.w;
+  const flux=d.lmNom*d.mode*(1-d.loss)*d.eta;
+  const rows=[
+   ["Taille d'image",`largeur (paysage) = recul ÷ rapport de projection = ${F(P.A.dist,2)} ÷ ${F(g.tr,2)} = <b>${F(wPay,2)} m</b>${port?' (image pivotée en portrait : largeur ↔ hauteur)':''} ; hauteur = largeur × ${g.pr.h}∕${g.pr.w}`],
+   ["Flux utile",`Φ = annoncés × mode × (1−perte) × η = ${F(d.lmNom,0)} × ${F(d.mode,2)} × ${F(1-d.loss,2)} × ${F(d.eta,2)} = <b>${F(flux,0)} lm</b>`],
+   ["Éclairement",`E = Φ ÷ surface de l'image = ${F(flux,0)} ÷ ${F(Si,2)} m² = <b>${F(t.EA,0)} lux</b>`],
+   ["Luminance",`L = E × ρ ÷ π = ${F(t.EA,0)} × ${F(t.rho,2)} ÷ 3,1416 = <b>${F(t.L,0)} cd/m² (nits)</b>`],
+   ["Contraste effectif",`C = (E + E<sub>amb</sub>) ÷ (E∕N + E<sub>amb</sub>) = (${F(t.EA,0)} + ${F(t.Ea,1)}) ÷ (${F(t.EA,0)}∕${F(d.N,0)} + ${F(t.Ea,1)}) = <b>${F(t.C,1)}:1</b>`],
+   ["Définition",`px/m = pixels ÷ largeur = ${port?g.pr.h:g.pr.w} ÷ ${F(g.w,2)} = <b>${F(g.pxm,0)} px/m</b>, soit ${F(1000/g.pxm,1)} mm par pixel`],
+   ["Courant",`I = P ÷ (U × cosφ) = ${F(t.Wtot,0)} ÷ (230 × 0,9) = <b>${F(t.Amp,1)} A</b>`]];
+  if(t.EB!=null && isFinite(t.EB)){
+    const T=Math.min(t.EA,t.EB)/Math.max(t.EA,t.EB);
+    rows.push(["Égalisation A/B",`T = E faible ∕ E fort = ${F(Math.min(t.EA,t.EB),0)} ∕ ${F(Math.max(t.EA,t.EB),0)} = ${F(T,2)} → filtre ND = −log₁₀(T) = <b>${F(-Math.log10(T),2)}</b> · diaphragmes = log₂(1∕T) = <b>${F(-Math.log2(T),1)}</b>`]);
+  }
+  el.innerHTML=rows.map(([n,x])=>`<div class="eq"><span class="f">${n}</span> — ${x}</div>`).join('');
+}
+
+/* ---------- Branchements interface v4 ---------- */
+function initUIControls(){
+  document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{UI.theme=b.dataset.th;applyUI();});
+  document.querySelectorAll('[data-fsz]').forEach(b=>b.onclick=()=>{UI.fs=b.dataset.fsz;applyUI();});
+  document.querySelectorAll('[data-dn]').forEach(b=>b.onclick=()=>{UI.dens=b.dataset.dn;applyUI();});
+  const map={palA:'a',palB:'b',palBg:'bg',palPanel:'panel',palTxt:'txt'};
+  for(const [id,key] of Object.entries(map)){
+    const el=$(id); el.value=UI.pal[key];
+    el.addEventListener('input',()=>{UI.pal[key]=el.value;UI.theme='perso';applyUI();});
+  }
+  $('surfRow').addEventListener('click',e=>{
+    const b=e.target.closest('[data-si]'); if(!b) return;
+    $('surf').value=b.dataset.si; $('surf').dispatchEvent(new Event('change'));
+  });
+  $('btnPrint').onclick=()=>{ $('report').innerHTML=buildReport();
+    document.body.classList.add('printing'); window.print(); };
+  window.addEventListener('afterprint',()=>{
+    document.body.classList.remove('printing'); $('report').innerHTML=''; });
+  $('btnReport').onclick=()=>dlBlob(`rapport-mapping-${stamp()}.html`,
+    `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rapport mapping ${stamp()}</title><style>body{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:900px;margin:20px auto;padding:0 16px;color:#111;background:#fff}table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #999;padding:4px 8px;text-align:left}h1{font-size:22px}h2{font-size:16px;margin-top:24px}ul{padding-left:20px}a{color:#0a5}</style></head><body>${buildReport()}</body></html>`,
+    'text/html');
+  $('btnCfg').onclick=exportCfg;
+  $('btnImp').onclick=()=>$('impFile').click();
+  $('impFile').addEventListener('change',e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const r=new FileReader();
+    r.onload=()=>{ try{ importCfg(JSON.parse(r.result)); alert('Configuration importée.'); }
+                   catch(err){ alert('Fichier invalide : '+err.message); } };
+    r.readAsText(file); e.target.value='';
+  });
+}
+
 /* ---------- Initialisation ---------- */
 opt('surf', SURFACES.map((s,i)=>[i,s.nom]));
 (() => {
@@ -870,7 +1232,7 @@ $('sources').innerHTML = `
     <tr><td>Epson ELPLM15</td><td>zoom standard, TR 1,57–2,56</td><td>⚠ annonces revendeurs, <b>à recouper</b></td></tr>
   </table>`;
 
-$('mois').textContent = '· ' + new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+$('mois').textContent = '· ' + new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}) + ' · v'+VERSION;
 $('n1').onclick=()=>applyNb(1);
 $('n2').onclick=()=>applyNb(2);
 PAIRS.forEach(([label,spec])=>{
@@ -890,10 +1252,13 @@ $('mat').addEventListener('change',calc);
 $('tex').addEventListener('change',calc);
 $('rhoPerso').addEventListener('input',calc);
 ['mode','usure','cible','eta','qual','acc','hours'].forEach(id=>$(id).addEventListener('input',calc));
+applyUI(false);
+initUIControls();
 renderParc();
 syncSelects();
 applyNb(2);
 setSurface();
+APP_READY=true;
 </script>
 </body>
 </html>
