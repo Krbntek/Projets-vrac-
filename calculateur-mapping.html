@@ -7,7 +7,9 @@
   consommation, decor Panthere, harmonisation - v4 themes et tailles de texte, cartes visuelles
   surfaces/projecteurs, exports (impression PDF, rapport HTML, config JSON), encart transparence -
   v4.1 barre d'outils unique collante (configuration, dispositions, prereglages du parc, menus
-  Exporter et Affichage), titres de sections, etat actif de la disposition.
+  Exporter et Affichage), titres de sections, etat actif de la disposition -
+  v4.2 bloc CONFIG des parametres principaux en tete du code, catalogues standardises avec
+  gabarits et sources par entree, ajout Epson EB-L1500UH (devis) et ELPLU04/ELPLM15 associees.
 -->
 <html lang="fr">
 <head>
@@ -375,9 +377,39 @@
 const $ = id => document.getElementById(id);
 const F = (v,d=1) => (isFinite(v)? v.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d}) : '–');
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-const LASER_DERATE = 0.10;
-const U_RES = 230, COS_PHI = 0.9, CIRC_KW = 230*16*0.8/1000;
-const VERSION='4.1';
+const VERSION='4.2';
+
+/* ======================================================================
+   =============  PARAMÈTRES PRINCIPAUX — À MODIFIER ICI  ===============
+   Tous les réglages par défaut de l'outil sont dans ce bloc CONFIG.
+   On les change ici une fois pour toutes ; l'interface permet ensuite
+   de les ajuster ponctuellement sans toucher au code.
+   Le recul de chaque surface prédéfinie se règle dans SURFACES
+   (champs recul = max et reculMin = min, en mètres).
+   ====================================================================== */
+const CONFIG = {
+  // --- géométrie / schéma ----------------------------------------------
+  reculMaxPerso: 12,   // m  — recul max proposé pour la surface « Personnalisée »
+  pasRepere: 10,       // m  — espacement des graduations du schéma
+  tailleHumain: 1.75,  // m  — hauteur du personnage de référence du schéma
+  // --- photométrie -------------------------------------------------------
+  rendement: 0.70,     // η  — pertes optique/bords/poussière (0,3 à 1)
+  usureLampe: 20,      // %  — flux perdu par une lampe usée (sources à lampe)
+  deriveLaser: 0.10,   //    — fraction de flux perdue retenue pour un laser
+  modeEco: 0.80,       //    — facteur de flux du mode éco
+  cibleLux: 80,        // lux — cible d'éclairement par défaut
+  qualiteDefaut: 3,    //    — indice LEVELS (2 Lisible · 3 Correct · 4 Bon · 5 Très bon)
+  // --- électricité -------------------------------------------------------
+  tension: 230,        // V  — réseau
+  cosPhi: 0.9,         //    — facteur de puissance estimé
+  circuitA: 16,        // A  — calibre du disjoncteur de référence
+  chargeCircuit: 0.8,  //    — part du circuit utilisable en continu
+  accessoiresW: 200,   // W  — serveur média, switch, ventilation (défaut)
+  dureeH: 4            // h  — durée d'événement par défaut
+};
+const LASER_DERATE = CONFIG.deriveLaser;
+const U_RES = CONFIG.tension, COS_PHI = CONFIG.cosPhi,
+      CIRC_KW = CONFIG.tension*CONFIG.circuitA*CONFIG.chargeCircuit/1000;
 
 /* ---------- Préférences d'affichage (v4) ---------- */
 const UISTORE='mapping-ui-v4';
@@ -409,30 +441,79 @@ function applyUI(save=true){
 }
 
 
-/* ---------- Catalogue optiques ---------- */
-// verif:false = donnée issue de sources secondaires, à recouper avec le manuel
+/* ======================================================================
+   =====================  CATALOGUE DES OPTIQUES  =======================
+   Pour AJOUTER une optique : copier le GABARIT, remplir, et la lister
+   dans proj:[…] pour chaque projecteur compatible.
+   ⚠ Le rapport de projection (TR) d'une même optique peut CHANGER selon
+   la série de projecteurs (taille de panneau) : si le fabricant donne
+   des plages différentes, créer UNE ENTRÉE PAR SÉRIE.
+   Champs : nom (libellé) · trMin/trMax (rapport de projection = distance
+   ÷ largeur d'image ; égaux si focale fixe) · fMin/fMax (focale en mm,
+   null si inconnue) · proj:[ids de MODELS] · verif:false si une valeur
+   n'est pas confirmée par le fabricant (affiche ⚠) · src (d'où ça vient).
+   GABARIT :
+   monid: {nom:'XX-000 courte focale', trMin:0.8, trMax:1.0, fMin:null, fMax:null,
+           proj:['idprojecteur'], verif:false, src:'manuel fabricant, p. …'},
+   ====================================================================== */
 const LENSES = {
-  sd:     {nom:'SD-800 standard (SD-804)', trMin:2.26, trMax:2.93, fMin:60, fMax:78, proj:['x10000'], verif:true},
-  sl:     {nom:'SL-802 courte focale',  trMin:1.27, trMax:1.53, fMin:34, fMax:41, proj:['x10000'],  verif:true},
-  sl803:  {nom:'SL-803 courte focale',  trMin:1.50, trMax:2.20, fMin:null,fMax:null,proj:['x10000'], verif:false},
-  ll805:  {nom:'LL-805 longue focale',  trMin:2.92, trMax:5.33, fMin:null,fMax:null,proj:['x10000'], verif:false},
-  ah32021:{nom:'AH-32021 courte fixe',  trMin:0.82, trMax:0.82, fMin:30, fMax:30, proj:['hdt1000'], verif:false},
-  lu04:   {nom:'ELPLU04 courte focale', trMin:0.64, trMax:0.77, fMin:null,fMax:null,proj:['pu2220b'],verif:false},
-  lm15:   {nom:'ELPLM15 standard',      trMin:1.57, trMax:2.56, fMin:null,fMax:null,proj:['pu2220b'],verif:false}
+  sd:     {nom:'SD-800 standard (SD-804)', trMin:2.26, trMax:2.93, fMin:60, fMax:78, proj:['x10000'], verif:true,
+           src:'ProjectorCentral CP-X10000 ; B&H SD-800 (2,2–2,9)'},
+  sl:     {nom:'SL-802 courte focale',  trMin:1.27, trMax:1.53, fMin:34, fMax:41, proj:['x10000'],  verif:true,
+           src:'ProjectorCentral CP-X10000 ; focale : liste optiques Hitachi'},
+  sl803:  {nom:'SL-803 courte focale',  trMin:1.50, trMax:2.20, fMin:null,fMax:null,proj:['x10000'], verif:false,
+           src:'ProjectorCentral seul'},
+  ll805:  {nom:'LL-805 longue focale',  trMin:2.92, trMax:5.33, fMin:null,fMax:null,proj:['x10000'], verif:false,
+           src:'ProjectorCentral seul'},
+  ah32021:{nom:'AH-32021 courte fixe',  trMin:0.82, trMax:0.82, fMin:30, fMax:30, proj:['hdt1000'], verif:false,
+           src:'base projector-database (source secondaire), à recouper'},
+  lu04:   {nom:'ELPLU04 courte focale', trMin:0.64, trMax:0.77, fMin:null,fMax:null,proj:['pu2220b','l1500uh'],verif:true,
+           src:'fiche Epson EB-L1505U (0,64–0,77, shift ±60/±18) ; même plage annoncée gamme 9–20 klm. ⚠ le devis Novelty indique 0,87–1,06 « pour 12K » : c’est la plage des séries G7000/L1000 — à confirmer avec le loueur'},
+  lm15:   {nom:'ELPLM15 standard',      trMin:1.57, trMax:2.56, fMin:null,fMax:null,proj:['pu2220b','l1500uh'],verif:false,
+           src:'annonces revendeurs ; même plage que l’optique standard du L1500UH (fiche Epson)'}
 };
-/* ---------- Modèles de projecteurs ---------- */
-// lm = flux annoncé ; N = contraste natif ; W = puissance absorbée ; shiftV/shiftH = décalage d'optique (fraction de la hauteur / largeur de l'image)
+/* ======================================================================
+   ====================  CATALOGUE DES PROJECTEURS  =====================
+   Pour AJOUTER un projecteur :
+   1) copier le GABARIT ci-dessous et remplir ses champs ;
+   2) créer ou compléter son optique dans LENSES (proj:['sonid']) ;
+   3) ajouter un exemplaire physique dans PARC.
+   Deux façons de remplir : noter soi-même les valeurs du manuel, ou
+   donner le nom exact du produit à Claude qui retrouve la fiche
+   fabricant, recoupe plusieurs sources et remplit le gabarit
+   (toute valeur non confirmée reste verif:false → ⚠ à l'écran).
+   Champs : nom/court (libellés) · lm (lumens ANSI annoncés) · w,h (pixels
+   natifs) · N (contraste NATIF, sans iris — si inconnu, estimer et
+   verif:false) · W (consommation en watts) · lamp (true = lampe avec
+   usure réglable, false = laser) · shiftV/shiftH (plage de décalage
+   d'optique en fraction de l'image, null si inconnue) · src (sources).
+   GABARIT :
+   monid: {nom:'Marque Modèle', court:'Modèle', lm:10000, w:1920, h:1200,
+           N:1000, W:500, shiftV:null, shiftH:null, lamp:false,
+           verif:false, src:'manuel fabricant / URL'},
+   ====================================================================== */
 const MODELS = {
-  x10000: {nom:'Hitachi CP-X10000', court:'CP-X10000',  lm:7500,  w:1024, h:768,  N:1000, W:540,  shiftV:0.85, shiftH:0.60, lamp:true,  verif:true},
-  hdt1000:{nom:'Eiki LC-HDT1000',   court:'LC-HDT1000', lm:10000, w:2048, h:1080, N:3000, W:1000, lamp:true,  verif:true},
-  pu2220b:{nom:'Epson EB-PU2220B',  court:'EB-PU2220B', lm:20000, w:1920, h:1200, N:2500, W:1100, lamp:false, verif:false}
+  x10000: {nom:'Hitachi CP-X10000', court:'CP-X10000',  lm:7500,  w:1024, h:768,  N:1000, W:540,  shiftV:0.85, shiftH:0.60, lamp:true,  verif:true,
+           src:'fiche Hitachi + ProjectorCentral (7500 lm, XGA, 540 W, shift ±85/±60) ; contraste natif estimé (2500:1 annoncé avec iris)'},
+  hdt1000:{nom:'Eiki LC-HDT1000',   court:'LC-HDT1000', lm:10000, w:2048, h:1080, N:3000, W:1000, shiftV:null, shiftH:null, lamp:true,  verif:true,
+           src:'fiche Eiki + ProjectorCentral (10000 lm avec AH-22051, 2K, 3000:1, 1000 W, lampe 380 W)'},
+  pu2220b:{nom:'Epson EB-PU2220B',  court:'EB-PU2220B', lm:20000, w:1920, h:1200, N:2500, W:1100, shiftV:null, shiftH:null, lamp:false, verif:false,
+           src:'fiche Epson (20000 lm, WUXGA) ; contraste natif et consommation estimés'},
+  l1500uh:{nom:'Epson EB-L1500UH',  court:'EB-L1500UH', lm:12000, w:1920, h:1200, N:2000, W:833,  shiftV:0.60, shiftH:0.18, lamp:false, verif:false,
+           src:'fiche Epson EB-L1500UH (12000 lm, WUXGA, laser 20000 h, 833 W en mode normal, shift motorisé ±60/±18) ; contraste natif estimé (2 500 000:1 dynamique annoncé) ; référence du devis Novelty'}
 };
-/* ---------- Parc : un élément = un projecteur physique ---------- */
+/* ======================================================================
+   =====================  PARC : machines physiques  ====================
+   Un élément = UN projecteur réel : id unique, modèle (id de MODELS),
+   propriétaire, optique montée par défaut (id de LENSES). owner/W/lm
+   restent modifiables dans le tableau Parc de l'interface.
+   ====================================================================== */
 const PARC = [
   {id:'cpx-1', model:'x10000', owner:'', lens:'sd'},
   {id:'cpx-2', model:'x10000', owner:'', lens:'sl'},
   {id:'hdt-1', model:'hdt1000',owner:'', lens:'ah32021'},
-  {id:'pu-1',  model:'pu2220b',owner:'', lens:'lu04'}
+  {id:'pu-1',  model:'pu2220b',owner:'', lens:'lu04'},
+  {id:'l15-1', model:'l1500uh',owner:'', lens:'lu04'}
 ];
 const STORE = 'mapping-parc-v2';
 try{
@@ -538,7 +619,9 @@ const PAIRS = [
   ['LC-HDT1000 + EB-PU2220B', [['hdt1000','ah32021'],['pu2220b','lu04']]],
   ['2 × EB-PU2220B',          [['pu2220b','lu04'],['pu2220b','lu04']]],
   ['2 × LC-HDT1000',          [['hdt1000','ah32021'],['hdt1000','ah32021']]],
-  ['CP-X10000 + EB-PU2220B',  [['x10000','sd'],['pu2220b','lm15']]]
+  ['CP-X10000 + EB-PU2220B',  [['x10000','sd'],['pu2220b','lm15']]],
+  ['EB-L1500UH + EB-PU2220B', [['l1500uh','lu04'],['pu2220b','lu04']]],
+  ['EB-L1500UH + CP-X10000',  [['l1500uh','lu04'],['x10000','sd']]]
 ];
 
 /* ---------- État ---------- */
@@ -869,7 +952,8 @@ function dessin(G,surf,ab,R,ACT){
   // sol
   s+=`<line x1="${X(minX)-20}" y1="${Y(0)}" x2="${X(maxX)+20}" y2="${Y(0)}" stroke="#b9c3cf" stroke-width="1.5"/>`;
   // repère horizontal tous les 10 m, origine = centre de la surface
-  for(let t=Math.ceil(minX/10)*10; t<=maxX; t+=10){
+  const PR=CONFIG.pasRepere;
+  for(let t=Math.ceil(minX/PR)*PR; t<=maxX; t+=PR){
     const lab = t===0 ? '0' : (t<0?'−':'+')+Math.abs(t)+' m';
     s+=`<line x1="${X(t)}" x2="${X(t)}" y1="${Y(0)}" y2="${Y(0)+6}" stroke="#b9c3cf" stroke-width="1.5"/>
         <text x="${X(t)}" y="${Y(0)+18}" fill="#b9c3cf" font-size="${fs(11)}" text-anchor="middle">${lab}</text>`;
@@ -877,17 +961,18 @@ function dessin(G,surf,ab,R,ACT){
   // règle verticale tous les 10 m
   const rx=16;
   s+=`<line x1="${rx}" x2="${rx}" y1="${Y(0)}" y2="${Y(Math.min(maxY,60))}" stroke="#b9c3cf" stroke-width="1.5"/>`;
-  for(let h=0; h<=maxY; h+=10){
+  for(let h=0; h<=maxY; h+=PR){
     s+=`<line x1="${rx}" x2="${rx+6}" y1="${Y(h)}" y2="${Y(h)}" stroke="#b9c3cf" stroke-width="1.5"/>
         <text x="${rx+8}" y="${Y(h)+4}" fill="#b9c3cf" font-size="${fs(11)}">${h} m</text>`;
   }
-  // repère humain : 1,75 m
-  s+=`<g fill="#f8fafc" transform="translate(${X(px)},${Y(0)}) scale(${k},${-k})">
+  // repère humain (hauteur CONFIG.tailleHumain)
+  const HS=CONFIG.tailleHumain/1.75;
+  s+=`<g fill="#f8fafc" transform="translate(${X(px)},${Y(0)}) scale(${k*HS},${-k*HS})">
         <circle cx="0" cy="1.62" r="0.12"/>
         <rect x="-0.22" y="0.85" width="0.44" height="0.62" rx="0.08"/>
         <rect x="-0.2" y="0" width="0.4" height="0.88"/>
       </g>
-      <text class="t" x="${X(px)}" y="${Y(1.75)-8}" fill="#f8fafc" font-size="${fs(12)}" text-anchor="middle">1,75 m</text>`;
+      <text class="t" x="${X(px)}" y="${Y(CONFIG.tailleHumain)-8}" fill="#f8fafc" font-size="${fs(12)}" text-anchor="middle">${F(CONFIG.tailleHumain,2)} m</text>`;
   for(const key of ACT){
     s+=rect(G[key],R.Lv[key].col,key==='A'?CA:CB,'8,5',0.55);
   }
@@ -1070,7 +1155,7 @@ function renderSurfCards(){
 }
 
 /* ---------- Pictogrammes projecteurs (v4) ---------- */
-const VPCOLORS={x10000:'#8fa6c0', hdt1000:'#4db6ac', pu2220b:'#9575cd'};
+const VPCOLORS={x10000:'#8fa6c0', hdt1000:'#4db6ac', pu2220b:'#9575cd', l1500uh:'#6fcf97'};
 function vpIcon(model,w){
   const h=Math.round(w*0.58), c=VPCOLORS[model]||'#999', m=MODELS[model];
   return `<svg width="${w}" height="${h}" viewBox="0 0 100 58" style="background:none;border:none" aria-hidden="true">
@@ -1242,11 +1327,11 @@ opt('surf', SURFACES.map((s,i)=>[i,s.nom]));
 opt('tex',  Object.entries(TEXS).map(([k,t])=>[k,t.nom]));
 opt('ambSel', AMBS.map(a=>[a[0],a[1]]));
 opt('qual', LEVELS.slice(2).map((l,i)=>[i+2,`${l.nom} (≥ ${F(l.min,1)}:1)`]));
-$('qual').value = 3;
+$('qual').value = CONFIG.qualiteDefaut;
 $('legend').innerHTML = LEVELS.map(l=>`<span><i style="background:${l.col}"></i><b>${l.nom}</b> ${l.min?'≥ '+F(l.min,1):'< 1,5'}:1</span>`).join('');
 $('sources').innerHTML = `
   <b>Parc</b> : projecteur + optique au choix pour chaque image. Le flux annoncé est celui du constructeur, réduit par le mode, l'usure et le rendement η.
-  Le décalage d'optique (lens shift) n'est pas modélisé : les positions supposent le lens shift ou un déplacement des machines.
+  Le décalage d'optique requis est contrôlé par rapport aux plages connues ; la projection oblique (keystone) n'est pas modélisée.
   Vérifier dans le manuel les plages de shift et les inclinaisons autorisées avant un usage en portrait.
   <table>
     <tr><th>Référence</th><th>Données retenues</th><th>Fiabilité</th></tr>
@@ -1259,6 +1344,8 @@ $('sources').innerHTML = `
     <tr><td>Epson EB-PU2220B</td><td>20 000 lm laser, WUXGA 1920×1200 16:10, contraste natif 2500:1, ~1100 W</td><td>lumens et résolution confirmés ; contraste, puissance et dérive laser (10 %) <b>estimés</b></td></tr>
     <tr><td>Epson ELPLU04</td><td>zoom courte focale, TR 0,64–0,77 (gamme 9 000–20 000 lm)</td><td>⚠ annonces revendeurs Epson, <b>à recouper</b> avec le calculateur Epson</td></tr>
     <tr><td>Epson ELPLM15</td><td>zoom standard, TR 1,57–2,56</td><td>⚠ annonces revendeurs, <b>à recouper</b></td></tr>
+    <tr><td>Epson EB-L1500UH</td><td>12 000 lm laser (20 000 h), WUXGA 1920×1200, 833 W (mode normal), décalage d'optique motorisé ±60 % / ±18 %</td><td>fiche Epson ; <b>contraste natif estimé</b> (2 500 000:1 dynamique annoncé) · référence du devis</td></tr>
+    <tr><td>ELPLU04 sur EB-L1500UH</td><td>TR 0,64–0,77 retenu (fiche Epson série L1500/L1505)</td><td>⚠ le devis annonce 0,87–1,06 « pour 12K » : c'est la plage des séries G7000/L1000 — <b>à confirmer avec le loueur</b></td></tr>
   </table>`;
 
 $('mois').textContent = '· ' + new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}) + ' · v'+VERSION;
@@ -1285,6 +1372,10 @@ renderParc();
 syncSelects();
 applyNb(2);
 setSurface();
+$('usure').value=CONFIG.usureLampe; $('cible').value=CONFIG.cibleLux; $('eta').value=CONFIG.rendement;
+$('acc').value=CONFIG.accessoiresW; $('hours').value=CONFIG.dureeH; $('cr').value=CONFIG.reculMaxPerso;
+(o=>{o.value=CONFIG.modeEco; o.textContent='Éco (≈ '+Math.round(CONFIG.modeEco*100)+' %)';})($('mode').options[1]);
+calc();
 APP_READY=true;
 </script>
 </body>

@@ -29,6 +29,25 @@ l'enregistrer dans Fichiers (iCloud Drive) puis l'ouvrir ; il fonctionne hors-li
 sont en tête du code JavaScript, commentés. Les données non recoupées sont marquées ⚠ dans
 l'interface, avec un tableau des sources en bas de page.
 
+## Ajouter une référence (projecteur ou optique)
+
+Les catalogues sont standardisés en tête du code JavaScript, chacun avec un **gabarit à
+copier-coller** et un champ `src` qui trace la source de chaque valeur :
+- `CONFIG` — les paramètres principaux (recul de la surface personnalisée, graduations du
+  schéma, rendement η, usure lampe, dérive laser, cible lux, électricité…) ;
+- `LENSES` / `MODELS` / `PARC` — optiques, modèles, machines physiques.
+
+Deux façons d'ajouter une référence :
+1. **À la main** : copier le gabarit du bloc concerné, remplir les champs depuis le manuel
+   fabricant, mettre `verif:false` sur toute valeur non confirmée (elle s'affichera ⚠).
+2. **Par Claude** : donner le nom exact du produit (ex. « ajoute le Panasonic PT-RZ120 »),
+   et demander de retrouver la fiche fabricant, recouper au moins deux sources, remplir le
+   gabarit et noter les sources dans `src` — sans jamais inventer une valeur : ce qui n'est
+   pas confirmé reste `verif:false`.
+
+⚠ Le rapport de projection d'une même optique peut changer selon la série de projecteurs :
+une entrée par série dans `LENSES` quand le fabricant donne des plages différentes.
+
 ## Autres fichiers
 - `dmx-simple-3d.html`, `Liaison HF basique antennes crmx-antennes-3d.html`,
   `Angle puissance et interférences HF light rf-dmx-champ-3d.html` : visualisations 3D DMX/HF.
