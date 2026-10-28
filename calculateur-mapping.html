@@ -299,7 +299,7 @@
     </div>
     <div class="parcWrap">
       <table>
-        <thead><tr><th></th><th>Propriétaire</th><th>Projecteur</th><th>Flux</th><th>Puissance</th><th>Utilisé dans</th></tr></thead>
+        <thead><tr><th></th><th>Propriétaire</th><th>Repère</th><th>Projecteur</th><th>Flux</th><th>Puissance</th><th>Utilisé dans</th></tr></thead>
         <tbody id="parcBody"></tbody>
       </table>
     </div>
@@ -509,8 +509,9 @@ const MODELS = {
    restent modifiables dans le tableau Parc de l'interface.
    ====================================================================== */
 const PARC = [
-  {id:'cpx-1', model:'x10000', owner:'', lens:'sd'},
-  {id:'cpx-2', model:'x10000', owner:'', lens:'sl'},
+  // tag = repère libre pour distinguer deux machines identiques (numéro, autocollant…)
+  {id:'cpx-1', model:'x10000', owner:'WLTP', tag:'nº1', lens:'sd'},
+  {id:'cpx-2', model:'x10000', owner:'WLTP', tag:'nº2', lens:'sl'},
   {id:'hdt-1', model:'hdt1000',owner:'', lens:'ah32021'},
   {id:'pu-1',  model:'pu2220b',owner:'', lens:'lu04'},
   {id:'l15-1', model:'l1500uh',owner:'', lens:'lu04'}
@@ -518,16 +519,17 @@ const PARC = [
 const STORE = 'mapping-parc-v2';
 try{
   const saved = JSON.parse(localStorage.getItem(STORE)||'{}');
-  for(const u of PARC){ const s=saved[u.id]; if(s){ if(s.owner!=null) u.owner=s.owner; if(s.W!=null) u.W=s.W; if(s.lm!=null) u.lm=s.lm; } }
+  for(const u of PARC){ const s=saved[u.id]; if(s){ if(s.owner) u.owner=s.owner; if(s.tag!=null) u.tag=s.tag; if(s.W!=null) u.W=s.W; if(s.lm!=null) u.lm=s.lm; } }
 }catch(e){}
 function saveParc(){
-  try{ localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(PARC.map(u=>[u.id,{owner:u.owner,W:u.W,lm:u.lm}])))); }catch(e){}
+  try{ localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(PARC.map(u=>[u.id,{owner:u.owner,tag:u.tag,W:u.W,lm:u.lm}])))); }catch(e){}
 }
 const unitById = id => PARC.find(u=>u.id===id);
 const unitW = u => u.W ?? MODELS[u.model].W;
 const unitLm = u => u.lm ?? MODELS[u.model].lm;
 const ownerTxt = u => (u.owner||'').trim() || 'Propriétaire à renseigner';
-const unitLabel = u => `${ownerTxt(u)} · ${MODELS[u.model].court} · ${F(unitLm(u),0)} lm`;
+const tagTxt = u => (u.tag||'').trim();
+const unitLabel = u => `${ownerTxt(u)} · ${MODELS[u.model].court}${tagTxt(u)?' '+tagTxt(u):''} · ${F(unitLm(u),0)} lm`;
 const nameKey = u => ((u.owner||'').trim() ? '0' : '1') + (u.owner||'').trim();
 const byOwner = (a,b)=> nameKey(a).localeCompare(nameKey(b),'fr') || MODELS[a.model].court.localeCompare(MODELS[b.model].court,'fr');
 const byModel = (a,b)=> MODELS[a.model].court.localeCompare(MODELS[b.model].court,'fr') || nameKey(a).localeCompare(nameKey(b),'fr');
@@ -715,6 +717,7 @@ function renderParc(){
     return `<tr>
       <td>${vpIcon(u.model,44)}</td>
       <td><input type="text" data-own="${u.id}" value="${esc(u.owner)}" placeholder="Propriétaire à renseigner"></td>
+      <td><input type="text" data-tag="${u.id}" value="${esc(u.tag||'')}" placeholder="nº, repère…" style="min-width:70px;width:80px"></td>
       <td>${m.court}</td>
       <td><input type="number" data-lm="${u.id}" value="${unitLm(u)}" step="100" min="0"> lm</td>
       <td><input type="number" data-w="${u.id}" value="${unitW(u)}" step="10" min="0"> W</td>
@@ -722,9 +725,10 @@ function renderParc(){
   }).join('');
 }
 $('parcBody').addEventListener('input',e=>{
-  const d=e.target.dataset, u=unitById(d.own || d.w || d.lm);
+  const d=e.target.dataset, u=unitById(d.own || d.tag || d.w || d.lm);
   if(!u) return;
   if(d.own!=null) u.owner=e.target.value;
+  else if(d.tag!=null) u.tag=e.target.value;
   else if(d.w!=null){ const w=+e.target.value; if(isFinite(w)&&w>=0) u.W=w; }
   else { const l=+e.target.value; if(isFinite(l)&&l>0) u.lm=l; }
   saveParc(); syncSelects(); calc();
@@ -825,7 +829,7 @@ function calc(){
     set(`${k}_ph`,-6,10,p.ph); set(`${k}_px`,-8,8,p.px);
     $(`${k}_phV`).textContent=(p.ph>=0?'+':'')+F(p.ph,1)+' m';
     $(`${k}_pxV`).textContent=(p.px>=0?'+':'')+F(p.px,1)+' m';
-    $(`${k}_own`).textContent=`— ${ownerTxt(u)}`;
+    $(`${k}_own`).textContent=`— ${ownerTxt(u)}${tagTxt(u)?' · '+tagTxt(u):''}`;
     $(`${k}_lens`).textContent=`${pr.nom} · ${g.L.nom}`+((pr.verif&&g.L.verif)?'':' · ⚠ données à vérifier');
     $(`${k}_distV`).textContent=F(p.dist,1)+' m'+(p.dist>=S.recul?' (max)':'');
     $(`${k}_zoomV`).textContent=(g.f==null?'':`${F(g.f,0)} mm · `)+`TR ${F(g.tr,2)}:1`+(g.L.trMin===g.L.trMax?' (fixe)':'');
@@ -1173,7 +1177,7 @@ function renderUnitRow(k){
   const el=$(`${k}_units`); if(!el) return;
   el.innerHTML=sortedUnits().map(u=>{const m=MODELS[u.model];
     return `<button class="unitCard${P[k].unit===u.id?' on':''}" data-u="${u.id}" title="${esc(unitLabel(u))}">
-      ${vpIcon(u.model,58)}<b>${esc(ownShort(u))}</b><small>${m.court}</small><em>${F(unitLm(u)/1000,1)}k lm</em></button>`;}).join('');
+      ${vpIcon(u.model,58)}<b>${esc(ownShort(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''}</b><small>${m.court}</small><em>${F(unitLm(u)/1000,1)}k lm</em></button>`;}).join('');
 }
 function coneSVG(L,color){
   const w=92,h=36,cy=h/2,len=w-14;
@@ -1201,7 +1205,7 @@ function buildReport(){
   const mat=currentMat(), tex=TEXS[$('tex').value];
   const svg=$('diag').outerHTML.replace('<svg ','<svg style="background:#0a0e14;border-radius:8px;max-width:100%;height:auto" ');
   const rows=ACT.map(k=>{const g=geom(k), u=unitById(P[k].unit);
-    return `<tr><td><b>${k}</b></td><td>${esc(ownerTxt(u))}</td><td>${g.pr.nom}</td><td>${g.L.nom}</td>
+    return `<tr><td><b>${k}</b></td><td>${esc(ownerTxt(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''}</td><td>${g.pr.nom}</td><td>${g.L.nom}</td>
       <td>${F(P[k].dist,1)} m</td><td>TR ${F(g.tr,2)}:1</td><td>${F(g.w,2)} × ${F(g.h,2)} m</td>
       <td>${P[k].orient==='P'?'portrait':'paysage'}</td><td>${F(unitW(u),0)} W</td></tr>`;}).join('');
   const chips=[...document.querySelectorAll('#chips .chip')].map(c=>`<li>${esc(c.innerText).replace(/\n/g,' — ')}</li>`).join('');
@@ -1222,7 +1226,7 @@ function buildReport(){
 }
 function exportCfg(){
   const cfg={v:4, date:new Date().toISOString(), ui:UI,
-    parc:Object.fromEntries(PARC.map(u=>[u.id,{owner:u.owner,W:u.W,lm:u.lm}])),
+    parc:Object.fromEntries(PARC.map(u=>[u.id,{owner:u.owner,tag:u.tag,W:u.W,lm:u.lm}])),
     surf:+$('surf').value, custom:{w:+$('cw').value,h:+$('ch').value,r:+$('cr').value},
     env:{amb:+$('amb').value,mat:$('mat').value,tex:$('tex').value,rhoPerso:+$('rhoPerso').value},
     nb, P:JSON.parse(JSON.stringify(P)), sort:$('sort').value,
@@ -1233,7 +1237,7 @@ function exportCfg(){
 function importCfg(c){
   if(!c || c.v!==4) throw new Error('version de config attendue : 4');
   if(c.parc) for(const u of PARC){const x=c.parc[u.id];
-    if(x){ u.owner=x.owner??u.owner; if(x.W!=null)u.W=x.W; if(x.lm!=null)u.lm=x.lm; }}
+    if(x){ if(x.owner)u.owner=x.owner; if(x.tag!=null)u.tag=x.tag; if(x.W!=null)u.W=x.W; if(x.lm!=null)u.lm=x.lm; }}
   saveParc();
   if(c.ui){ Object.assign(UI,c.ui); applyUI(); }
   if(c.sort && SORTS[c.sort]) $('sort').value=c.sort;
