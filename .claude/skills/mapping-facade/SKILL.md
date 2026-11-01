@@ -204,6 +204,12 @@ Il prend n'importe quelle façade, a des préréglages, retient les réglages du
 dans le navigateur, et calcule : éclairement, rapport de projection, pavage, parc
 nécessaire, résolution de composition, table distance ↔ optique.
 
+Même logique pour la maquette d'implantation 3D, `outils/implantation-3d.html` :
+façade, place, zone public, plateforme VP, régie dos à dos, village sous tonnelles,
+sono, lumières, et contrôle géométrique (faisceaux au-dessus des têtes, obstacles
+dans les cônes, allées, dégagements). On l'adapte à un autre site en changeant le
+bloc `PROJET` en tête du fichier, on ne la réécrit pas.
+
 Le contrat de synchronisation, dans les deux sens :
 
 - **au début d'un projet** : récupère ce fichier, copie-le dans le dossier du projet

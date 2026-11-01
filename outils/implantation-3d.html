@@ -3,22 +3,23 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Implantation 3D — mapping façade</title>
+<title>Plan d'implantation 3D — mapping, sono, lumières, village</title>
 <style>
   :root{--bg:#0e1116;--panel:#161b22;--line:#2a3138;--txt:#e6edf3;--dim:#8b949e;--acc:#ffb454;
         --ok:#3fb950;--warn:#f0883e;--bad:#f85149}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
             font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-  #wrap{display:grid;grid-template-columns:1fr 360px;height:100%}
+  #wrap{display:grid;grid-template-columns:1fr 380px;height:100%}
   #view{position:relative;min-height:0}
   #view canvas{display:block;width:100%;height:100%}
-  #bar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap}
+  #bar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 20px)}
   button{background:#21262d;color:var(--txt);border:1px solid var(--line);border-radius:6px;
          padding:6px 10px;font:inherit;cursor:pointer}
   button:hover{border-color:var(--acc)}
-  #legend{position:absolute;bottom:10px;left:10px;background:rgba(14,17,22,.82);padding:8px 10px;
-          border-radius:8px;font-size:12px;color:var(--dim);line-height:1.7}
+  button.sec{background:transparent;color:var(--dim)}
+  #legend{position:absolute;bottom:10px;left:10px;background:rgba(14,17,22,.85);padding:8px 10px;
+          border-radius:8px;font-size:12px;color:var(--dim);line-height:1.65;max-width:360px}
   #legend b{color:var(--txt)}
   .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
   #side{background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:12px}
@@ -26,18 +27,23 @@
   #side h2:first-child{margin-top:0}
   details{border:1px solid var(--line);border-radius:8px;margin:6px 0;background:#0b0f14}
   summary{padding:7px 10px;cursor:pointer;font-weight:600}
+  summary span{color:var(--dim);font-weight:400}
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:0 10px 10px}
+  .grid.g2{grid-template-columns:1fr 1fr}
   .grid label{font-size:11px;color:var(--dim);display:block}
-  input[type=number]{width:100%;background:#161b22;border:1px solid var(--line);color:var(--txt);
-                     border-radius:5px;padding:4px 6px;font:inherit}
-  .chk{display:flex;align-items:center;gap:8px;padding:4px 0}
+  input[type=number],input[type=text],select{width:100%;background:#161b22;border:1px solid var(--line);
+       color:var(--txt);border-radius:5px;padding:4px 6px;font:inherit}
+  .chk{display:flex;align-items:center;gap:8px;padding:3px 0}
   .item{padding:6px 8px;border-radius:6px;margin:4px 0;border-left:3px solid var(--dim);background:#0b0f14;font-size:13px}
   .ok{border-color:var(--ok)} .warn{border-color:var(--warn)} .bad{border-color:var(--bad)}
   table{width:100%;border-collapse:collapse;font-size:12px}
   td{padding:4px 2px;border-bottom:1px solid var(--line)}
   td:last-child{text-align:right;font-variant-numeric:tabular-nums}
   .note{font-size:11.5px;color:var(--dim);margin-top:10px}
-  @media(max-width:860px){#wrap{grid-template-columns:1fr;grid-template-rows:60vh auto}}
+  .stand{display:grid;grid-template-columns:1fr 110px 28px;gap:6px;padding:3px 10px;align-items:center}
+  .stand button{padding:2px 6px}
+  .row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+  @media(max-width:900px){#wrap{grid-template-columns:1fr;grid-template-rows:58vh auto}}
 </style>
 </head>
 <body>
@@ -45,15 +51,19 @@
   <div id="view">
     <div id="bar">
       <button data-view="persp">Perspective</button>
-      <button data-view="plan">Plan d'implantation</button>
-      <button data-view="cote">Vue de côté</button>
+      <button data-view="plan">Plan général</button>
+      <button data-view="bloc">Bloc central</button>
+      <button data-view="village">Village</button>
+      <button data-view="cote">Côté</button>
       <button data-view="public">Depuis le public</button>
+      <button class="sec" id="btnPng">⤓ PNG</button>
     </div>
     <div id="legend">
-      <div><span class="sw" style="background:#ffb454"></span><b>Projecteur</b> — cône d'émission + image sur la façade</div>
-      <div><span class="sw" style="background:#3fb950"></span><b>Laser</b> — vert : conforme · orange : à vérifier · rouge : interdit</div>
-      <div><span class="sw" style="background:#9fd3ff55"></span><b>Zone public</b> — capacité théorique à 2 pers/m²</div>
-      <div><span class="sw" style="background:#58a6ff"></span><b>Câblage</b> — chemins de la régie</div>
+      <div><span class="sw" style="background:#ffb454"></span><b>Vidéoprojecteur</b> — cône d'émission + image sur la façade</div>
+      <div><span class="sw" style="background:#3fb950"></span><b>Laser</b> — vert conforme · orange à vérifier · rouge interdit</div>
+      <div><span class="sw" style="background:#9fd3ff55"></span><b>Zone public</b> · <span class="sw" style="background:#f0883e55"></span><b>Couverture sono</b></div>
+      <div><span class="sw" style="background:#d7dde4"></span><b>Régie</b> dos à dos avec la plateforme VP · <span class="sw" style="background:#e8e0c8"></span><b>Tonnelles</b> du village</div>
+      <div><span class="sw" style="background:#b36bff"></span><b>Lumières</b> — totems et wash de façade</div>
     </div>
   </div>
   <aside id="side"></aside>
@@ -63,14 +73,12 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
 /* =====================================================================
-   PROJET — tout ce qui dépend du bâtiment et du site. Pour un autre
-   chantier, change ce bloc (façade, zone public, volumes voisins).
-   Unités : mètres. X = largeur (0 = axe de la façade), Y = hauteur,
-   Z = profondeur (0 = plan de la façade, + = vers la place).
+   PROJET — ce qui dépend du bâtiment et du site. Pour un autre chantier,
+   change ce bloc. Unités : mètres. X = largeur (0 = axe de la façade),
+   Y = hauteur, Z = profondeur (0 = plan de la façade, + = vers la place).
    ===================================================================== */
 const PROJET = {
-  nom: "Basilique Saint-Denis — façade occidentale",
-  // silhouette de la façade (contour extérieur, sens horaire depuis le sol)
+  nom: "Basilique Saint-Denis — parvis",
   facade: {
     largeur: 32.5, hauteur: 37.3,
     contour: [[-16.25,0],[-16.25,29.2],[-5.9,29.2],[0,37.3],[5.9,29.2],[5.2,29.2],
@@ -78,19 +86,14 @@ const PROJET = {
               [15.8,50.6],[15.8,29.2],[16.25,29.2],[16.25,0]],
     profondeur: 3.0,
     rosace: {x:0, y:22.5, r:3.0},
-    // ouvertures sombres (x0, x1, y0, y1)
     ouvertures: [
-      [-2.6,2.6,0,5.5],[-12.3,-6.9,0,3.3],[6.9,12.3,0,3.3],     // portails
-      [-2.95,2.95,13.6,24],                                       // grande baie
-      [-11.25,-7.95,12.2,23],[-7.95,-4.65,12.2,23],               // lancettes
-      [7.95,11.25,12.2,23],[11.25,14.55,12.2,23],
-      [6.3,9.5,30.1,36.3],[11.5,14.7,30.1,36.3],                  // abat-sons tour
-      [6.3,9.5,37,49],[11.5,14.7,37,49]
+      [-2.6,2.6,0,5.5],[-12.3,-6.9,0,3.3],[6.9,12.3,0,3.3],
+      [-2.95,2.95,13.6,24],
+      [-11.25,-7.95,12.2,23],[-7.95,-4.65,12.2,23],[7.95,11.25,12.2,23],[11.25,14.55,12.2,23],
+      [6.3,9.5,30.1,36.3],[11.5,14.7,30.1,36.3],[6.3,9.5,37,49],[11.5,14.7,37,49]
     ]
   },
-  // zone public : rectangle au sol devant la façade
   zonePublic: {x0:-30, x1:30, z0:6, z1:60, hautYeux:2.5, densite:2},
-  // volumes indicatifs du site (approximés, à remplacer par un relevé)
   voisins: [
     {nom:"bâti ouest", x0:-55, x1:-30, z0:0,  z1:50,  h:16},
     {nom:"bâti est",   x0: 32, x1: 60, z0:0,  z1:45,  h:14},
@@ -101,448 +104,595 @@ const PROJET = {
 };
 
 /* =====================================================================
-   ÉTAT — ce que l'on déplace. Modifié par l'interface.
+   ÉTAT — ce que l'on déplace.
+   Le BLOC CENTRAL est l'idée d'implantation : tout le monde au même
+   endroit, dans l'axe. Plateforme VP devant (côté façade), régie dos à
+   dos juste derrière, puis l'allée du village qui part vers l'arrière.
+   Déplacer le bloc déplace tout ; chaque élément garde sa place relative.
    ===================================================================== */
-const ETAT = {
+const DEFAUT = () => ({
+  bloc: {x:0, z:70, hauteurVP:10, largeurPlateforme:9, profondeurPlateforme:3},
   projecteurs: [
-    {nom:"VP1 — bas",  x:-4, y:10, z:70, cx:0, cy:9.7,  tr:2.02, ratio:16/9, lumens:40000},
-    {nom:"VP2 — haut", x: 4, y:10, z:70, cx:0, cy:27.6, tr:2.02, ratio:16/9, lumens:40000}
+    {nom:"VP1 — bas",  dx:-1.3, cx:0, cy:9.7,  tr:2.02, ratio:16/9, lumens:40000},
+    {nom:"VP2 — haut", dx: 1.3, cx:0, cy:27.6, tr:2.02, ratio:16/9, lumens:40000}
   ],
   lasers: [
-    {nom:"Laser 1", x:-8, y:9, z:66, tx:-6, ty:17, puissance:10},
-    {nom:"Laser 2", x: 8, y:9, z:66, tx: 8, ty:20, puissance:10}
+    {nom:"Laser 1", dx:-3.6, dy:-1.0, tx:-6, ty:17, puissance:10},
+    {nom:"Laser 2", dx: 3.6, dy:-1.0, tx: 8, ty:20, puissance:10}
   ],
-  regie: {x:-22, z:82, longueur:6.06, largeur:2.44, hauteur:2.59},
-  options: {zone:true, voisins:true, cables:true, nef:true, echafaud:true}
-};
+  regie: {longueur:6.06, largeur:2.44, hauteur:2.59, ecart:0.4},
+  village: {
+    allee:4.0, pas:3.6, cote:3.0, ecartRegie:1.5,
+    stands:[
+      {nom:"Prévention",       type:"prevention"},
+      {nom:"Poste de secours", type:"secours"},
+      {nom:"Accueil · infos",  type:"accueil"},
+      {nom:"Buvette",          type:"buvette"},
+      {nom:"Restauration",     type:"buvette"},
+      {nom:"Asso 1",           type:"asso"},
+      {nom:"Asso 2",           type:"asso"},
+      {nom:"Asso 3",           type:"asso"}
+    ]
+  },
+  sono: {x:19.5, z:4, hauteur:6.5, ouverture:90, portee:62, visee:10, subs:2,
+         delais:0, delaiX:13, delaiZ:38, delaiH:5},
+  lumieres: {
+    totems:[{x:-31, z:10, h:5.5},{x:31, z:10, h:5.5},{x:-31, z:56, h:5.5},{x:31, z:56, h:5.5}],
+    wash:[{x:-13, z:9, tx:-10, ty:26},{x:13, z:9, tx:10.5, ty:44}]
+  },
+  options:{zone:true, voisins:true, cables:true, nef:true, echafaud:true, etiquettes:true,
+           sono:true, lumieres:true, village:true, cones:true}
+});
+let ETAT = DEFAUT();
+try { const s = JSON.parse(localStorage.getItem('implantation-3d') || 'null');
+      if (s && s.bloc && s.village) ETAT = Object.assign(DEFAUT(), s); } catch(e){}
+function sauver(){ try { localStorage.setItem('implantation-3d', JSON.stringify(ETAT)); } catch(e){} }
 
 /* =====================================================================
-   GÉOMÉTRIE DE LA FAÇADE ET DU SITE
+   POSITIONS ABSOLUES — tout dérive du bloc
    ===================================================================== */
-const COULEURS = {pierre:0xd9d2bf, sombre:0x2a2620, vitrail:0x1d2a3d, pave:0x8a8478,
-                  voisin:0xb9b2a0, nef:0xcfc8b4, regie:0xd7dde4, echafaud:0xc98a3c,
-                  projo:0x222730, laser:0x3fb950};
-const etat_couleur = {ok:0x3fb950, warn:0xf0883e, bad:0xf85149};
+function posPlateforme(){
+  const b = ETAT.bloc;
+  return {x0:b.x-b.largeurPlateforme/2, x1:b.x+b.largeurPlateforme/2,
+          z0:b.z-b.profondeurPlateforme/2, z1:b.z+b.profondeurPlateforme/2, y0:0, y1:b.hauteurVP, nom:"plateforme VP"};
+}
+function posProjecteur(p){ const b = ETAT.bloc; return {x:b.x+p.dx, y:b.hauteurVP, z:b.z}; }
+function posLaser(l){ const b = ETAT.bloc; return {x:b.x+l.dx, y:b.hauteurVP+l.dy, z:b.z}; }
+function regieAABB(){
+  const b = ETAT.bloc, r = ETAT.regie, pl = posPlateforme();
+  const zc = pl.z1 + r.ecart + r.largeur/2;              // dos à dos avec la plateforme
+  return {x0:b.x - r.longueur/2, x1:b.x + r.longueur/2, z0:zc - r.largeur/2, z1:zc + r.largeur/2,
+          y0:0, y1:r.hauteur, nom:"régie"};
+}
+function posStands(){
+  const b = ETAT.bloc, v = ETAT.village, rg = regieAABB(), out = [];
+  const zDebut = rg.z1 + v.ecartRegie + v.cote/2;
+  v.stands.forEach((s,i) => {
+    const rang = Math.floor(i/2), cote = i%2 ? 1 : -1;
+    const xc = b.x + cote*(v.allee/2 + v.cote/2);
+    const zc = zDebut + rang*v.pas;
+    out.push({x0:xc-v.cote/2, x1:xc+v.cote/2, z0:zc-v.cote/2, z1:zc+v.cote/2, y0:0, y1:3.0,
+              nom:s.nom, type:s.type, x:xc, z:zc});
+  });
+  return out;
+}
+function posSono(){
+  const s = ETAT.sono, out = [];
+  [-1,1].forEach(c => out.push({x0:c*s.x-.6, x1:c*s.x+.6, z0:s.z-.6, z1:s.z+.6, y0:0, y1:s.hauteur,
+                                nom:`PA ${c<0?'jardin':'cour'}`, x:c*s.x, z:s.z, cote:c, principal:true}));
+  for (let i=0;i<s.delais;i++){
+    const c = i%2 ? 1 : -1;
+    out.push({x0:c*s.delaiX-.5, x1:c*s.delaiX+.5, z0:s.delaiZ-.5, z1:s.delaiZ+.5, y0:0, y1:s.delaiH,
+              nom:`délai ${i+1}`, x:c*s.delaiX, z:s.delaiZ, cote:c, principal:false});
+  }
+  return out;
+}
+function posTotems(){
+  return ETAT.lumieres.totems.map((t,i) => ({x0:t.x-.4, x1:t.x+.4, z0:t.z-.4, z1:t.z+.4, y0:0, y1:t.h,
+                                            nom:`totem ${i+1}`, x:t.x, z:t.z, h:t.h}));
+}
+/* tous les volumes susceptibles de couper un faisceau */
+function obstacles(){
+  const o = [regieAABB(), ...posSono(), ...posTotems()];
+  if (ETAT.options.village) o.push(...posStands());
+  return o;
+}
 
+/* =====================================================================
+   PRIMITIVES
+   ===================================================================== */
+const COULEURS = {pierre:0xd9d2bf, sombre:0x2a2620, vitrail:0x1d2a3d, pave:0x8a8478, voisin:0xb9b2a0,
+                  nef:0xcfc8b4, regie:0xd7dde4, echafaud:0xc98a3c, projo:0x222730, sono:0x1c1f24,
+                  totem:0x2b2f36, tente:0xe8e0c8};
+const TYPE_COULEUR = {prevention:0x4fa3ff, secours:0xf85149, accueil:0xffb454, buvette:0xe4c05a, asso:0xe8e0c8};
+const etat_couleur = {ok:0x3fb950, warn:0xf0883e, bad:0xf85149};
 let scene, camera, renderer, controls;
 const stat = new THREE.Group(), dyn = new THREE.Group();
 
 function mat(c, extra){ return new THREE.MeshStandardMaterial(Object.assign({color:c, roughness:.85, metalness:0}, extra||{})); }
 function boite(x0,x1,y0,y1,z0,z1, m){
-  const g = new THREE.BoxGeometry(x1-x0, y1-y0, z1-z0);
-  const o = new THREE.Mesh(g, m);
+  const o = new THREE.Mesh(new THREE.BoxGeometry(x1-x0, y1-y0, z1-z0), m);
   o.position.set((x0+x1)/2, (y0+y1)/2, (z0+z1)/2);
-  o.castShadow = o.receiveShadow = true;
-  return o;
+  o.castShadow = o.receiveShadow = true; return o;
 }
-function cylindre(a, b, rayon, m){
+function cylindre(a, b, rayon, m, seg=8){
   const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b);
   const dir = B.clone().sub(A), len = dir.length();
-  const o = new THREE.Mesh(new THREE.CylinderGeometry(rayon, rayon, len, 8), m);
+  const o = new THREE.Mesh(new THREE.CylinderGeometry(rayon, rayon, len, seg), m);
   o.position.copy(A).add(B).multiplyScalar(.5);
-  o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize());
-  return o;
+  o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize()); return o;
+}
+function cone(sommet, base, rayon, couleur, opacite){
+  const A = new THREE.Vector3(...sommet), B = new THREE.Vector3(...base);
+  const dir = B.clone().sub(A), len = dir.length();
+  const g = new THREE.ConeGeometry(rayon, len, 24, 1, true);
+  g.translate(0, -len/2, 0); g.rotateX(Math.PI);          // pointe au sommet
+  const o = new THREE.Mesh(g, new THREE.MeshBasicMaterial({color:couleur, transparent:true, opacity:opacite,
+                                                           side:THREE.DoubleSide, depthWrite:false}));
+  o.position.copy(A);
+  o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize()); return o;
+}
+function etiquette(texte, x, y, z, largeur=6, couleur='#e6edf3'){
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = 'rgba(14,17,22,.78)'; ctx.fillRect(0,0,512,128);
+  ctx.font = 'bold 56px -apple-system, Segoe UI, Roboto, sans-serif';
+  ctx.fillStyle = couleur; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(texte, 256, 64);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false}));
+  sp.scale.set(largeur, largeur/4, 1); sp.position.set(x, y, z); sp.renderOrder = 10; return sp;
 }
 
+/* =====================================================================
+   FAÇADE ET SITE (statique)
+   ===================================================================== */
 function construireFacade(){
-  const f = PROJET.facade;
-  const forme = new THREE.Shape();
+  const f = PROJET.facade, forme = new THREE.Shape();
   f.contour.forEach(([x,y],i) => i ? forme.lineTo(x,y) : forme.moveTo(x,y));
   const g = new THREE.ExtrudeGeometry(forme, {depth:f.profondeur, bevelEnabled:false});
-  g.translate(0,0,-f.profondeur);                     // la façade est dans le plan z=0
+  g.translate(0,0,-f.profondeur);
   const corps = new THREE.Mesh(g, mat(COULEURS.pierre, {roughness:.9}));
-  corps.castShadow = corps.receiveShadow = true;
-  stat.add(corps);
-
-  const vitre = mat(COULEURS.vitrail, {roughness:.3, metalness:.1});
-  const porte = mat(COULEURS.sombre, {roughness:.6});
+  corps.castShadow = corps.receiveShadow = true; stat.add(corps);
+  const vitre = mat(COULEURS.vitrail, {roughness:.3, metalness:.1}), porte = mat(COULEURS.sombre, {roughness:.6});
   f.ouvertures.forEach(([x0,x1,y0,y1], i) => {
-    const m = i < 3 ? porte : vitre;
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(x1-x0, y1-y0), m);
-    p.position.set((x0+x1)/2, (y0+y1)/2, .02);
-    stat.add(p);
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(x1-x0, y1-y0), i<3 ? porte : vitre);
+    p.position.set((x0+x1)/2, (y0+y1)/2, .02); stat.add(p);
   });
-  // rosace-horloge
   const r = f.rosace;
-  const rose = new THREE.Mesh(new THREE.CircleGeometry(r.r, 48),
-                              mat(0xc8a24a, {roughness:.4, metalness:.5}));
+  const rose = new THREE.Mesh(new THREE.CircleGeometry(r.r, 48), mat(0xc8a24a, {roughness:.4, metalness:.5}));
   rose.position.set(r.x, r.y, .03); stat.add(rose);
   const vit = new THREE.Mesh(new THREE.CircleGeometry(r.r*.72, 48), vitre);
   vit.position.set(r.x, r.y, .04); stat.add(vit);
 }
-
 function construireSite(){
-  const sol = new THREE.Mesh(new THREE.PlaneGeometry(240, 200), mat(COULEURS.pave, {roughness:1}));
-  sol.rotation.x = -Math.PI/2; sol.position.set(0,0,60); sol.receiveShadow = true;
-  stat.add(sol);
-  // nef derrière la façade (volume simplifié)
-  const n = PROJET.nef;
-  const nefM = new THREE.Group(); nefM.userData.groupe = 'nef';
+  const sol = new THREE.Mesh(new THREE.PlaneGeometry(240, 220), mat(COULEURS.pave, {roughness:1}));
+  sol.rotation.x = -Math.PI/2; sol.position.set(0,0,60); sol.receiveShadow = true; stat.add(sol);
+  const n = PROJET.nef, nefM = new THREE.Group(); nefM.userData.groupe = 'nef';
   nefM.add(boite(n.x0, n.x1, 0, n.h, n.z0, n.z1, mat(COULEURS.nef)));
-  nefM.add(boite(n.x0-.5, n.x1+.5, n.h, n.h+1.5, n.z0, n.z1, mat(0x5a5447)));  // toiture
+  nefM.add(boite(n.x0-.5, n.x1+.5, n.h, n.h+1.5, n.z0, n.z1, mat(0x5a5447)));
   stat.add(nefM);
-  // voisins
   const vois = new THREE.Group(); vois.userData.groupe = 'voisins';
   PROJET.voisins.forEach(v => vois.add(boite(v.x0, v.x1, 0, v.h, v.z0, v.z1, mat(COULEURS.voisin))));
   stat.add(vois);
 }
 
-/* ------------------------------ régie ------------------------------- */
-function regieAABB(){
-  const r = ETAT.regie;
-  return {x0:r.x - r.longueur/2, x1:r.x + r.longueur/2,
-          z0:r.z - r.largeur/2,  z1:r.z + r.largeur/2, y0:0, y1:r.hauteur};
+/* =====================================================================
+   ÉLÉMENTS DYNAMIQUES
+   ===================================================================== */
+function dessinerPlateforme(g){
+  const pl = posPlateforme(), b = ETAT.bloc;
+  if (!ETAT.options.echafaud) return;
+  const m = mat(COULEURS.echafaud, {roughness:.6});
+  // montants aux angles + lisses intermédiaires tous les ~2 m
+  const xs = [], zs = [pl.z0, pl.z1];
+  for (let x = pl.x0; x <= pl.x1 + .01; x += (pl.x1-pl.x0)/Math.max(1, Math.round((pl.x1-pl.x0)/2.25))) xs.push(x);
+  xs.forEach(x => zs.forEach(z => g.add(cylindre([x,0,z],[x,pl.y1-.25,z], .05, m))));
+  for (let y = 2; y < pl.y1 - .3; y += 2){
+    zs.forEach(z => g.add(cylindre([pl.x0,y,z],[pl.x1,y,z], .03, m)));
+    [pl.x0, pl.x1].forEach(x => g.add(cylindre([x,y,pl.z0],[x,y,pl.z1], .03, m)));
+  }
+  g.add(boite(pl.x0-.15, pl.x1+.15, pl.y1-.45, pl.y1-.2, pl.z0-.15, pl.z1+.15, mat(0x8a5a26, {roughness:.8})));
+  // garde-corps
+  [[pl.x0,pl.z0,pl.x1,pl.z0],[pl.x0,pl.z1,pl.x1,pl.z1],[pl.x0,pl.z0,pl.x0,pl.z1],[pl.x1,pl.z0,pl.x1,pl.z1]]
+    .forEach(([a,b2,c,d]) => g.add(cylindre([a,pl.y1+.9,b2],[c,pl.y1+.9,d], .025, m)));
+  // bâche de protection pluie sur les machines (toit léger)
+  g.add(boite(pl.x0-.2, pl.x1+.2, pl.y1+2.3, pl.y1+2.4, pl.z0-.2, pl.z1+.2,
+              mat(0xf2f2f2, {transparent:true, opacity:.55})));
+  if (ETAT.options.etiquettes) g.add(etiquette("PLATEFORME VP · " + b.hauteurVP + " m", b.x, pl.y1+3.4, b.z, 9));
+}
+function cadreImage(p){
+  const P = posProjecteur(p), W = P.z / p.tr, H = W / p.ratio;
+  return {W, H, x0:p.cx-W/2, x1:p.cx+W/2, y0:p.cy-H/2, y1:p.cy+H/2};
+}
+function dessinerProjecteur(g, p){
+  const im = cadreImage(p), P0 = posProjecteur(p), P = [P0.x, P0.y, P0.z];
+  const C = [[im.x0,im.y0,0],[im.x1,im.y0,0],[im.x1,im.y1,0],[im.x0,im.y1,0]];
+  if (ETAT.options.cones){
+    const pos = [];
+    for (let i=0;i<4;i++) pos.push(...P, ...C[i], ...C[(i+1)%4]);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.computeVertexNormals();
+    g.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:.09, side:THREE.DoubleSide, depthWrite:false})));
+    const edges = []; C.forEach(c => edges.push(...P, ...c)); for (let i=0;i<4;i++) edges.push(...C[i], ...C[(i+1)%4]);
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3));
+    g.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color:0xffb454})));
+  }
+  const lis = new THREE.Mesh(new THREE.PlaneGeometry(im.x1-im.x0, im.y1-im.y0),
+              new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:.22, depthWrite:false}));
+  lis.position.set((im.x0+im.x1)/2, (im.y0+im.y1)/2, .06); g.add(lis);
+  const corps = new THREE.Mesh(new THREE.BoxGeometry(.6,.42,.7), mat(COULEURS.projo, {roughness:.4, metalness:.5}));
+  corps.position.set(...P); corps.lookAt(new THREE.Vector3(p.cx, p.cy, 0)); corps.castShadow = true; g.add(corps);
+  const obj = new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.12,16), mat(0x0b0d10, {roughness:.2}));
+  obj.position.copy(corps.position).add(new THREE.Vector3(0,0,.4).applyQuaternion(corps.quaternion));
+  obj.quaternion.copy(corps.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI/2,0,0)));
+  g.add(obj);
+}
+function dessinerLaser(g, l, statut){
+  const c = etat_couleur[statut], L = posLaser(l);
+  g.add(boite(L.x-.2,L.x+.2,L.y-.12,L.y+.12,L.z-.2,L.z+.2, mat(0x111418, {roughness:.4, metalness:.6})));
+  g.add(cylindre([L.x,L.y,L.z],[l.tx,l.ty,0], .05, new THREE.MeshBasicMaterial({color:c})));
+  const pt = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshBasicMaterial({color:c}));
+  pt.position.set(l.tx, l.ty, .05); g.add(pt);
 }
 function dessinerRegie(g){
   const b = regieAABB();
   g.add(boite(b.x0,b.x1,0,b.y1,b.z0,b.z1, mat(COULEURS.regie, {roughness:.5, metalness:.3})));
-  // porte et joint d'étanchéité
+  // porte côté village (on travaille dos à la plateforme, face au village)
   const porte = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.2), mat(0x9aa4ae));
   porte.position.set(b.x0 + .9, 1.1, b.z1 + .02); g.add(porte);
-  // grille de ventilation
+  const fen = new THREE.Mesh(new THREE.PlaneGeometry(2.4, .9), mat(0x1d2a3d, {roughness:.2, metalness:.4}));
+  fen.position.set((b.x0+b.x1)/2 + .6, 1.6, b.z0 - .02); fen.rotation.y = Math.PI; g.add(fen);  // vitre vers la façade
   const grille = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .6), mat(0x40464e));
-  grille.position.set(b.x1 - 1.2, 2.1, b.z1 + .02); g.add(grille);
-  // étiquette
-  const lab = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .25), mat(0xffb454, {emissive:0x3a2600}));
-  lab.position.set((b.x0+b.x1)/2, b.y1 - .2, b.z1 + .02); g.add(lab);
+  grille.position.set(b.x1 - 1.0, 2.1, b.z1 + .02); g.add(grille);
+  const clim = boite(b.x1-1.2, b.x1-.2, b.y1, b.y1+.6, (b.z0+b.z1)/2-.5, (b.z0+b.z1)/2+.5, mat(0xbfc6cf));
+  g.add(clim);
+  if (ETAT.options.etiquettes) g.add(etiquette("RÉGIE ÉTANCHE 20'", (b.x0+b.x1)/2, b.y1+1.2, (b.z0+b.z1)/2, 7));
 }
-
-/* ---------------------------- projecteurs --------------------------- */
-function cadreImage(p){
-  const W = p.z / p.tr, H = W / p.ratio;
-  return {W, H, x0:p.cx-W/2, x1:p.cx+W/2, y0:p.cy-H/2, y1:p.cy+H/2};
+function dessinerTonnelle(g, s){
+  const c = ETAT.village.cote, h0 = 2.2, h1 = 3.0, col = TYPE_COULEUR[s.type] || COULEURS.tente;
+  const mPied = mat(0x8c9096, {metalness:.5, roughness:.4});
+  [[s.x0,s.z0],[s.x1,s.z0],[s.x1,s.z1],[s.x0,s.z1]].forEach(([x,z]) => g.add(cylindre([x,0,z],[x,h0,z], .035, mPied)));
+  // toit pyramidal
+  const geo = new THREE.ConeGeometry(c*Math.SQRT1_2*1.02, h1-h0, 4, 1);
+  geo.rotateY(Math.PI/4);
+  const toit = new THREE.Mesh(geo, mat(col, {roughness:.9, side:THREE.DoubleSide}));
+  toit.position.set(s.x, h0+(h1-h0)/2, s.z); toit.castShadow = true; g.add(toit);
+  // comptoir
+  g.add(boite(s.x0+.2, s.x1-.2, 0, .95, s.z0+.1, s.z0+.7, mat(0x6b5a44)));
+  if (s.type==='secours'){ const cr = new THREE.Mesh(new THREE.PlaneGeometry(.9,.9), mat(0xffffff)); cr.position.set(s.x, h0+.6, s.z1+.02); g.add(cr);
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(.6,.6), mat(0xf85149)); pl.position.set(s.x, h0+.6, s.z1+.03); g.add(pl); }
+  if (ETAT.options.etiquettes) g.add(etiquette(s.nom, s.x, h1+.6, s.z, 3.4));
 }
-function dessinerProjecteur(g, p){
-  const im = cadreImage(p);
-  const P = [p.x, p.y, p.z];
-  const C = [[im.x0,im.y0,0],[im.x1,im.y0,0],[im.x1,im.y1,0],[im.x0,im.y1,0]];
-
-  // cône d'émission (faces translucides)
-  const pos = [];
-  for (let i=0;i<4;i++){ pos.push(...P, ...C[i], ...C[(i+1)%4]); }
-  pos.push(...C[0], ...C[1], ...C[2], ...C[0], ...C[2], ...C[3]);
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  geo.computeVertexNormals();
-  g.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffb454, transparent:true,
-        opacity:.10, side:THREE.DoubleSide, depthWrite:false})));
-
-  // contour du cône
-  const edges = [];
-  C.forEach(c => edges.push(...P, ...c));
-  for (let i=0;i<4;i++) edges.push(...C[i], ...C[(i+1)%4]);
-  const lg = new THREE.BufferGeometry();
-  lg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3));
-  g.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color:0xffb454})));
-
-  // image projetée : liseré lumineux sur la façade
-  const liseré = new THREE.Mesh(new THREE.PlaneGeometry(im.x1-im.x0, im.y1-im.y0),
-                 new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:.22, depthWrite:false}));
-  liseré.position.set((im.x0+im.x1)/2, (im.y0+im.y1)/2, .06); g.add(liseré);
-
-  // corps de la machine, orienté vers le centre de l'image
-  const corps = new THREE.Mesh(new THREE.BoxGeometry(.55,.38,.62), mat(COULEURS.projo, {roughness:.4, metalness:.5}));
-  corps.position.set(...P);
-  corps.lookAt(new THREE.Vector3(p.cx, p.cy, 0));
-  corps.castShadow = true; g.add(corps);
-  const objectif = new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.1,16), mat(0x0b0d10, {roughness:.2}));
-  objectif.rotation.x = Math.PI/2;
-  objectif.position.copy(corps.position).add(new THREE.Vector3(0,0,.36).applyQuaternion(corps.quaternion));
-  objectif.quaternion.copy(corps.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI/2,0,0)));
-  g.add(objectif);
-
-  // échafaudage de support jusqu'au sol
-  if (ETAT.options.echafaud && p.y > 1.2){
-    const s = .9, base = [p.x-s, p.z-s], haut = [p.x+s, p.z+s];
-    [[p.x-s,p.z-s],[p.x+s,p.z-s],[p.x+s,p.z+s],[p.x-s,p.z+s]].forEach(([x,z]) =>
-      g.add(cylindre([x,0,z],[x,p.y-.2,z], .05, mat(COULEURS.echafaud, {roughness:.6}))));
-    g.add(boite(p.x-s-.15, p.x+s+.15, p.y-.45, p.y-.2, p.z-s-.15, p.z+s+.15, mat(COULEURS.echafaud, {roughness:.7})));
-  }
+function dessinerSono(g){
+  const s = ETAT.sono;
+  posSono().forEach(st => {
+    const mN = mat(COULEURS.sono, {roughness:.6});
+    if (st.principal){
+      for (let i=0;i<s.subs;i++) g.add(boite(st.x-.6, st.x+.6, i*.7, i*.7+.65, st.z-.6, st.z+.6, mNoir(mN)));
+      const base = s.subs*.7 + .2, top = st.y1;
+      g.add(cylindre([st.x,0,st.z],[st.x,top,st.z], .04, mat(0x8c9096, {metalness:.5})));
+      for (let y = top - .35; y > base; y -= .38) g.add(boite(st.x-.45, st.x+.45, y-.32, y, st.z-.3, st.z+.3, mN));
+    } else {
+      g.add(cylindre([st.x,0,st.z],[st.x,st.y1,st.z], .04, mat(0x8c9096, {metalness:.5})));
+      for (let y = st.y1 - .3; y > st.y1 - 1.6; y -= .38) g.add(boite(st.x-.3, st.x+.3, y-.3, y, st.z-.22, st.z+.22, mN));
+    }
+    // secteur de couverture au sol
+    const ang = (s.ouverture/2) * Math.PI/180, az = (st.cote * -s.visee) * Math.PI/180;   // visée vers l'intérieur
+    const forme = new THREE.Shape(); forme.moveTo(0,0);
+    const portee = st.principal ? s.portee : s.portee*.45;
+    for (let a = -ang; a <= ang + 1e-6; a += ang/12) forme.lineTo(Math.sin(a+az)*portee, Math.cos(a+az)*portee);
+    forme.lineTo(0,0);
+    const sect = new THREE.Mesh(new THREE.ShapeGeometry(forme), new THREE.MeshBasicMaterial({color:0xf0883e, transparent:true, opacity:.10, side:THREE.DoubleSide, depthWrite:false}));
+    sect.rotation.x = -Math.PI/2; sect.position.set(st.x, .04, st.z); g.add(sect);
+    if (ETAT.options.etiquettes) g.add(etiquette(st.nom.toUpperCase(), st.x, st.y1+1.0, st.z, 5));
+  });
+  function mNoir(m){ return m; }
 }
-
-/* ------------------------------ lasers ------------------------------ */
-function dessinerLaser(g, l, statut){
-  const c = etat_couleur[statut];
-  const corps = boite(l.x-.18,l.x+.18,l.y-.12,l.y+.12,l.z-.18,l.z+.18, mat(0x111418, {roughness:.4, metalness:.6}));
-  g.add(corps);
-  if (ETAT.options.echafaud && l.y > 1.2){
-    [[l.x-.5,l.z-.5],[l.x+.5,l.z-.5],[l.x+.5,l.z+.5],[l.x-.5,l.z+.5]].forEach(([x,z]) =>
-      g.add(cylindre([x,0,z],[x,l.y-.25,z], .035, mat(COULEURS.echafaud))));
-  }
-  g.add(cylindre([l.x,l.y,l.z],[l.tx,l.ty,0], .045,
-        new THREE.MeshBasicMaterial({color:c})));
-  const pt = new THREE.Mesh(new THREE.SphereGeometry(.22, 12, 8), new THREE.MeshBasicMaterial({color:c}));
-  pt.position.set(l.tx, l.ty, .05); g.add(pt);
+function dessinerLumieres(g){
+  const L = ETAT.lumieres, mTot = mat(COULEURS.totem, {metalness:.5, roughness:.4});
+  posTotems().forEach(t => {
+    g.add(boite(t.x-.5, t.x+.5, 0, .25, t.z-.5, t.z+.5, mTot));
+    g.add(cylindre([t.x,0,t.z],[t.x,t.h,t.z], .06, mTot));
+    g.add(boite(t.x-.35, t.x+.35, t.h-.35, t.h, t.z-.2, t.z+.2, mat(0x111418)));
+    // faisceau wash vers le public (centre de la zone)
+    const Z = PROJET.zonePublic, cx = (Z.x0+Z.x1)/2, cz = (Z.z0+Z.z1)/2;
+    const dir = new THREE.Vector3(cx - t.x, 0 - t.h, cz - t.z);
+    const base = new THREE.Vector3(t.x, t.h, t.z).add(dir.clone().normalize().multiplyScalar(Math.min(26, dir.length())));
+    g.add(cone([t.x,t.h-.2,t.z],[base.x,Math.max(base.y,.1),base.z], 7, 0xb36bff, .12));
+    if (ETAT.options.etiquettes) g.add(etiquette(t.nom, t.x, t.h+1.0, t.z, 4));
+  });
+  L.wash.forEach((w,i) => {
+    g.add(boite(w.x-.45, w.x+.45, 0, .5, w.z-.35, w.z+.35, mat(0x111418, {metalness:.5})));
+    g.add(cone([w.x,.5,w.z],[w.tx,w.ty,0], 4.5, 0xb36bff, .14));
+    if (ETAT.options.etiquettes) g.add(etiquette(`wash ${i+1}`, w.x, 1.6, w.z, 3.5));
+  });
 }
-
-/* ----------------------------- câblage ------------------------------ */
 function dessinerCables(g){
-  const r = ETAT.regie, pts = [];
-  ETAT.projecteurs.forEach(p => pts.push([p.x, 0.05, p.z]));
-  ETAT.lasers.forEach(l => pts.push([l.x, 0.05, l.z]));
-  pts.forEach(q => {
-    const pos = [r.x, .08, r.z, q[0], q[1], q[2]];
+  const r = regieAABB(), rx = (r.x0+r.x1)/2, rz = (r.z0+r.z1)/2, pts = [];
+  posSono().forEach(s => pts.push([s.x, s.z]));
+  posTotems().forEach(t => pts.push([t.x, t.z]));
+  ETAT.lumieres.wash.forEach(w => pts.push([w.x, w.z]));
+  pts.forEach(([x,z]) => {
     const lg = new THREE.BufferGeometry();
-    lg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    lg.setAttribute('position', new THREE.Float32BufferAttribute([rx,.08,rz, x,.08,z], 3));
     const ln = new THREE.Line(lg, new THREE.LineDashedMaterial({color:0x58a6ff, dashSize:.6, gapSize:.3}));
     ln.computeLineDistances(); g.add(ln);
   });
 }
 
 /* =====================================================================
-   CONTRÔLE GÉOMÉTRIQUE — indicatif, pas une certification
+   CONTRÔLES — géométriques, indicatifs, pas une certification
    ===================================================================== */
-function dansZonePublic(x,y,z){
-  const z_ = PROJET.zonePublic;
-  return x>=z_.x0 && x<=z_.x1 && z>=z_.z0 && z<=z_.z1;
+function dansZonePublic(x,y,z){ const Z = PROJET.zonePublic; return x>=Z.x0 && x<=Z.x1 && z>=Z.z0 && z<=Z.z1; }
+function dansBoite(b,x,y,z){ return x>=b.x0 && x<=b.x1 && z>=b.z0 && z<=b.z1 && y>=b.y0 && y<=b.y1; }
+function sectionCone(p, z){
+  // coupe du cône d'un projecteur à la profondeur z (0 = façade, P.z = machine)
+  const P = posProjecteur(p), im = cadreImage(p), t = Math.min(1, Math.max(0, z / P.z));
+  const l = (a,b) => a + (b-a)*t;
+  return {x0:l(im.x0,P.x), x1:l(im.x1,P.x), y0:l(im.y0,P.y), y1:l(im.y1,P.y)};
 }
-function dansRegie(x,y,z){
-  const b = regieAABB();
-  return x>=b.x0 && x<=b.x1 && z>=b.z0 && z<=b.z1 && y>=0 && y<=b.y1;
-}
-function evaluerLaser(l){
-  const F = PROJET.facade, Z = PROJET.zonePublic, res = [];
-  let statut = 'ok';
-  const pousser = (niv, msg) => { res.push({niv, msg}); if (niv==='bad') statut='bad'; else if (niv==='warn' && statut!=='bad') statut='warn'; };
-
-  // 1. la cible est bien sur la façade
-  if (Math.abs(l.tx) <= F.largeur/2 && l.ty >= 0 && l.ty <= F.hauteur)
-    pousser('ok', `cible sur la façade (${l.tx.toFixed(1)} ; ${l.ty.toFixed(1)} m)`);
-  else pousser('bad', `cible hors de la façade : le faisceau continue vers l'extérieur`);
-
-  // 2. parcours du faisceau : hauteur au-dessus du public, passage dans la régie
-  const A = [l.x,l.y,l.z], B = [l.tx,l.ty,0], N = 240;
-  let hMin = Infinity, traverseRegie = false;
-  for (let i=0;i<=N;i++){
-    const t = i/N, x = A[0]+(B[0]-A[0])*t, y = A[1]+(B[1]-A[1])*t, z = A[2]+(B[2]-A[2])*t;
-    if (dansZonePublic(x,y,z)) hMin = Math.min(hMin, y);
-    if (dansRegie(x,y,z)) traverseRegie = true;
-  }
-  if (traverseRegie) pousser('bad', `le faisceau traverse la régie`);
-  if (hMin === Infinity) pousser('ok', `aucun passage au-dessus du public`);
-  else if (hMin < Z.hautYeux) pousser('bad', `faisceau à ${hMin.toFixed(2)} m dans la zone public (seuil ${Z.hautYeux} m)`);
-  else pousser('ok', `au-dessus du public : hauteur minimale ${hMin.toFixed(2)} m`);
-
-  // 3. réflexion spéculaire (la pierre est diffuse, mais une surface lisse ou mouillée ne l'est pas)
-  const d = [B[0]-A[0], B[1]-A[1], B[2]-A[2]], n = Math.hypot(...d);
-  const r = [d[0]/n, d[1]/n, -d[2]/n];                  // réflexion sur un mur plan z=0
-  if (r[1] > .02) pousser('warn', `réflexion remontante : vérifier ciel et étages supérieurs`);
-  let reflexionPublic = false;
-  for (let i=1;i<=60;i++){
-    const q = [B[0]+r[0]*i, B[1]+r[1]*i, B[2]+r[2]*i];
-    if (q[1] < 0) break;
-    if (dansZonePublic(q[0],q[1],q[2]) && q[1] < Z.hautYeux){ reflexionPublic = true; break; }
-  }
-  if (reflexionPublic) pousser('warn', `si la surface réfléchit, le public est atteint — impose une surface diffuse`);
-
-  // 4. distance
-  const L = Math.hypot(...d);
-  res.push({niv:'info', msg:`distance au point d'impact ${L.toFixed(1)} m · puissance ${l.puissance} W`});
-  return {statut, res, hMin};
+function obstructions(p){
+  const P = posProjecteur(p), hits = [];
+  obstacles().forEach(o => {
+    if (o.z1 <= 0 || o.z0 >= P.z - .5) return;
+    for (const z of [Math.max(o.z0, 0), Math.min(o.z1, P.z-.5)]){
+      const s = sectionCone(p, z);
+      if (o.x1 > s.x0 && o.x0 < s.x1 && o.y1 > s.y0 && o.y0 < s.y1){ hits.push(o.nom); break; }
+    }
+  });
+  return hits;
 }
 function evaluerProjecteur(p){
-  const F = PROJET.facade, res = [];
+  const F = PROJET.facade, Z = PROJET.zonePublic, res = [], P = posProjecteur(p), im = cadreImage(p);
   let statut = 'ok';
   const pousser = (niv,msg) => { res.push({niv,msg}); if (niv==='bad') statut='bad'; else if (niv==='warn' && statut!=='bad') statut='warn'; };
-  const im = cadreImage(p);
-
-  if (dansZonePublic(p.x,p.y,p.z)) pousser('bad', `projecteur dans la zone public`);
-  else pousser('ok', `projecteur hors zone public`);
-
-  if (p.z < 55 || p.z > 80) pousser('warn', `distance ${p.z.toFixed(0)} m hors de la plage conseillée 55–80 m`);
-  else pousser('ok', `distance ${p.z.toFixed(0)} m dans la plage conseillée`);
-
+  if (dansZonePublic(P.x,P.y,P.z)) pousser('bad', `plateforme dans la zone public`); else pousser('ok', `plateforme hors zone public`);
+  if (P.z < 55 || P.z > 80) pousser('warn', `distance ${P.z.toFixed(0)} m hors de la plage conseillée 55–80 m`);
+  else pousser('ok', `distance ${P.z.toFixed(0)} m dans la plage conseillée`);
+  // bas du cône au-dessus des têtes au bord de la zone public le plus proche de la machine
+  const sBord = sectionCone(p, Z.z1);
+  if (sBord.y0 < Z.hautYeux + .5) pousser('bad', `bas du faisceau à ${sBord.y0.toFixed(1)} m au bord du public : il faut monter la plateforme ou reculer`);
+  else pousser('ok', `faisceau à ${sBord.y0.toFixed(1)} m au-dessus du public au plus près`);
+  const obs = obstructions(p);
+  if (obs.length) pousser('bad', `faisceau coupé par : ${obs.join(', ')}`); else pousser('ok', `aucun obstacle dans le cône`);
   const ox = Math.max(0, Math.min(im.x1, F.largeur/2) - Math.max(im.x0, -F.largeur/2));
   const oy = Math.max(0, Math.min(im.y1, F.hauteur) - Math.max(im.y0, 0));
   const part = ox*oy/(im.W*im.H);
-  // le débord latéral (~1 m par côté) est voulu : on ne signale que les pertes réelles
-  if (part < .85) pousser('warn', `${((1-part)*100).toFixed(0)} % de l'image hors façade : lumière perdue ou sur le parvis`);
+  if (part < .85) pousser('warn', `${((1-part)*100).toFixed(0)} % de l'image hors façade`);
   else pousser('ok', `image couvrant la façade (${(part*100).toFixed(0)} %, débord voulu compris)`);
-
-  const decal = Math.abs(p.cy - p.y) / im.H;
-  if (decal > .6) pousser('warn', `décalage optique ${(decal*100).toFixed(0)} % : au-delà de ±60 %, incliner et corriger au warp`);
-  else pousser('ok', `décalage optique ${(decal*100).toFixed(0)} % (dans la plage)`);
-
+  const decal = Math.abs(p.cy - P.y) / im.H;
+  if (decal > .6) pousser('warn', `décalage optique ${(decal*100).toFixed(0)} % : incliner et corriger au warp`);
+  else pousser('ok', `décalage optique ${(decal*100).toFixed(0)} %`);
   const f1 = v => (Math.abs(v) < .05 ? 0 : v).toFixed(1);
   res.push({niv:'info', msg:`image ${im.W.toFixed(1)} × ${im.H.toFixed(1)} m · bas ${f1(im.y0)} m · haut ${f1(im.y1)} m`});
   return {statut, res, im};
+}
+function evaluerLaser(l){
+  const F = PROJET.facade, Z = PROJET.zonePublic, res = [], L = posLaser(l);
+  let statut = 'ok';
+  const pousser = (niv, msg) => { res.push({niv, msg}); if (niv==='bad') statut='bad'; else if (niv==='warn' && statut!=='bad') statut='warn'; };
+  if (Math.abs(l.tx) <= F.largeur/2 && l.ty >= 0 && l.ty <= F.hauteur) pousser('ok', `cible sur la façade (${l.tx.toFixed(1)} ; ${l.ty.toFixed(1)} m)`);
+  else pousser('bad', `cible hors de la façade : le faisceau continue vers l'extérieur`);
+  const A = [L.x,L.y,L.z], B = [l.tx,l.ty,0], N = 300, obs = obstacles(), coupe = new Set();
+  let hMin = Infinity;
+  for (let i=0;i<=N;i++){
+    const t = i/N, x = A[0]+(B[0]-A[0])*t, y = A[1]+(B[1]-A[1])*t, z = A[2]+(B[2]-A[2])*t;
+    if (dansZonePublic(x,y,z)) hMin = Math.min(hMin, y);
+    obs.forEach(o => { if (dansBoite(o,x,y,z)) coupe.add(o.nom); });
+  }
+  if (coupe.size) pousser('bad', `le faisceau traverse : ${[...coupe].join(', ')}`);
+  if (hMin === Infinity) pousser('ok', `aucun passage au-dessus du public`);
+  else if (hMin < Z.hautYeux) pousser('bad', `faisceau à ${hMin.toFixed(2)} m dans la zone public (seuil ${Z.hautYeux} m)`);
+  else pousser('ok', `au-dessus du public : hauteur minimale ${hMin.toFixed(2)} m`);
+  const d = [B[0]-A[0], B[1]-A[1], B[2]-A[2]], n = Math.hypot(...d), r = [d[0]/n, d[1]/n, -d[2]/n];
+  if (r[1] > .02) pousser('warn', `réflexion remontante : vérifier ciel et étages supérieurs`);
+  let reflexionPublic = false;
+  for (let i=1;i<=60;i++){ const q = [B[0]+r[0]*i, B[1]+r[1]*i, B[2]+r[2]*i]; if (q[1] < 0) break;
+    if (dansZonePublic(q[0],q[1],q[2]) && q[1] < Z.hautYeux){ reflexionPublic = true; break; } }
+  if (reflexionPublic) pousser('warn', `si la surface réfléchit, le public est atteint — impose une surface diffuse`);
+  res.push({niv:'info', msg:`distance au point d'impact ${n.toFixed(1)} m · ${l.puissance} W`});
+  return {statut, res, hMin};
+}
+function evaluerSite(){
+  const res = [], Z = PROJET.zonePublic, rg = regieAABB(), pl = posPlateforme(), v = ETAT.village;
+  const pousser = (niv,msg) => res.push({niv,msg});
+  // la zone public ne doit rien contenir du bloc
+  const dedans = [pl, rg, ...posStands()].filter(o => o.x1 > Z.x0 && o.x0 < Z.x1 && o.z1 > Z.z0 && o.z0 < Z.z1).map(o=>o.nom);
+  if (dedans.length) pousser('bad', `dans la zone public : ${dedans.join(', ')}`); else pousser('ok', `bloc central hors de la zone public`);
+  // la sono principale ne gêne pas la façade mappée
+  const F = PROJET.facade;
+  posSono().filter(s=>s.principal).forEach(s => {
+    if (Math.abs(s.x) < F.largeur/2 + .6 && s.z < 6) pousser('warn', `${s.nom} devant l'image mappée (x ${s.x} m) : décaler hors du cadre ou accepter l'ombre`);
+  });
+  // allée du village : largeur de passage
+  if (v.allee < 4) pousser('warn', `allée du village ${v.allee} m : prévoir 4 m minimum pour la circulation et les secours`);
+  else pousser('ok', `allée du village ${v.allee} m`);
+  // accès pompiers : bande de 4 m libre entre le bloc et les voisins
+  const stands = posStands(), zFin = stands.length ? Math.max(...stands.map(s=>s.z1)) : rg.z1;
+  pousser('info', `bloc central : de z = ${pl.z0.toFixed(0)} m à z = ${zFin.toFixed(0)} m (${(zFin-pl.z0).toFixed(0)} m de long), ${stands.length} stands`);
+  const voisinProche = PROJET.voisins.filter(b => b.z1 > pl.z0 && b.z0 < zFin).map(b => Math.min(Math.abs(b.x0 - rg.x1), Math.abs(b.x1 - rg.x0)));
+  if (voisinProche.length){ const dmin = Math.min(...voisinProche);
+    if (dmin < 4) pousser('bad', `moins de 4 m entre le bloc et un bâtiment (${dmin.toFixed(1)} m) : voie pompiers obstruée`);
+    else pousser('ok', `dégagement latéral ${dmin.toFixed(0)} m de part et d'autre du bloc`); }
+  return res;
 }
 
 /* =====================================================================
    SCÈNE DYNAMIQUE
    ===================================================================== */
 function rafraichir(){
-  while (dyn.children.length){
-    const c = dyn.children.pop();
-    c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); });
-  }
-  const zone = PROJET.zonePublic;
+  while (dyn.children.length){ const c = dyn.children.pop();
+    c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material){ if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); }
+  const Z = PROJET.zonePublic;
   if (ETAT.options.zone){
-    const surf = new THREE.Mesh(new THREE.PlaneGeometry(zone.x1-zone.x0, zone.z1-zone.z0),
-                 new THREE.MeshBasicMaterial({color:0x9fd3ff, transparent:true, opacity:.20, depthWrite:false}));
-    surf.rotation.x = -Math.PI/2; surf.position.set((zone.x0+zone.x1)/2, .03, (zone.z0+zone.z1)/2);
-    dyn.add(surf);
+    const surf = new THREE.Mesh(new THREE.PlaneGeometry(Z.x1-Z.x0, Z.z1-Z.z0), new THREE.MeshBasicMaterial({color:0x9fd3ff, transparent:true, opacity:.20, depthWrite:false}));
+    surf.rotation.x = -Math.PI/2; surf.position.set((Z.x0+Z.x1)/2, .03, (Z.z0+Z.z1)/2); dyn.add(surf);
+    if (ETAT.options.etiquettes) dyn.add(etiquette(`ZONE PUBLIC · ${((Z.x1-Z.x0)*(Z.z1-Z.z0)).toLocaleString('fr-FR')} m²`, (Z.x0+Z.x1)/2, 1.2, (Z.z0+Z.z1)/2, 14, '#9fd3ff'));
   }
   if (ETAT.options.cables) dessinerCables(dyn);
+  dessinerPlateforme(dyn);
   dessinerRegie(dyn);
   ETAT.projecteurs.forEach(p => dessinerProjecteur(dyn, p));
   ETAT.lasers.forEach(l => dessinerLaser(dyn, l, evaluerLaser(l).statut));
-  mettreAJourPanneau();
+  if (ETAT.options.village){
+    posStands().forEach(s => dessinerTonnelle(dyn, s));
+    // allée centrale
+    const st = posStands(); if (st.length){
+      const z0 = regieAABB().z1 + .3, z1 = Math.max(...st.map(s=>s.z1)) + 1;
+      const al = new THREE.Mesh(new THREE.PlaneGeometry(ETAT.village.allee, z1-z0), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.10, depthWrite:false}));
+      al.rotation.x = -Math.PI/2; al.position.set(ETAT.bloc.x, .035, (z0+z1)/2); dyn.add(al);
+      if (ETAT.options.etiquettes) dyn.add(etiquette(`ALLÉE ${ETAT.village.allee} m`, ETAT.bloc.x, .8, z1 - 1.5, 6, '#9fd3ff'));
+    }
+  }
+  if (ETAT.options.sono) dessinerSono(dyn);
+  if (ETAT.options.lumieres) dessinerLumieres(dyn);
+  if (ETAT.options.etiquettes) dyn.add(etiquette("FAÇADE MAPPÉE", 0, PROJET.facade.hauteur + 2.5, 0, 12, '#ffb454'));
+  sauver(); mettreAJourPanneau();
 }
 
 /* =====================================================================
    PANNEAU
    ===================================================================== */
 const side = document.getElementById('side');
-function champ(label, val, on){
-  return `<label>${label}<input type="number" step="0.1" value="${val}" data-on="${on}"></label>`;
+const ic = {ok:'✅', warn:'⚠️', bad:'❌', info:'·'};
+const champ = (label, val, on, step=0.1) => `<label>${label}<input type="number" step="${step}" value="${val}" data-on="${on}"></label>`;
+const items = res => res.map(r => `<div class="item ${r.niv==='info'?'':r.niv}">${ic[r.niv]} ${r.msg}</div>`).join('');
+const badge = s => s==='bad' ? '❌' : s==='warn' ? '⚠️' : '✅';
+const ouvert = {};  // mémorise les <details> ouverts entre deux rendus
+function det(id, titre, corps, defaut=false, force=false){
+  // force : un point bloquant rouvre toujours le volet, sinon il passerait inaperçu
+  const o = force ? true : (ouvert[id] === undefined ? defaut : ouvert[id]);
+  return `<details data-id="${id}" ${o?'open':''}><summary>${titre}</summary>${corps}</details>`;
 }
-function rendreDeviceBloc(){
-  const ic = {ok:'✅', warn:'⚠️', bad:'❌', info:'·'};
-  let h = '<h2>Projecteurs</h2>';
-  ETAT.projecteurs.forEach((p,i) => {
-    const ev = evaluerProjecteur(p);
-    h += `<details open><summary>${p.nom} <span style="color:var(--dim);font-weight:400">— ${ev.statut==='bad'?'❌':ev.statut==='warn'?'⚠️':'✅'}</span></summary>
-      <div class="grid">
-        ${champ('x',p.x,`p.${i}.x`)}${champ('hauteur',p.y,`p.${i}.y`)}${champ('dist. z',p.z,`p.${i}.z`)}
-        ${champ('centre image y',p.cy,`p.${i}.cy`)}${champ('TR',p.tr,`p.${i}.tr`)}${champ('lumens',p.lumens,`p.${i}.lumens`)}
-      </div>
-      ${ev.res.map(r => `<div class="item ${r.niv==='info'?'':r.niv}">${ic[r.niv]} ${r.msg}</div>`).join('')}
-    </details>`;
-  });
+function rendrePanneau(){
+  const b = ETAT.bloc, r = ETAT.regie, v = ETAT.village, s = ETAT.sono, Z = PROJET.zonePublic;
+  let h = '';
+  // --- bloc central
+  h += '<h2>Bloc central</h2>' + det('bloc', `Position et plateforme <span>— x ${b.x} · z ${b.z} · VP à ${b.hauteurVP} m</span>`, `
+     <div class="grid">${champ('x (axe)',b.x,'b.x',0.5)}${champ('z (recul)',b.z,'b.z',0.5)}${champ('hauteur VP',b.hauteurVP,'b.hauteurVP',0.5)}
+       ${champ('plateforme larg.',b.largeurPlateforme,'b.largeurPlateforme',0.5)}${champ('plateforme prof.',b.profondeurPlateforme,'b.profondeurPlateforme',0.5)}${champ('écart régie',r.ecart,'r.ecart')}</div>
+     <p class="note" style="padding:0 10px 8px;margin:0">Plateforme VP devant, régie dos à dos derrière, village à la suite. Déplacer x ou z déplace tout le bloc.</p>`, true);
+  // --- projecteurs
+  h += '<h2>Vidéoprojecteurs</h2>';
+  ETAT.projecteurs.forEach((p,i) => { const ev = evaluerProjecteur(p);
+    h += det('p'+i, `${p.nom} <span>— ${badge(ev.statut)}</span>`, `
+      <div class="grid">${champ('décalage x',p.dx,`p.${i}.dx`)}${champ('centre image y',p.cy,`p.${i}.cy`)}${champ('TR',p.tr,`p.${i}.tr`,0.01)}
+        ${champ('lumens',p.lumens,`p.${i}.lumens`,1000)}</div>${items(ev.res)}`, ev.statut!=='ok', ev.statut==='bad'); });
+  // --- lasers
   h += '<h2>Lasers</h2>';
-  ETAT.lasers.forEach((l,i) => {
-    const ev = evaluerLaser(l);
-    h += `<details open><summary>${l.nom} <span style="color:var(--dim);font-weight:400">— ${ev.statut==='bad'?'❌ interdit':ev.statut==='warn'?'⚠️ à vérifier':'✅ conforme (contrôle géom.)'}</span></summary>
-      <div class="grid">
-        ${champ('x',l.x,`l.${i}.x`)}${champ('hauteur',l.y,`l.${i}.y`)}${champ('z',l.z,`l.${i}.z`)}
-        ${champ('cible x',l.tx,`l.${i}.tx`)}${champ('cible y',l.ty,`l.${i}.ty`)}${champ('W',l.puissance,`l.${i}.puissance`)}
-      </div>
-      ${ev.res.map(r => `<div class="item ${r.niv==='info'?'':r.niv}">${ic[r.niv]} ${r.msg}</div>`).join('')}
-    </details>`;
-  });
+  ETAT.lasers.forEach((l,i) => { const ev = evaluerLaser(l);
+    h += det('l'+i, `${l.nom} <span>— ${badge(ev.statut)} ${ev.statut==='bad'?'interdit':ev.statut==='warn'?'à vérifier':'conforme (géom.)'}</span>`, `
+      <div class="grid">${champ('décalage x',l.dx,`l.${i}.dx`)}${champ('décalage y',l.dy,`l.${i}.dy`)}${champ('W',l.puissance,`l.${i}.puissance`,1)}
+        ${champ('cible x',l.tx,`l.${i}.tx`)}${champ('cible y',l.ty,`l.${i}.ty`)}</div>${items(ev.res)}`, ev.statut==='bad', ev.statut==='bad'); });
+  // --- village
+  const stands = posStands();
+  h += '<h2>Village sous tonnelles</h2>' + det('village', `${v.stands.length} stands <span>— allée ${v.allee} m · tonnelles ${v.cote} × ${v.cote} m</span>`, `
+     <div class="grid">${champ('allée',v.allee,'v.allee')}${champ('pas',v.pas,'v.pas')}${champ('côté tonnelle',v.cote,'v.cote')}</div>
+     ${v.stands.map((st,i) => `<div class="stand">
+        <input type="text" value="${st.nom.replace(/"/g,'&quot;')}" data-stand="${i}">
+        <select data-type="${i}">${Object.keys(TYPE_COULEUR).map(t=>`<option ${st.type===t?'selected':''}>${t}</option>`).join('')}</select>
+        <button data-del="${i}" title="retirer">✕</button></div>`).join('')}
+     <div class="row" style="padding:4px 10px 8px"><button data-add="1">+ stand</button>
+       <span class="note" style="margin:4px 0 0">ordre = ordre dans l'allée, en partant de la régie ; 2 par rangée, face à face</span></div>`);
+  // --- sono
+  h += '<h2>Sono</h2>' + det('sono', `PA principale ±${s.x} m <span>— ${s.delais ? s.delais+' délais' : 'sans délai'}</span>`, `
+     <div class="grid">${champ('x (±)',s.x,'s.x')}${champ('z',s.z,'s.z')}${champ('hauteur',s.hauteur,'s.hauteur')}
+       ${champ('ouverture °',s.ouverture,'s.ouverture',5)}${champ('portée m',s.portee,'s.portee',1)}${champ('visée int. °',s.visee,'s.visee',1)}
+       ${champ('subs / côté',s.subs,'s.subs',1)}${champ('délais (0/2/4)',s.delais,'s.delais',2)}${champ('délais z',s.delaiZ,'s.delaiZ',1)}</div>`);
+  // --- lumières
+  h += '<h2>Lumières</h2>' + det('lum', `${ETAT.lumieres.totems.length} totems · ${ETAT.lumieres.wash.length} wash façade`, `
+     ${ETAT.lumieres.totems.map((t,i)=>`<div class="grid">${champ(`totem ${i+1} x`,t.x,`t.${i}.x`,0.5)}${champ('z',t.z,`t.${i}.z`,0.5)}${champ('h',t.h,`t.${i}.h`,0.5)}</div>`).join('')}
+     ${ETAT.lumieres.wash.map((w,i)=>`<div class="grid g2">${champ(`wash ${i+1} x`,w.x,`w.${i}.x`,0.5)}${champ('z',w.z,`w.${i}.z`,0.5)}${champ('cible x',w.tx,`w.${i}.tx`,0.5)}${champ('cible y',w.ty,`w.${i}.ty`,0.5)}</div>`).join('')}`);
+  // --- synthèse
+  const evs = [...ETAT.projecteurs.map(evaluerProjecteur), ...ETAT.lasers.map(evaluerLaser)], site = evaluerSite();
+  const nBad = evs.filter(e=>e.statut==='bad').length + site.filter(e=>e.niv==='bad').length;
+  const nWarn = evs.filter(e=>e.statut==='warn').length + site.filter(e=>e.niv==='warn').length;
+  const aire = (Z.x1-Z.x0)*(Z.z1-Z.z0), lumens = ETAT.projecteurs.reduce((a,p)=>a+p.lumens,0);
+  const verdict = nBad ? `<div class="item bad">❌ ${nBad} point(s) bloquant(s)</div>` : nWarn ? `<div class="item warn">⚠️ ${nWarn} point(s) à vérifier, aucun bloquant</div>` : `<div class="item ok">✅ aucun point bloquant au contrôle géométrique</div>`;
+  h += `<h2>Synthèse</h2>${verdict}${items(site)}
+    <p class="note">Contrôle géométrique : cibles, hauteur des faisceaux au-dessus du public, obstacles dans les cônes, zone public, allée et dégagements. Il ne remplace ni le calcul NOHD, ni la déclaration DGAC, ni la commission de sécurité. Volumes du site indicatifs.</p>
+    <h2>Inventaire</h2><table>
+      <tr><td>Vidéoprojecteurs</td><td>${ETAT.projecteurs.length} · ${lumens.toLocaleString('fr-FR')} lm</td></tr>
+      <tr><td>Lasers</td><td>${ETAT.lasers.length}</td></tr>
+      <tr><td>Plateforme VP (échafaudage)</td><td>${b.largeurPlateforme} × ${b.profondeurPlateforme} m · ${b.hauteurVP} m</td></tr>
+      <tr><td>Régie étanche (conteneur 20')</td><td>${r.longueur} × ${r.largeur} × ${r.hauteur} m</td></tr>
+      <tr><td>Tonnelles ${v.cote}×${v.cote}</td><td>${v.stands.length}</td></tr>
+      <tr><td>Sono</td><td>2 PA + ${2*s.subs} subs${s.delais?` + ${s.delais} délais`:''}</td></tr>
+      <tr><td>Lumières</td><td>${ETAT.lumieres.totems.length} totems · ${ETAT.lumieres.wash.length} wash</td></tr>
+      <tr><td>Zone public</td><td>${aire.toLocaleString('fr-FR')} m² · ${Math.round(aire*Z.densite).toLocaleString('fr-FR')} pers. à ${Z.densite}/m²</td></tr>
+    </table>
+    <h2>Affichage</h2>
+    ${['zone:zone public','voisins:bâtiments voisins','nef:nef','cables:câblage','echafaud:échafaudages','etiquettes:étiquettes','cones:cônes VP','sono:sono','lumieres:lumières','village:village']
+      .map(o => { const [k,l] = o.split(':'); return `<div class="chk"><input type="checkbox" data-opt="${k}" ${ETAT.options[k]?'checked':''}> ${l}</div>`; }).join('')}
+    <div class="row" style="margin-top:10px"><button id="btnJson">Exporter JSON</button><button id="btnImport">Importer JSON</button><button class="sec" id="btnReset">Réinitialiser</button></div>
+    <input type="file" id="fileJson" accept=".json" style="display:none">`;
   return h;
 }
-function rendreSynthese(){
-  const R = ETAT.regie, z = PROJET.zonePublic;
-  const tous = [...ETAT.projecteurs.map(evaluerProjecteur), ...ETAT.lasers.map(evaluerLaser)];
-  const nBad = tous.filter(e=>e.statut==='bad').length, nWarn = tous.filter(e=>e.statut==='warn').length;
-  const aire = (z.x1-z.x0)*(z.z1-z.z0), capa = Math.round(aire*z.densite);
-  const lumens = ETAT.projecteurs.reduce((s,p)=>s+p.lumens,0);
-  const verdict = nBad ? `<div class="item bad">❌ ${nBad} élément(s) interdit(s) — la configuration n'est pas valable</div>`
-                : nWarn ? `<div class="item warn">⚠️ ${nWarn} point(s) à vérifier — aucun interdit</div>`
-                : `<div class="item ok">✅ aucun point bloquant au contrôle géométrique</div>`;
-  return `<h2>Synthèse de sécurité</h2>${verdict}
-    <p class="note">Ce contrôle vérifie la géométrie : cibles sur la façade, hauteur des faisceaux
-    au-dessus du public, passage dans la régie, réflexions. Il ne remplace ni le calcul NOHD,
-    ni la déclaration DGAC, ni un opérateur laser certifié. Les volumes du site sont indicatifs.</p>
-    <h2>Équipement</h2>
-    <table>
-      <tr><td>Projecteurs</td><td>${ETAT.projecteurs.length} · ${lumens.toLocaleString('fr-FR')} lm</td></tr>
-      <tr><td>Lasers</td><td>${ETAT.lasers.length}</td></tr>
-      <tr><td>Régie étanche</td><td>${R.longueur} × ${R.largeur} × ${R.hauteur} m</td></tr>
-      <tr><td>Zone public</td><td>${aire.toLocaleString('fr-FR')} m²</td></tr>
-      <tr><td>Capacité théorique (${z.densite} pers/m²)</td><td>${capa.toLocaleString('fr-FR')}</td></tr>
-    </table>
-    <h2>Régie et options</h2>
-    <div class="chk"><input type="checkbox" data-opt="zone" ${ETAT.options.zone?'checked':''}> zone public</div>
-    <div class="chk"><input type="checkbox" data-opt="voisins" ${ETAT.options.voisins?'checked':''}> bâtiments voisins</div>
-    <div class="chk"><input type="checkbox" data-opt="nef" ${ETAT.options.nef?'checked':''}> nef (volume)</div>
-    <div class="chk"><input type="checkbox" data-opt="cables" ${ETAT.options.cables?'checked':''}> câblage régie</div>
-    <div class="chk"><input type="checkbox" data-opt="echafaud" ${ETAT.options.echafaud?'checked':''}> échafaudages</div>
-    <div class="grid" style="padding:6px 0 0">
-      ${champ('régie x',R.x,'r.x')}${champ('régie z',R.z,'r.z')}
-    </div>`;
-}
 function mettreAJourPanneau(){
-  side.innerHTML = `<div style="font-weight:600;margin-bottom:4px">${PROJET.nom}</div>
-     <div class="note" style="margin:0 0 6px">Maquette de travail · unités en mètres</div>`
-     + rendreDeviceBloc() + rendreSynthese();
-  side.querySelectorAll('input[data-on]').forEach(inp => inp.addEventListener('input', () => {
-    const [kind, idx, key] = inp.dataset.on.split('.');
-    const v = parseFloat(inp.value); if (isNaN(v)) return;
-    if (kind==='p') ETAT.projecteurs[+idx][key] = v;
-    if (kind==='l') ETAT.lasers[+idx][key] = v;
-    if (kind==='r') ETAT.regie[key==='x'?'x':'z'] = v;
+  side.querySelectorAll('details[data-id]').forEach(d => ouvert[d.dataset.id] = d.open);
+  const scroll = side.scrollTop;
+  side.innerHTML = `<div style="font-weight:600">${PROJET.nom}</div><div class="note" style="margin:0 0 4px">Plan d'implantation générale · mètres</div>` + rendrePanneau();
+  side.scrollTop = scroll;
+  side.querySelectorAll('details[data-id]').forEach(d => d.addEventListener('toggle', () => ouvert[d.dataset.id] = d.open));
+  side.querySelectorAll('input[data-on]').forEach(inp => inp.addEventListener('change', () => {
+    const parts = inp.dataset.on.split('.'), v = parseFloat(inp.value); if (isNaN(v)) return;
+    const [k, i, key] = parts.length === 3 ? parts : [parts[0], null, parts[1]];
+    ({b:()=>ETAT.bloc[key]=v, r:()=>ETAT.regie[key]=v, v:()=>ETAT.village[key]=v, s:()=>ETAT.sono[key]=v,
+      p:()=>ETAT.projecteurs[+i][key]=v, l:()=>ETAT.lasers[+i][key]=v,
+      t:()=>ETAT.lumieres.totems[+i][key]=v, w:()=>ETAT.lumieres.wash[+i][key]=v})[k]();
     rafraichir();
   }));
+  side.querySelectorAll('input[data-stand]').forEach(inp => inp.addEventListener('change', () => { ETAT.village.stands[+inp.dataset.stand].nom = inp.value; rafraichir(); }));
+  side.querySelectorAll('select[data-type]').forEach(sel => sel.addEventListener('change', () => { ETAT.village.stands[+sel.dataset.type].type = sel.value; rafraichir(); }));
+  side.querySelectorAll('button[data-del]').forEach(bt => bt.addEventListener('click', () => { ETAT.village.stands.splice(+bt.dataset.del, 1); rafraichir(); }));
+  side.querySelectorAll('button[data-add]').forEach(bt => bt.addEventListener('click', () => { ETAT.village.stands.push({nom:`Stand ${ETAT.village.stands.length+1}`, type:'asso'}); rafraichir(); }));
   side.querySelectorAll('input[data-opt]').forEach(inp => inp.addEventListener('change', () => {
     ETAT.options[inp.dataset.opt] = inp.checked;
     stat.children.forEach(c => { if (c.userData.groupe) c.visible = ETAT.options[c.userData.groupe]; });
     rafraichir();
   }));
+  document.getElementById('btnJson').onclick = () => telecharger('implantation.json', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(ETAT, null, 2)));
+  document.getElementById('btnImport').onclick = () => document.getElementById('fileJson').click();
+  document.getElementById('fileJson').onchange = e => { const f = e.target.files[0]; if (!f) return;
+    f.text().then(t => { try { ETAT = Object.assign(DEFAUT(), JSON.parse(t)); rafraichir(); } catch(err){ alert('Fichier illisible'); } }); };
+  document.getElementById('btnReset').onclick = () => { if (confirm('Revenir à l\'implantation par défaut ?')){ ETAT = DEFAUT(); rafraichir(); } };
 }
+function telecharger(nom, url){ const a = document.createElement('a'); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove(); }
 
 /* =====================================================================
-   VUES ET INITIALISATION
+   VUES, EXPORT PNG, INITIALISATION
    ===================================================================== */
 const VUES = {
-  persp:  {pos:[-70, 55, 150], cible:[0, 10, 40]},
-  plan:   {pos:[0, 230, 60.01], cible:[0, 0, 60], ortho:true},
-  cote:   {pos:[120, 14, 60], cible:[0, 14, 30]},
-  public: {pos:[0, 1.7, 40], cible:[0, 16, 0]}
+  persp:   {pos:[-80, 60, 160], cible:[0, 8, 45]},
+  plan:    {pos:[0, 260, 55.01], cible:[0, 0, 55], ortho:true},
+  bloc:    {pos:[-18, 14, 95], cible:[0, 3, 76]},
+  village: {pos:[26, 18, 104], cible:[0, 1, 80]},
+  cote:    {pos:[130, 16, 50], cible:[0, 14, 30]},
+  public:  {pos:[0, 1.7, 42], cible:[0, 16, 0]}
 };
-function allerVue(nom){
-  const v = VUES[nom];
-  camera.position.set(...v.pos); controls.target.set(...v.cible);
-  controls.enableRotate = !v.ortho;
-  controls.update();
-}
-
+function allerVue(nom){ const v = VUES[nom]; camera.position.set(...v.pos); controls.target.set(...v.cible); controls.enableRotate = !v.ortho; controls.update(); }
 function init(){
   const vue = document.getElementById('view');
-  scene = new THREE.Scene();
-  scene.background = new THREE.Color(0xa9c4dc);
-  scene.fog = new THREE.Fog(0xa9c4dc, 220, 520);
-
-  camera = new THREE.PerspectiveCamera(42, 1, .1, 1000);
-  renderer = new THREE.WebGLRenderer({antialias:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  scene = new THREE.Scene(); scene.background = new THREE.Color(0xa9c4dc); scene.fog = new THREE.Fog(0xa9c4dc, 240, 560);
+  camera = new THREE.PerspectiveCamera(42, 1, .1, 1200);
+  renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   vue.appendChild(renderer.domElement);
-
   scene.add(new THREE.HemisphereLight(0xdfeeff, 0x6b6250, .9));
-  const soleil = new THREE.DirectionalLight(0xfff1dc, 1.1);
-  soleil.position.set(-80, 120, 60);
-  soleil.castShadow = true;
-  Object.assign(soleil.shadow.camera, {left:-120, right:120, top:120, bottom:-120, far:400});
-  soleil.shadow.mapSize.set(2048, 2048);
-  scene.add(soleil);
-
-  const grille = new THREE.GridHelper(200, 20, 0x3a4450, 0x2a3138);
-  grille.position.set(0, .01, 60);
-  stat.add(grille);
-
-  construireFacade();
-  construireSite();
-  scene.add(stat, dyn);
-
+  const soleil = new THREE.DirectionalLight(0xfff1dc, 1.1); soleil.position.set(-80, 120, 60); soleil.castShadow = true;
+  Object.assign(soleil.shadow.camera, {left:-130, right:130, top:130, bottom:-130, far:420}); soleil.shadow.mapSize.set(2048, 2048); scene.add(soleil);
+  const grille = new THREE.GridHelper(220, 22, 0x3a4450, 0x2a3138); grille.position.set(0, .01, 60); stat.add(grille);
+  construireFacade(); construireSite(); scene.add(stat, dyn);
+  stat.children.forEach(c => { if (c.userData.groupe) c.visible = ETAT.options[c.userData.groupe]; });
   camera.position.set(...VUES.persp.pos);
-  controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.target.set(...VUES.persp.cible);
-  controls.maxPolarAngle = Math.PI*.495;
-  controls.update();
-
-  document.querySelectorAll('#bar button').forEach(b => b.addEventListener('click', () => allerVue(b.dataset.view)));
-  redimensionner();
-  window.addEventListener('resize', redimensionner);
-  rafraichir();
-  boucle();
+  controls = new THREE.OrbitControls(camera, renderer.domElement); controls.target.set(...VUES.persp.cible); controls.maxPolarAngle = Math.PI*.495; controls.update();
+  document.querySelectorAll('#bar button[data-view]').forEach(b => b.addEventListener('click', () => allerVue(b.dataset.view)));
+  document.getElementById('btnPng').addEventListener('click', () => { renderer.render(scene, camera); telecharger('implantation-' + Date.now() + '.png', renderer.domElement.toDataURL('image/png')); });
+  redimensionner(); window.addEventListener('resize', redimensionner); rafraichir(); boucle();
 }
-function redimensionner(){
-  const vue = document.getElementById('view');
-  const w = vue.clientWidth, h = vue.clientHeight;
-  renderer.setSize(w, h, false);
-  camera.aspect = w / h; camera.updateProjectionMatrix();
-  renderer.domElement.style.width = w + 'px';
-  renderer.domElement.style.height = h + 'px';
-}
-function boucle(){
-  requestAnimationFrame(boucle);
-  controls.update();
-  renderer.render(scene, camera);
-}
+function redimensionner(){ const vue = document.getElementById('view'), w = vue.clientWidth, h = vue.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix(); renderer.domElement.style.width = w+'px'; renderer.domElement.style.height = h+'px'; }
+function boucle(){ requestAnimationFrame(boucle); controls.update(); renderer.render(scene, camera); }
 init();
 </script>
 </body>
