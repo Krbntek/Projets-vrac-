@@ -514,7 +514,7 @@ function construirePodium(){
   const cort = []; for (let i = 0; i < 16; i++) cort.push([cx + (i%2 ? .6 : -.6), T.z0 - 1 - Math.floor(i/2)*1.1, Math.PI]);
   G.cortege = creerFoule(cort, {y0:H}); G.cortege.pers.forEach((q,i) => { q.defile = true; q.bras = (i % 6) < 2; });
   G.bannieres = ['NOS LUTTES','SOLIDARITÉ','ÉGALITÉ'].map((m,k) => { const tb = texTexte(1024, 384, ['#ffb454','#ff5a8a','#4fa3ff'][k], [[m, 192, 150]], '#1a1200');
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(2.0, .75), std({map:tb, side:THREE.DoubleSide})); p.visible = false; scene.add(p); return p; });
+    const p = new THREE.Group(), mb = std({map:tb}), f = new THREE.Mesh(new THREE.PlaneGeometry(2.0, .75), mb), d = new THREE.Mesh(new THREE.PlaneGeometry(2.0, .75), mb); d.rotation.y = Math.PI; p.add(f, d); p.visible = false; scene.add(p); return p; });   // deux faces : lisible des deux côtés
   const file = []; for (let i = 0; i < 6; i++) file.push([G.escaliers[1].x + .9 + i*.8 + (rnd()-.5)*.2, G.escaliers[1].z + (rnd()-.5)*.5, -Math.PI/2]);
   G.fouleFile = creerFoule(file, {});
 }
