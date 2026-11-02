@@ -555,7 +555,11 @@ function mettreAJourPanneau(){
   document.getElementById('fileJson').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const j = JSON.parse(t); if (!j.camion){ alert('Ancien schéma (v1) : ce fichier ne contient pas le podium, le camion, le repos… Réinitialise puis reporte tes valeurs.'); return; } ETAT = fusionner(DEFAUT(), j); rafraichir(); } catch(err){ alert('Fichier illisible'); } }); };
   document.getElementById('btnReset').onclick = () => { if (confirm('Revenir à l\'implantation par défaut ?')){ ETAT = DEFAUT(); rafraichir(); } };
 }
-function telecharger(nom, url){ const a = document.createElement('a'); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove(); }
+// Téléchargements : dans l'artefact claude.ai le lien <a download> est inerte, on passe par la capacité « downloads » quand elle existe
+let DL = null; try { if (window.claude && claude.use) claude.use('downloads').then(d => { DL = d; }).catch(() => {}); } catch(e){}
+async function telecharger(nom, url){
+  if (DL){ try { const data = url.startsWith('data:') ? decodeURIComponent(url.split(',')[1]) : await (await fetch(url)).blob(); await DL.save({filename:nom, data}); return; } catch(e){ if (e && e.code === 'declined') return; console.warn('downloads', e); } }
+  const a = document.createElement('a'); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove(); }
 
 /* =====================================================================
    DÉPLACEMENT À LA SOURIS — on glisse un ensemble, les contrôles se recalculent
@@ -641,7 +645,7 @@ function init(){
   camera.position.set(...VUES.persp.pos);
   controls = new THREE.OrbitControls(camera, renderer.domElement); controls.target.set(...VUES.persp.cible); controls.maxPolarAngle = Math.PI*.495; controls.update();
   document.querySelectorAll('#bar button[data-view]').forEach(b => b.addEventListener('click', () => allerVue(b.dataset.view)));
-  document.getElementById('btnPng').addEventListener('click', () => { renderer.render(scene, camera); telecharger('implantation-' + Date.now() + '.png', renderer.domElement.toDataURL('image/png')); });
+  document.getElementById('btnPng').addEventListener('click', () => { renderer.render(scene, camera); renderer.domElement.toBlob(bl => { const u = URL.createObjectURL(bl); telecharger('implantation-' + Date.now() + '.png', u); setTimeout(() => URL.revokeObjectURL(u), 20000); }, 'image/png'); });
   installerSouris();
   redimensionner(); window.addEventListener('resize', redimensionner); rafraichir(); boucle();
 }
