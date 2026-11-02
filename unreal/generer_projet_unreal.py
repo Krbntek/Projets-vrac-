@@ -165,14 +165,18 @@ def positions(E):
         if v.get("forme", "flancs") == "flancs":
             side = -1 if i < par_cote else 1; k = i if side < 0 else i - par_cote
             x = b["x"] + side * ((pl["x1"] - b["x"]) + v["ecartTour"] + v["cote"] / 2 + k * (v["cote"] + v["ecart"]))
-            stands.append(dict(nom=st["nom"], type=st["type"], x=x, z=v["z"], rot=0.0))
+            # un stand déplacé à la souris dans le visualiseur garde sa position propre (x, z, rot)
+            stands.append(dict(nom=st["nom"], type=st["type"], x=st.get("x", x), z=st.get("z", v["z"]), rot=float(st.get("rot", 0.0))))
         else:
             rang, cote = i // 2, (1 if i % 2 else -1)
             z0 = max(rg["z1"], pl["z1"]) + v.get("ecartRegie", 1.5) + v["cote"] / 2
             stands.append(dict(nom=st["nom"], type=st["type"], x=b["x"] + cote * (v.get("allee", 4) / 2 + v["cote"] / 2), z=z0 + rang * v.get("pas", 3.6), rot=0.0))
     xmax = max(abs(x) for x in s["stacks"])
     stacks = [dict(nom=f"Subs_{'jardin' if x < 0 else 'cour'}_{'ext' if abs(x) == xmax else 'int'}", x=x, z=s["z"], ext=abs(x) == xmax) for x in s["stacks"]]
-    delais = [dict(nom=f"Delai_{'jardin' if i % 2 == 0 else 'cour'}", x=(1 if i % 2 else -1) * s["delaiX"], z=s["delaiZ"]) for i in range(s["delais"])]
+    delais = []
+    for i in range(s["delais"]):
+        o = (s.get("delaisPos") or [None] * s["delais"])[i] or {}
+        delais.append(dict(nom=f"Delai_{'jardin' if i % 2 == 0 else 'cour'}", x=o.get("x", (1 if i % 2 else -1) * s["delaiX"]), z=o.get("z", s["delaiZ"]), cote=-1 if i % 2 == 0 else 1))
     vps = [dict(p, x=b["x"] + p["dx"], y=b["hauteurVP"], z=b["z"]) for p in E["projecteurs"]]
     lasers = [dict(l, x=b["x"] + l["dx"], y=b["hauteurVP"] + l["dy"], z=b["z"]) for l in E["lasers"]]
     scene_l = [dict(x=b["x"] + l["dx"], z=pb["tete"]["z0"] + l["dz"], h=l["h"]) for l in E["lumieres"].get("scene", [])]
@@ -182,7 +186,8 @@ def positions(E):
     for cc in (-1, 1):
         cables.append(dict(nom=f"Tronc_{'jardin' if cc < 0 else 'cour'}", type="tronc",
                            pts=[[rg["x"] + cc * rg["L"] / 2, zl], [cc * xs, zl], [cc * xs, zf], [cam["x0"] - 1.2 if cc < 0 else cam["xh1"] + .8, zf]]))
-        if s["delais"]: cables.append(dict(nom=f"Cable_delai_{'jardin' if cc < 0 else 'cour'}", type="public", pts=[[cc * xs, s["delaiZ"]], [cc * s["delaiX"], s["delaiZ"]]]))
+    for d in delais:
+        cables.append(dict(nom="Cable_" + d["nom"], type="public", pts=[[d["cote"] * xs, d["z"]], [d["x"], d["z"]]]))
     cables.append(dict(nom="Cable_regie_podium", type="coulisses", pts=[[rg["x"], rg["z0"]], [rg["x"], pb["tete"]["z1"]]]))
     cables.append(dict(nom="Cable_TGBT_regie", type="tronc", pts=[[tg["x"], tg["z"]], [tg["x"], zl], [rg["x"] - rg["L"] / 2, zl]]))
     cables.append(dict(nom="Cable_TGBT_tour", type="tronc", pts=[[tg["x"], tg["z"]], [tg["x"], pl["z1"] + .3], [pl["x0"] + 3.07 + .06, pl["z1"] + .3]]))

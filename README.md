@@ -10,8 +10,12 @@
   lasers, foule à visages, légende technique (nomenclature Layher, jauges, bilan électrique),
   caméra plan-séquence, enregistrement vidéo direct.
 - **[`outils/implantation-3d.html`](outils/implantation-3d.html)** —
-  maquette 3D de l'implantation (schéma v2) : on déplace tout, et le contrôle géométrique
+  maquette 3D de l'implantation (schéma v2) : on **glisse chaque ensemble à la souris**, on
+  enregistre des variantes, et le contrôle géométrique
   vérifie faisceaux, obstacles, voies pompiers, jauges, ombre du camion.
+- **[`exports/`](exports/)** — ce qu'on envoie : dossier technique, fiche de déclaration, plan
+  d'implantation et inventaire en **HTML simple et PDF A4** (sections Markdown réorganisables
+  dans `exports/dossier/`), **vidéo** de la démo (`demo-soiree.mp4`) et **photos** de la maquette.
 - **[`evenement/SYNOPTIQUES.md`](evenement/SYNOPTIQUES.md)** — bilan de puissance, armoires,
   synoptiques son · lumière · vidéo · captation · électricité (Mermaid), passages de câbles,
   jauges, nomenclature Layher sourcée.

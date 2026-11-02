@@ -137,6 +137,14 @@ try { const s = JSON.parse(localStorage.getItem('implantation-3d')||'null');
   if (s && s.camion && s.version === 2){ const d = DEFAUT(); Object.keys(d).forEach(k => { if (s[k] !== undefined) E[k] = (typeof d[k] === 'object' && !Array.isArray(d[k])) ? Object.assign(d[k], s[k]) : s[k]; }); }
   else if (s) console.info('implantation locale ignorée (ancien schéma) — exporter à nouveau depuis le visualiseur'); } catch(e){}
 const P = () => E.projet;
+// Téléchargements. Dans l'artefact claude.ai, un lien <a download> ne fait rien : la page doit passer par la
+// capacité « downloads » (confirmation du lecteur). En fichier local (Chrome, Firefox), le lien suffit.
+let DL = null; try { if (window.claude && claude.use) claude.use('downloads').then(d => { DL = d; }).catch(() => {}); } catch(e){}
+async function telechargerFichier(nom, data){
+  if (DL){ try { await DL.save({filename:nom, data}); return true; } catch(e){ if (e && (e.code === 'declined' || e.code === 'rate_limited')) return false; console.warn('downloads', e); } }
+  const blob = data instanceof Blob ? data : new Blob([data]), url = URL.createObjectURL(blob), a = document.createElement('a');
+  a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 20000); return true;
+}
 
 /* =====================================================================
    LE SCÉNARIO — la soirée, heure par heure. C'est lui que la mairie regarde.
@@ -358,18 +366,20 @@ const camionBox = () => { const c = E.camion, x0 = c.x - c.longueur/2; return {x
 function posStands(){ const b = E.bloc, v = E.village, pl = posPlateforme(), n = v.stands.length, out = [];
   if (v.forme === 'flancs'){ const parCote = Math.ceil(n/2);
     v.stands.forEach((s,i) => { const side = i < parCote ? -1 : 1, k = side < 0 ? i : i - parCote;
-      out.push({nom:s.nom, type:s.type, x:b.x + side*((pl.x1 - b.x) + v.ecartTour + v.cote/2 + k*(v.cote + v.ecart)), z:v.z, rot:0}); }); return out; }
+      const xa = b.x + side*((pl.x1 - b.x) + v.ecartTour + v.cote/2 + k*(v.cote + v.ecart));
+      out.push({nom:s.nom, type:s.type, x:s.x !== undefined ? s.x : xa, z:s.z !== undefined ? s.z : v.z, rot:s.rot || 0}); }); return out; }
   if (v.forme === 'rond'){ const c = {x:b.x, z:pl.z1 + (v.ecartTour||3) + (v.rayon||11)};
     v.stands.forEach((s,i) => { const a = (n > 1 ? (i/(n-1) - .5) * (300*Math.PI/180) : 0) + Math.PI; out.push({nom:s.nom, type:s.type, x:c.x + Math.sin(a)*v.rayon, z:c.z - Math.cos(a)*v.rayon, rot:Math.PI - a}); }); return out; }
   const rg = regieBox(), z0 = Math.max(rg.z1, pl.z1) + (v.ecartRegie||1.5) + v.cote/2;
   v.stands.forEach((s,i) => { const rang = Math.floor(i/2), c = i%2 ? 1 : -1; out.push({nom:s.nom, type:s.type, x:b.x + c*((v.allee||4)/2 + v.cote/2), z:z0 + rang*(v.pas||3.6), rot:0}); }); return out; }
+function posDelais(){ const s = E.sono, out = []; for (let i = 0; i < s.delais; i++){ const c = i%2 ? 1 : -1, o = (s.delaisPos || [])[i] || {}; out.push({x:o.x !== undefined ? o.x : c*s.delaiX, z:o.z !== undefined ? o.z : s.delaiZ, c}); } return out; }
 const TENTE = {prevention:0x4fa3ff, secours:0xf85149, accueil:0xffb454, buvette:0xe4c05a, asso:0xe8e0c8};
 // ombre portée du camion sur la façade par le VP bas : le rayon qui frôle le haut de la caisse
 function ombreCamion(){ const c = camionBox(), b = E.bloc, zc = c.z1, yt = c.yt; const h = yt - (b.hauteurVP - yt) * zc / (b.z - zc), k = b.z / (b.z - zc);
   return {h:Math.max(0, h), x0:(c.x0 - b.x)*k + b.x, x1:(c.xh1 - b.x)*k + b.x}; }
 // zones interdites au public : podium + 1 m, tours de délai + 1,3 m
 function exclusions(){ const pb = podiumBox(), s = E.sono, out = [[pb.tete.x0-1, pb.tete.x1+1, pb.tete.z0-1, pb.tete.z1+1], [pb.cat.x0-1, pb.cat.x1+1, pb.cat.z0-1, pb.cat.z1]];
-  for (let i = 0; i < s.delais; i++){ const c = i%2 ? 1 : -1; out.push([c*s.delaiX-1.3, c*s.delaiX+1.3, s.delaiZ-1.3, s.delaiZ+1.3]); } return out; }
+  posDelais().forEach(d => out.push([d.x-1.3, d.x+1.3, d.z-1.3, d.z+1.3])); return out; }
 const dansExcl = (x,z,ex) => ex.some(b => x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3]);
 // JAUGES : surfaces nettes et capacités, zone par zone
 function jauges(){
@@ -611,11 +621,11 @@ function construireSono(){
     for (let k = 0; k < nT; k++){ const y = top + k*hT; const b = boite(x-(ext?.5:.3), x+(ext?.5:.3), y, y+hT-.02, z-sb.p/2+.1, z+sb.p/2-.05, mn); b.rotation.x = -(k*.05); scene.add(b); }
     const led = new THREE.Mesh(new THREE.SphereGeometry(.07,8,6), std({color:0x3fb950, emissive:0x3fb950, emissiveIntensity:0})); led.position.set(x+sb.l/2, top-.2, z+sb.p/2); scene.add(led); G.pa.push(led);
     nommer(`${ext ? 'PA' : 'front-fill'} ${x < 0 ? 'jardin' : 'cour'} · 4 × ${sb.modele}`, x, top + nT*hT + 1.2, z, 7, '#e6edf3'); });
-  for (let i = 0; i < so.delais; i++){ const c = i%2 ? 1 : -1, x = c*so.delaiX, z = so.delaiZ, h = so.delaiH;
+  posDelais().forEach(d => { const c = d.c, x = d.x, z = d.z, h = so.delaiH;
     for (const [dx,dz] of [[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]]) scene.add(cyl([x+dx,0,z+dz],[x+dx*.3,h-1,z+dz*.3],.025, mAlu()));
     scene.add(cyl([x,0,z],[x,h-.9,z],.05, mAlu())); scene.add(boite(x-.7,x+.7,0,.15,z-.7,z+.7, std({color:0x3a3f48})));
     for (let k = 0; k < so.delaiTetes; k++) scene.add(boite(x-.5, x+.5, h-.9+k*.36, h-.9+(k+1)*.36-.02, z-.3, z+.3, mn));
-    nommer(`délai ${c<0?'jardin':'cour'} · ${so.delaiTetes} × ${so.tetes.modele}`, x, h+1.0, z, 6, '#e6edf3'); }
+    nommer(`délai ${c<0?'jardin':'cour'} · ${so.delaiTetes} × ${so.tetes.modele}`, x, h+1.0, z, 6, '#e6edf3'); });
 }
 function construireLumieres(){
   const Z = P().zonePublic; G.totems = []; G.wash = [];
@@ -633,7 +643,8 @@ function construireLumieres(){
 function tracesCables(){
   const rg = regieBox(), Z = P().zonePublic, s = E.sono, el = E.electricite, pb = podiumBox(), pl = posPlateforme(), zl = Z.z1 + 2.2, xs = Z.x1 + 1.5, zf = 1.6, cb = camionBox(), out = [];
   for (const c of [-1, 1]){ out.push({nom:`tronc ${c<0?'jardin':'cour'}`, type:'tronc', pts:[[rg.x + c*rg.L/2, zl],[c*xs, zl],[c*xs, zf],[c < 0 ? cb.x0 - 1.2 : cb.xh1 + .8, zf]]});
-    if (s.delais) out.push({nom:`délai ${c<0?'jardin':'cour'}`, type:'public', pts:[[c*xs, s.delaiZ],[c*s.delaiX, s.delaiZ]]}); }
+  }
+  posDelais().forEach(d => out.push({nom:`délai ${d.c<0?'jardin':'cour'}`, type:'public', pts:[[d.c*xs, d.z],[d.x, d.z]]}));
   out.push({nom:'régie → podium', type:'coulisses', pts:[[rg.x, rg.z0],[rg.x, pb.tete.z1]]});
   const tg = el.armoires[0]; out.push({nom:'TGBT → régie', type:'tronc', pts:[[tg.x, tg.z],[tg.x, zl],[rg.x - rg.L/2, zl]]});
   out.push({nom:'TGBT → tour', type:'tronc', pts:[[tg.x, tg.z],[tg.x, pl.z1+.3],[pl.x0 + 3.07 + .06, pl.z1 + .3]]});
@@ -828,7 +839,7 @@ function cameraMaj(t, dt){
 /* =====================================================================
    LECTURE, VIDÉO, INIT
    ===================================================================== */
-let t = 16, lecture = false, dernier = performance.now(), rec = null, chunks = [];
+let t = 16, lecture = false, dernier = performance.now(), rec = null, chunks = [], recT0 = 0;
 function legendeHTML(){
   const J = G.jauges, om = ombreCamion(), fmt = n => n.toLocaleString('fr-FR'), nom = nomenclatureTour(), el = E.electricite, tot = el.bilan.reduce((a,b) => a + b.kw, 0);
   const tour = `<table><tr><th>Pièce</th><th>Réf. Layher</th><th>Qté</th><th>Note</th></tr>${nom.map(([p,r,q,n,ok]) => `<tr><td>${p}</td><td class="${ok?'ok':'q'}">${r}</td><td>${q}</td><td>${n}</td></tr>`).join('')}</table>
@@ -862,12 +873,12 @@ function init(){
   play.addEventListener('click', () => { lecture = !lecture; play.textContent = lecture ? '❚❚ Pause' : '▶ Lecture'; play.classList.toggle('on', lecture); if (lecture && t >= 25.99) t = 16; });
   document.getElementById('cam').addEventListener('change', e => { modeCam = e.target.value; controls.enabled = (modeCam === 'libre'); });
   controls.enabled = false;
-  document.getElementById('png').addEventListener('click', () => { renderer.render(scene, camera); const a = document.createElement('a'); a.href = renderer.domElement.toDataURL('image/png'); a.download = `demo-${document.getElementById('heure').textContent.replace(':','h')}.png`; a.click(); });
+  document.getElementById('png').addEventListener('click', () => { renderer.render(scene, camera); const nom = `demo-${document.getElementById('heure').textContent.replace(':','h')}.png`; renderer.domElement.toBlob(b => telechargerFichier(nom, b), 'image/png'); });
   document.getElementById('video').addEventListener('click', basculerVideo);
   const lp = document.getElementById('legpan'); lp.innerHTML = legendeHTML();
   document.getElementById('leg').addEventListener('click', e => { const on = lp.style.display !== 'block'; lp.style.display = on ? 'block' : 'none'; e.target.classList.toggle('on', on); G.legendes.forEach(sp => sp.visible = on); });
   document.getElementById('impb').addEventListener('click', () => document.getElementById('imp').click());
-  document.getElementById('imp').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const j = JSON.parse(txt); if (!j.camion) j.version = 1; localStorage.setItem('implantation-3d', JSON.stringify(j)); location.reload(); } catch(err){ alert('JSON illisible'); } }); });
+  document.getElementById('imp').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const j = JSON.parse(txt); if (!j.camion){ alert("Ancien schéma (v1) : ce fichier n'a ni podium, ni camion, ni repos. Exporte à nouveau depuis le visualiseur implantation-3d.html."); return; } j.version = 2; localStorage.setItem('implantation-3d', JSON.stringify(j)); location.reload(); } catch(err){ alert('JSON illisible'); } }); });
   redim(); window.addEventListener('resize', redim); boucle();
 }
 function basculerVideo(){
@@ -875,10 +886,13 @@ function basculerVideo(){
   if (rec){ rec.stop(); return; }
   if (!window.MediaRecorder || !renderer.domElement.captureStream){ alert("Ce navigateur ne sait pas enregistrer le canvas. Utilise Chrome ou Firefox, ou capture l'écran."); return; }
   const flux = renderer.domElement.captureStream(30);
-  const type = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '';
-  rec = new MediaRecorder(flux, {mimeType:type, videoBitsPerSecond: 8e6}); chunks = [];
+  const type = ['video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+  rec = new MediaRecorder(flux, type ? {mimeType:type, videoBitsPerSecond: 8e6} : {videoBitsPerSecond: 8e6}); chunks = []; recT0 = performance.now();
   rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
-  rec.onstop = () => { const blob = new Blob(chunks, {type: rec.mimeType}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'demo-implantation.' + (rec.mimeType.includes('mp4') ? 'mp4' : 'webm'); a.click(); rec = null; b.textContent = '⏺ Enregistrer la vidéo'; b.classList.remove('on'); document.getElementById('rec').style.display = 'none'; lecture = false; document.getElementById('play').textContent = '▶ Lecture'; document.getElementById('play').classList.remove('on'); };
+  rec.onstop = () => { const mime = rec.mimeType || type, ext = mime.includes('mp4') ? 'mp4' : 'webm', blob = new Blob(chunks, {type: mime});
+    rec = null; b.textContent = '⏺ Enregistrer la vidéo'; b.classList.remove('on'); document.getElementById('rec').style.display = 'none'; lecture = false; document.getElementById('play').textContent = '▶ Lecture'; document.getElementById('play').classList.remove('on');
+    if (!blob.size){ alert("Aucune image n'a été capturée : ce navigateur ne sait pas enregistrer ce canvas. Essaie Chrome ou Edge sur ordinateur, ou utilise la vidéo déjà rendue dans exports/demo-soiree.mp4."); return; }
+    telechargerFichier('demo-implantation.' + ext, blob).then(ok => { if (!ok) return; const r = document.getElementById('rec'); r.textContent = `Vidéo enregistrée : demo-implantation.${ext} · ${(blob.size/1e6).toFixed(1)} Mo${ext === 'mp4' ? '' : ' (WebM : VLC, Chrome, ou convertir en MP4)'}`; r.style.display = 'block'; setTimeout(() => { r.style.display = 'none'; r.textContent = 'ENREGISTREMENT'; }, 8000); }); };
   t = 16; lecture = true; document.getElementById('play').textContent = '❚❚ Pause'; document.getElementById('play').classList.add('on');
   rec.start(500); b.textContent = '■ Arrêter'; b.classList.add('on'); document.getElementById('rec').style.display = 'block';
 }
@@ -887,6 +901,7 @@ function boucle(){
   requestAnimationFrame(boucle);
   const now = performance.now(), dt = Math.min(.5, (now-dernier)/1000); dernier = now;
   if (lecture){ t += dt / (+document.getElementById('vitesse').value); if (t >= 26){ t = 26; lecture = false; document.getElementById('play').textContent = '▶ Lecture'; document.getElementById('play').classList.remove('on'); if (rec) rec.stop(); } document.getElementById('tl').value = t; }
+  if (rec) document.getElementById('rec').textContent = `ENREGISTREMENT · ${Math.round((now - recT0)/1000)} s`;
   appliquer(t, dt); cameraMaj(t, dt); renderer.render(scene, camera);
 }
 init();

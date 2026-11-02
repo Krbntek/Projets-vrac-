@@ -43,6 +43,10 @@
   .stand{display:grid;grid-template-columns:1fr 110px 28px;gap:6px;padding:3px 10px;align-items:center}
   .stand button{padding:2px 6px}
   .row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+  #sel{position:absolute;top:52px;left:10px;background:rgba(14,17,22,.85);padding:6px 10px;border-radius:8px;font-size:12px;color:var(--acc);display:none}
+  #aide{position:absolute;top:10px;right:10px;background:rgba(14,17,22,.75);padding:6px 10px;border-radius:8px;font-size:11.5px;color:var(--dim);max-width:300px;line-height:1.5}
+  .preset{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;padding:3px 10px}
+  .preset button{padding:2px 8px}
   @media(max-width:900px){#wrap{grid-template-columns:1fr;grid-template-rows:58vh auto}}
 </style>
 </head>
@@ -60,6 +64,8 @@
       <button data-view="catwalk">Depuis le catwalk</button>
       <button class="sec" id="btnPng">⤓ PNG</button>
     </div>
+    <div id="sel"></div>
+    <div id="aide"><b>Déplacer</b> : glisser un élément (tour + régie + podium ensemble, camion, chaque stand, pile de subs, délai, totem, wash, armoire, repos) · pas de 0,5 m, <b>Alt</b> pour libre · <b>R</b> tourne le dernier stand touché · <b>Ctrl+Z</b> annule · variantes dans le panneau</div>
     <div id="legend">
       <div><span class="sw" style="background:#ffb454"></span><b>Vidéoprojecteur</b> — cône d'émission + image sur la façade (ombre du camion comprise)</div>
       <div><span class="sw" style="background:#3fb950"></span><b>Laser</b> — vert conforme · orange à vérifier · rouge interdit</div>
@@ -166,13 +172,14 @@ function posStands(){ const b = ETAT.bloc, v = ETAT.village, pl = posPlateforme(
   v.stands.forEach((s,i) => { let x, z, rot = 0;
     if (v.forme === 'flancs'){ const side = i < parCote ? -1 : 1, k = side < 0 ? i : i - parCote; x = b.x + side*((pl.x1 - b.x) + v.ecartTour + v.cote/2 + k*(v.cote + v.ecart)); z = v.z; }
     else { const rg = regieAABB(), rang = Math.floor(i/2), c = i%2 ? 1 : -1; x = b.x + c*((v.allee||4)/2 + v.cote/2); z = Math.max(rg.z1, pl.z1) + (v.ecartRegie||1.5) + v.cote/2 + rang*(v.pas||3.6); }
-    out.push({x0:x-v.cote/2, x1:x+v.cote/2, z0:z-v.cote/2, z1:z+v.cote/2, y0:0, y1:3.0, nom:s.nom, type:s.type, x, z, rot}); });
+    if (s.x !== undefined) x = s.x; if (s.z !== undefined) z = s.z; rot = s.rot || 0;   // position libre (déplacé à la souris)
+    out.push({x0:x-v.cote/2, x1:x+v.cote/2, z0:z-v.cote/2, z1:z+v.cote/2, y0:0, y1:3.0, nom:s.nom, type:s.type, x, z, rot, i}); });
   return out; }
+function posDelais(){ const s = ETAT.sono, out = []; for (let i = 0; i < s.delais; i++){ const c = i%2 ? 1 : -1, o = (s.delaisPos || [])[i] || {}; out.push({x:o.x !== undefined ? o.x : c*s.delaiX, z:o.z !== undefined ? o.z : s.delaiZ, c, i}); } return out; }
 function posSono(){ const s = ETAT.sono, out = [], xMax = Math.max(...s.stacks.map(Math.abs));
-  s.stacks.forEach(x => { const ext = Math.abs(x) === xMax, top = s.subsParStack*s.sub.h + (ext ? s.tetes.parStackExterieur*.35 : s.tetes.frontFill*.4);
-    out.push({x0:x-s.sub.l/2-.1, x1:x+s.sub.l/2+.1, z0:s.z-s.sub.p/2, z1:s.z+s.sub.p/2, y0:0, y1:top, nom:`${ext?'PA':'front-fill'} ${x<0?'jardin':'cour'}`, x, z:s.z, cote:x<0?-1:1, principal:ext, top}); });
-  for (let i = 0; i < s.delais; i++){ const c = i%2 ? 1 : -1;
-    out.push({x0:c*s.delaiX-.7, x1:c*s.delaiX+.7, z0:s.delaiZ-.7, z1:s.delaiZ+.7, y0:0, y1:s.delaiH, nom:`délai ${c<0?'jardin':'cour'}`, x:c*s.delaiX, z:s.delaiZ, cote:c, principal:false}); }
+  s.stacks.forEach((x, i) => { const ext = Math.abs(x) === xMax, top = s.subsParStack*s.sub.h + (ext ? s.tetes.parStackExterieur*.35 : s.tetes.frontFill*.4);
+    out.push({x0:x-s.sub.l/2-.1, x1:x+s.sub.l/2+.1, z0:s.z-s.sub.p/2, z1:s.z+s.sub.p/2, y0:0, y1:top, nom:`${ext?'PA':'front-fill'} ${x<0?'jardin':'cour'}`, x, z:s.z, cote:x<0?-1:1, principal:ext, top, i}); });
+  posDelais().forEach(d => out.push({x0:d.x-.7, x1:d.x+.7, z0:d.z-.7, z1:d.z+.7, y0:0, y1:s.delaiH, nom:`délai ${d.c<0?'jardin':'cour'}`, x:d.x, z:d.z, cote:d.c, principal:false, i:d.i}));
   return out; }
 function posTotems(){ return ETAT.lumieres.totems.map((t,i) => ({x0:t.x-.5, x1:t.x+.5, z0:t.z-.5, z1:t.z+.5, y0:0, y1:t.h+.4, nom:`totem ${i+1}`, x:t.x, z:t.z, h:t.h})); }
 function posRepos(){ const r = ETAT.repos; return [{x0:r.x-r.tonnelle.largeur/2, x1:r.x+r.tonnelle.largeur/2, z0:r.z-r.tonnelle.profondeur/2, z1:r.z+r.tonnelle.profondeur/2, y0:0, y1:2.4, nom:"repos"},
@@ -185,8 +192,8 @@ function obstacles(){ const pb = podiumBox(), o = [regieAABB(), pb.tete, pb.cat,
 // ombre du camion sur la façade par le VP bas
 function ombreCamion(){ const c = camionAABB(), b = ETAT.bloc, zc = c.z1, yt = c.yt; const h = yt - (b.hauteurVP - yt)*zc/(b.z - zc), k = b.z/(b.z - zc);
   return {h:Math.max(0, h), x0:(c.x0 - b.x)*k + b.x, x1:(c.xh1 - b.x)*k + b.x}; }
-function exclusions(){ const pb = podiumBox(), s = ETAT.sono, out = [[pb.tete.x0-1, pb.tete.x1+1, pb.tete.z0-1, pb.tete.z1+1],[pb.cat.x0-1, pb.cat.x1+1, pb.cat.z0-1, pb.cat.z1]];
-  for (let i = 0; i < s.delais; i++){ const c = i%2 ? 1 : -1; out.push([c*s.delaiX-1.3, c*s.delaiX+1.3, s.delaiZ-1.3, s.delaiZ+1.3]); } return out; }
+function exclusions(){ const pb = podiumBox(), out = [[pb.tete.x0-1, pb.tete.x1+1, pb.tete.z0-1, pb.tete.z1+1],[pb.cat.x0-1, pb.cat.x1+1, pb.cat.z0-1, pb.cat.z1]];
+  posDelais().forEach(d => out.push([d.x-1.3, d.x+1.3, d.z-1.3, d.z+1.3])); return out; }
 function jauges(){ const Z = PROJET.zonePublic, ex = exclusions(); let brut = 0, net = 0;
   for (let x = Z.x0+.5; x < Z.x1; x += 1) for (let z = Z.z0+.5; z < Z.z1; z += 1){ brut++; if (!ex.some(b => x>=b[0]&&x<=b[1]&&z>=b[2]&&z<=b[3])) net++; }
   const pb = podiumBox(), pl = posPlateforme(), v = ETAT.village, st = posStands(), rg = regieAABB();
@@ -197,7 +204,8 @@ function jauges(){ const Z = PROJET.zonePublic, ex = exclusions(); let brut = 0,
   return {brut, net, j2:Math.floor(net*Z.densite), j3:Math.floor(net*(Z.densiteMax||3)), flancs, scene, jScene:Math.floor(scene/1.5), coulisses, repos, jRepos:Math.floor(repos/2), hayon}; }
 function tracesCables(){ const rg = regieAABB(), Z = PROJET.zonePublic, s = ETAT.sono, el = ETAT.electricite, pb = podiumBox(), pl = posPlateforme(), zl = Z.z1 + 2.2, xs = Z.x1 + 1.5, zf = 1.6, cb = camionAABB(), out = [];
   for (const c of [-1, 1]){ out.push({nom:`tronc ${c<0?'jardin':'cour'}`, type:'tronc', pts:[[rg.x + c*rg.L/2, zl],[c*xs, zl],[c*xs, zf],[c < 0 ? cb.x0 - 1.2 : cb.xh1 + .8, zf]]});
-    if (s.delais) out.push({nom:`délai ${c<0?'jardin':'cour'}`, type:'public', pts:[[c*xs, s.delaiZ],[c*s.delaiX, s.delaiZ]]}); }
+  }
+  posDelais().forEach(d => out.push({nom:`délai ${d.c<0?'jardin':'cour'}`, type:'public', pts:[[d.c*xs, d.z],[d.x, d.z]]}));
   out.push({nom:'régie → podium', type:'coulisses', pts:[[rg.x, rg.z0],[rg.x, pb.tete.z1]]});
   const tg = el.armoires[0]; out.push({nom:'TGBT → régie', type:'tronc', pts:[[tg.x, tg.z],[tg.x, zl],[rg.x - rg.L/2, zl]]});
   out.push({nom:'TGBT → tour', type:'tronc', pts:[[tg.x, tg.z],[tg.x, pl.z1+.3],[pl.x0 + 3.07 + .06, pl.z1 + .3]]});
@@ -225,6 +233,7 @@ function etiquette(texte, x, y, z, largeur=6, couleur='#e6edf3'){
   const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false, transparent:true}));
   sp.scale.set(largeur, largeur/4, 1); sp.position.set(x, y, z); sp.renderOrder = 10; return sp; }
 const mAlu = () => mat(0xb9c0c8, {metalness:.6, roughness:.35}), mNoir = () => mat(0x111418, {roughness:.6});
+function sous(parent, drag){ const h = new THREE.Group(); h.userData.drag = drag; parent.add(h); return h; }
 
 /* =====================================================================
    ÉLÉMENTS STATIQUES
@@ -247,7 +256,7 @@ function construireSite(){
    ÉLÉMENTS DYNAMIQUES
    ===================================================================== */
 function dessinerTour(g){
-  if (!ETAT.options.echafaud) return;
+  if (!ETAT.options.echafaud) return; g = sous(g, {type:'bloc', nom:'Tour Layher (bloc tour · régie · podium)'});
   const b = ETAT.bloc, pl = posPlateforme(), nx = b.travees, n = b.niveaux, hN = b.hauteurNiveau, base = b.base, L = b.profondeurPlateforme, m = mat(COULEURS.galva, {metalness:.75, roughness:.35}), md = mat(0x8f949a, {metalness:.5, roughness:.55});
   const xs = []; for (let i = 0; i <= nx; i++) xs.push(pl.x0 + i*L); const zs = [pl.z0, pl.z1], ys = []; for (let k = 0; k <= n; k++) ys.push(base + k*hN);
   xs.forEach(x => zs.forEach(z => { g.add(cylindre([x,0,z],[x,ys[n]+1.0,z],.024,m)); g.add(boite(x-.08,x+.08,0,.012,z-.08,z+.08,m)); }));
@@ -262,7 +271,7 @@ function dessinerTour(g){
   if (ETAT.options.etiquettes) g.add(etiquette(`TOUR LAYHER ${nx} × 3,07 · plancher ${b.plancher} m`, b.x, ys[n]+3.6, b.z, 11));
 }
 function dessinerRegie(g){
-  const b = regieAABB(), pl = posPlateforme();
+  g = sous(g, {type:'bloc', nom:'Régie (bloc tour · régie · podium)'}); const b = regieAABB(), pl = posPlateforme();
   if (b.y0 > 0){ g.add(boite(b.x0, b.x1, .08, b.y0, b.z0, b.z1, mat(COULEURS.jupe))); const n = 5, gm = b.y0/n, p = (pl.z0 - b.z1 - .2)/n, xe = b.x0 + .9; for (let i = 0; i < n; i++){ const y1 = gm*(n-i), z0 = b.z1 + i*p; g.add(boite(xe-.6, xe+.6, y1-.05, y1, z0, z0+p, mat(0x2a2d33))); } }
   g.add(boite(b.x0,b.x1,b.y0,b.y1,b.z0,b.z1, mat(COULEURS.regie, {roughness:.5, metalness:.3})));
   const porte = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.2), mat(0x9aa4ae)); porte.position.set(b.x0 + .9, b.y0 + 1.1, b.z1 + .02); g.add(porte);
@@ -271,7 +280,7 @@ function dessinerRegie(g){
   if (ETAT.options.etiquettes) g.add(etiquette(`RÉGIE 20' · +${b.y0} m`, b.x, b.y1+1.2, b.z, 7));
 }
 function dessinerPodium(g){
-  const pb = podiumBox(), H = pb.H, T = pb.tete, C = pb.cat, cx = pb.x, ma = mAlu();
+  g = sous(g, {type:'bloc', nom:'Podium-catwalk (bloc tour · régie · podium)'}); const pb = podiumBox(), H = pb.H, T = pb.tete, C = pb.cat, cx = pb.x, ma = mAlu();
   [[T.x0,T.x1,T.z0,T.z1],[C.x0,C.x1,C.z0,C.z1]].forEach(([x0,x1,z0,z1]) => { g.add(boite(x0,x1,H-.12,H,z0,z1, mat(COULEURS.bois, {roughness:.9}))); g.add(boite(x0+.08,x1-.08,0,H-.12,z0+.08,z1-.08, mat(COULEURS.jupe))); });
   [[T.x0+1.4, T.z1, T.x1-1.4, T.z1],[T.x0, T.z0, T.x0, T.z1-1.5],[T.x1, T.z0, T.x1, T.z1-1.5]].forEach(([x0,z0,x1,z1]) => { for (const hh of [H+.5, H+1.1]) g.add(cylindre([x0,hh,z0],[x1,hh,z1],.025,ma)); const n = Math.max(1, Math.round(Math.hypot(x1-x0,z1-z0)/1.5)); for (let i = 0; i <= n; i++){ const x = x0+(x1-x0)*i/n, z = z0+(z1-z0)*i/n; g.add(cylindre([x,H,z],[x,H+1.1,z],.025,ma)); } });
   const nM = 8, gm = H/nM, pm = .28, zs0 = T.z1-1.4, zs1 = T.z1-.2;
@@ -283,7 +292,7 @@ function dessinerPodium(g){
   if (ETAT.options.etiquettes){ g.add(etiquette(`PODIUM-CATWALK ${H} m · ${(T.x1-T.x0)}×${(T.z1-T.z0)} + ${(C.x1-C.x0)}×${(C.z1-C.z0)} m`, cx, H+3.2, (C.z0+T.z1)/2, 13)); }
 }
 function dessinerCamion(g){
-  if (!ETAT.options.camion) return;
+  if (!ETAT.options.camion) return; g = sous(g, {type:'camion', nom:'Camion 20 m³'});
   const c = camionAABB(), mb = mat(COULEURS.camion, {roughness:.5, metalness:.2}), mn = mNoir(), ma = mAlu();
   g.add(boite(c.x0+.1, c.xc0-.05, .4, 2.6, c.z0+.05, c.z1-.05, mb)); g.add(boite(c.x0, c.xh0, .5, c.yp, c.z0+.1, c.z1-.1, mn)); g.add(boite(c.xc0, c.xh0, c.yp, c.yt, c.z0, c.z1, mb));
   [c.x0+1.0, c.xh0-1.2].forEach(x => [c.z0+.15, c.z1-.15].forEach(z => { const r = new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.3,16), mn); r.rotation.x = Math.PI/2; r.position.set(x,.5,z); g.add(r); }));
@@ -315,7 +324,7 @@ function dessinerLaser(g, l, statut){
   const pt = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshBasicMaterial({color:c})); pt.position.set(l.tx, l.ty, .05); g.add(pt);
 }
 function dessinerTonnelle(g, s){
-  const c = ETAT.village.cote, h0 = 2.2, h1 = 3.0, grp = new THREE.Group();
+  g = sous(g, {type:'stand', i:s.i, nom:'Stand ' + s.nom}); const c = ETAT.village.cote, h0 = 2.2, h1 = 3.0, grp = new THREE.Group();
   [[-c/2,-c/2],[c/2,-c/2],[c/2,c/2],[-c/2,c/2]].forEach(([x,z]) => grp.add(cylindre([x,0,z],[x,h0,z],.035, mat(0x8c9096, {metalness:.5}))));
   const geo = new THREE.ConeGeometry(c*Math.SQRT1_2*1.02, h1-h0, 4, 1); geo.rotateY(Math.PI/4);
   const toit = new THREE.Mesh(geo, mat(TYPE_COULEUR[s.type] || COULEURS.tente, {roughness:.9, side:THREE.DoubleSide})); toit.position.set(0, h0+(h1-h0)/2, 0); toit.castShadow = true; grp.add(toit);
@@ -326,13 +335,13 @@ function dessinerTonnelle(g, s){
 }
 function dessinerRepos(g){
   if (!ETAT.options.repos) return; const r = ETAT.repos;
-  posRepos().forEach(b => { [[b.x0,b.z0],[b.x1,b.z0],[b.x1,b.z1],[b.x0,b.z1]].forEach(([x,z]) => g.add(cylindre([x,0,z],[x,2.2,z],.035, mat(0x8c9096, {metalness:.5})))); g.add(boite(b.x0-.1,b.x1+.1,2.27,2.33,b.z0-.1,b.z1+.1, mat(b.nom==='repos'?0xd8d2c4:0xb9bfc6))); if (ETAT.options.etiquettes) g.add(etiquette(b.nom.toUpperCase(), (b.x0+b.x1)/2, 3.3, (b.z0+b.z1)/2, 5)); });
+  posRepos().forEach(b => { const h = sous(g, {type:b.nom, nom:b.nom === 'repos' ? 'Tonnelle repos' : 'Tonnelle stockage'}); [[b.x0,b.z0],[b.x1,b.z0],[b.x1,b.z1],[b.x0,b.z1]].forEach(([x,z]) => h.add(cylindre([x,0,z],[x,2.2,z],.035, mat(0x8c9096, {metalness:.5})))); h.add(boite(b.x0-.1,b.x1+.1,2.27,2.33,b.z0-.1,b.z1+.1, mat(b.nom==='repos'?0xd8d2c4:0xb9bfc6))); if (ETAT.options.etiquettes) h.add(etiquette(b.nom.toUpperCase(), (b.x0+b.x1)/2, 3.3, (b.z0+b.z1)/2, 5)); });
   for (let i = 0; i < 6; i++) g.add(boite(r.stockage.x-1.2+(i%3)*.8, r.stockage.x-.6+(i%3)*.8, 0, .9+Math.floor(i/3)*.3, r.stockage.z-1+Math.floor(i/3)*1.1, r.stockage.z-.4+Math.floor(i/3)*1.1, mat(0x15171b, {metalness:.4})));
   const bz = r.bache.z; g.add(boite(-r.bache.demiLargeur, r.bache.demiLargeur, 0, r.bache.hauteur, bz-.02, bz+.02, mat(0x2b2f36, {roughness:.9})));
 }
-function dessinerSono(g){
+function dessinerSono(g0){
   const s = ETAT.sono, mN = mat(COULEURS.sono, {roughness:.6});
-  posSono().forEach(st => {
+  posSono().forEach(st0 => { const st = st0, g = sous(g0, st.top !== undefined ? {type:'stack', i:st.i, nom:'Pile ' + st.nom} : {type:'delai', i:st.i, nom:'Tour de ' + st.nom});
     if (st.principal !== undefined && st.top !== undefined){ for (let i = 0; i < s.subsParStack; i++) g.add(boite(st.x-s.sub.l/2, st.x+s.sub.l/2, i*s.sub.h, (i+1)*s.sub.h-.03, st.z-s.sub.p/2, st.z+s.sub.p/2, mN));
       const top = s.subsParStack*s.sub.h, nT = st.principal ? s.tetes.parStackExterieur : s.tetes.frontFill, hT = st.principal ? .35 : .4, dl = st.principal ? .5 : .3;
       for (let k = 0; k < nT; k++) g.add(boite(st.x-dl, st.x+dl, top+k*hT, top+(k+1)*hT-.02, st.z-s.sub.p/2+.1, st.z+s.sub.p/2-.05, mN));
@@ -345,12 +354,12 @@ function dessinerSono(g){
       if (ETAT.options.etiquettes) g.add(etiquette(`${st.nom.toUpperCase()} · ${s.delaiTetes} × ${s.tetes.modele}`, st.x, st.y1+1.0, st.z, 7)); }
   });
 }
-function dessinerLumieres(g){
+function dessinerLumieres(g0){
   const L = ETAT.lumieres, mTot = mat(COULEURS.totem, {metalness:.5, roughness:.4}), Z = PROJET.zonePublic, cx = (Z.x0+Z.x1)/2, cz = (Z.z0+Z.z1)/2;
-  posTotems().forEach(t => { g.add(boite(t.x-.5, t.x+.5, 0, .25, t.z-.5, t.z+.5, mTot)); g.add(cylindre([t.x,0,t.z],[t.x,t.h,t.z], .06, mTot)); g.add(boite(t.x-.5,t.x+.5,t.h-.3,t.h-.15,t.z-.1,t.z+.1, mNoir())); g.add(boite(t.x-.5,t.x+.5,t.h-.1,t.h+.05,t.z-.1,t.z+.1, mNoir()));
+  posTotems().forEach((t, i) => { const g = sous(g0, {type:'totem', i, nom:'Totem ' + (i+1)}); g.add(boite(t.x-.5, t.x+.5, 0, .25, t.z-.5, t.z+.5, mTot)); g.add(cylindre([t.x,0,t.z],[t.x,t.h,t.z], .06, mTot)); g.add(boite(t.x-.5,t.x+.5,t.h-.3,t.h-.15,t.z-.1,t.z+.1, mNoir())); g.add(boite(t.x-.5,t.x+.5,t.h-.1,t.h+.05,t.z-.1,t.z+.1, mNoir()));
     const dir = new THREE.Vector3(cx - t.x, -t.h, cz - t.z), base = new THREE.Vector3(t.x, t.h, t.z).add(dir.clone().normalize().multiplyScalar(Math.min(26, dir.length())));
     g.add(cone([t.x,t.h-.2,t.z],[base.x,Math.max(base.y,.1),base.z], 7, 0xb36bff, .12)); if (ETAT.options.etiquettes) g.add(etiquette(t.nom, t.x, t.h+1.0, t.z, 4)); });
-  L.wash.forEach((w,i) => { g.add(boite(w.x-.45, w.x+.45, 0, .5, w.z-.35, w.z+.35, mat(0x111418, {metalness:.5}))); g.add(cone([w.x,.5,w.z],[w.tx,w.ty,0], 4.5, 0xb36bff, .14)); if (ETAT.options.etiquettes) g.add(etiquette(`wash ${i+1}`, w.x, 1.6, w.z, 3.5)); });
+  L.wash.forEach((w,i) => { const g = sous(g0, {type:'wash', i, nom:'Wash ' + (i+1)}); g.add(boite(w.x-.45, w.x+.45, 0, .5, w.z-.35, w.z+.35, mat(0x111418, {metalness:.5}))); g.add(cone([w.x,.5,w.z],[w.tx,w.ty,0], 4.5, 0xb36bff, .14)); if (ETAT.options.etiquettes) g.add(etiquette(`wash ${i+1}`, w.x, 1.6, w.z, 3.5)); });
 }
 function dessinerCables(g){
   const mC = mat(0x15171b, {roughness:.8}), mJ = mat(0xffd23f, {roughness:.7}), mR = mat(0x2a2a2a);
@@ -358,7 +367,7 @@ function dessinerCables(g){
     for (let i = 0; i < c.pts.length-1; i++){ const [x0,z0] = c.pts[i], [x1,z1] = c.pts[i+1], L = Math.hypot(x1-x0, z1-z0); if (L < .05) continue;
       const seg = boite(-L/2, L/2, 0, h, -w/2, w/2, c.type === 'public' ? mR : mC); seg.position.set((x0+x1)/2, 0, (z0+z1)/2); seg.rotation.y = -Math.atan2(z1-z0, x1-x0); g.add(seg);
       const pas = c.type === 'tronc' ? 2.0 : 1.0; for (let d = pas/2; d < L; d += pas){ const u = d/L, ray = boite(-.06, .06, h, h+.012, -w/2, w/2, mJ); ray.position.set(x0+(x1-x0)*u, 0, z0+(z1-z0)*u); ray.rotation.y = -Math.atan2(z1-z0, x1-x0); g.add(ray); } } });
-  posElec().forEach(a => { g.add(boite(a.x0, a.x1, 0, a.y1, a.z0, a.z1, mat(0x9aa4ae, {metalness:.4, roughness:.5}))); if (ETAT.options.etiquettes) g.add(etiquette(a.nom, (a.x0+a.x1)/2, a.y1+1.0, (a.z0+a.z1)/2, 6.5, '#ffd23f')); });
+  posElec().forEach((a, i) => { const h = sous(g, i < ETAT.electricite.armoires.length ? {type:'armoire', i, nom:a.nom} : {type:'groupe', nom:a.nom}); h.add(boite(a.x0, a.x1, 0, a.y1, a.z0, a.z1, mat(0x9aa4ae, {metalness:.4, roughness:.5}))); if (ETAT.options.etiquettes) h.add(etiquette(a.nom, (a.x0+a.x1)/2, a.y1+1.0, (a.z0+a.z1)/2, 6.5, '#ffd23f')); });
 }
 
 /* =====================================================================
@@ -514,6 +523,7 @@ function rendrePanneau(){
       <tr><td>Bilan électrique</td><td>${kw} kW appelés · TGBT 125 A tri</td></tr>
       <tr><td>Zone public nette</td><td>${J.net.toLocaleString('fr-FR')} m² · ${J.j2.toLocaleString('fr-FR')} pers. à ${Z.densite}/m²</td></tr>
     </table>
+    ${panneauVariantes()}
     <h2>Affichage</h2>
     ${['zone:zone public','voisins:bâtiments voisins','nef:nef','cables:câbles et armoires','echafaud:tour Layher','etiquettes:étiquettes','cones:cônes VP','sono:sono','lumieres:lumières','village:village','camion:camion','repos:repos et stockage']
       .map(o => { const [k,l] = o.split(':'); return `<div class="chk"><input type="checkbox" data-opt="${k}" ${ETAT.options[k]?'checked':''}> ${l}</div>`; }).join('')}
@@ -539,12 +549,69 @@ function mettreAJourPanneau(){
   side.querySelectorAll('button[data-del]').forEach(bt => bt.addEventListener('click', () => { ETAT.village.stands.splice(+bt.dataset.del, 1); rafraichir(); }));
   side.querySelectorAll('button[data-add]').forEach(bt => bt.addEventListener('click', () => { ETAT.village.stands.push({nom:`Stand ${ETAT.village.stands.length+1}`, type:'asso'}); rafraichir(); }));
   side.querySelectorAll('input[data-opt]').forEach(inp => inp.addEventListener('change', () => { ETAT.options[inp.dataset.opt] = inp.checked; stat.children.forEach(c => { if (c.userData.groupe) c.visible = ETAT.options[c.userData.groupe]; }); rafraichir(); }));
+  brancherVariantes();
   document.getElementById('btnJson').onclick = () => telecharger('implantation.json', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(Object.assign({projet:PROJET}, ETAT), null, 1)));
   document.getElementById('btnImport').onclick = () => document.getElementById('fileJson').click();
   document.getElementById('fileJson').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const j = JSON.parse(t); if (!j.camion){ alert('Ancien schéma (v1) : ce fichier ne contient pas le podium, le camion, le repos… Réinitialise puis reporte tes valeurs.'); return; } ETAT = fusionner(DEFAUT(), j); rafraichir(); } catch(err){ alert('Fichier illisible'); } }); };
   document.getElementById('btnReset').onclick = () => { if (confirm('Revenir à l\'implantation par défaut ?')){ ETAT = DEFAUT(); rafraichir(); } };
 }
 function telecharger(nom, url){ const a = document.createElement('a'); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove(); }
+
+/* =====================================================================
+   DÉPLACEMENT À LA SOURIS — on glisse un ensemble, les contrôles se recalculent
+   ===================================================================== */
+function positionDe(d){ const E = ETAT; switch (d.type){
+  case 'bloc': return {x:E.bloc.x, z:E.bloc.z}; case 'camion': return {x:E.camion.x, z:E.camion.z};
+  case 'stand': { const s = posStands()[d.i]; return {x:s.x, z:s.z}; } case 'stack': return {x:E.sono.stacks[d.i], z:E.sono.z};
+  case 'delai': { const q = posDelais()[d.i]; return {x:q.x, z:q.z}; } case 'totem': return {x:E.lumieres.totems[d.i].x, z:E.lumieres.totems[d.i].z};
+  case 'wash': return {x:E.lumieres.wash[d.i].x, z:E.lumieres.wash[d.i].z}; case 'armoire': return {x:E.electricite.armoires[d.i].x, z:E.electricite.armoires[d.i].z};
+  case 'groupe': return {x:E.electricite.groupe.x, z:E.electricite.groupe.z}; case 'repos': return {x:E.repos.x, z:E.repos.z}; case 'stockage': return {x:E.repos.stockage.x, z:E.repos.stockage.z}; } return {x:0, z:0}; }
+function deplacer(d, x, z){ const E = ETAT; switch (d.type){
+  case 'bloc': E.bloc.x = x; E.bloc.z = z; break; case 'camion': E.camion.x = x; E.camion.z = z; break;
+  case 'stand': { const s = E.village.stands[d.i]; s.x = x; s.z = z; break; } case 'stack': E.sono.stacks[d.i] = x; E.sono.z = z; break;
+  case 'delai': E.sono.delaisPos = E.sono.delaisPos || []; E.sono.delaisPos[d.i] = {x, z}; break;
+  case 'totem': Object.assign(E.lumieres.totems[d.i], {x, z}); break; case 'wash': Object.assign(E.lumieres.wash[d.i], {x, z}); break;
+  case 'armoire': Object.assign(E.electricite.armoires[d.i], {x, z}); break; case 'groupe': Object.assign(E.electricite.groupe, {x, z}); break;
+  case 'repos': E.repos.x = x; E.repos.z = z; break; case 'stockage': E.repos.stockage.x = x; E.repos.stockage.z = z; break; } }
+let drag = null, dernierStand = null, prevu = false; const HIST = [];
+const PLAN_SOL = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+function rayon(ev){ const r = renderer.domElement.getBoundingClientRect(), m = new THREE.Vector2(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1), rc = new THREE.Raycaster(); rc.setFromCamera(m, camera); return rc; }
+function surSol(ev){ const p = new THREE.Vector3(); return rayon(ev).ray.intersectPlane(PLAN_SOL, p) ? p : null; }
+function afficherSel(d, p){ const el = document.getElementById('sel'); el.style.display = 'block'; el.textContent = `${d.nom} · x ${p.x.toFixed(1)} m · z ${p.z.toFixed(1)} m`; }
+function planifier(){ if (prevu) return; prevu = true; requestAnimationFrame(() => { prevu = false; rafraichir(); }); }
+function memoriser(){ HIST.push(JSON.stringify(ETAT)); if (HIST.length > 60) HIST.shift(); }
+function installerSouris(){
+  const c = renderer.domElement;
+  c.addEventListener('pointerdown', ev => { if (ev.button !== 0 || ev.ctrlKey) return;
+    const hits = rayon(ev).intersectObjects(dyn.children, true);
+    for (const h of hits){ let o = h.object; while (o && !(o.userData && o.userData.drag)) o = o.parent; if (!o) continue;
+      const p = surSol(ev); if (!p) return; const cur = positionDe(o.userData.drag);
+      drag = {d:o.userData.drag, dx:cur.x - p.x, dz:cur.z - p.z, etat0:JSON.stringify(ETAT), bouge:false}; if (drag.d.type === 'stand') dernierStand = drag.d.i;
+      controls.enabled = false; c.setPointerCapture(ev.pointerId); afficherSel(drag.d, cur); return; } });
+  c.addEventListener('pointermove', ev => { if (!drag) return; const p = surSol(ev); if (!p) return; let x = p.x + drag.dx, z = p.z + drag.dz;
+    if (!ev.altKey){ x = Math.round(x*2)/2; z = Math.round(z*2)/2; } const cur = positionDe(drag.d); if (Math.abs(cur.x-x) < 1e-6 && Math.abs(cur.z-z) < 1e-6) return;
+    if (!drag.bouge){ HIST.push(drag.etat0); if (HIST.length > 60) HIST.shift(); drag.bouge = true; } deplacer(drag.d, x, z); afficherSel(drag.d, {x, z}); planifier(); });
+  const fin = () => { if (!drag) return; drag = null; controls.enabled = true; rafraichir(); setTimeout(() => document.getElementById('sel').style.display = 'none', 1500); };
+  c.addEventListener('pointerup', fin); c.addEventListener('pointercancel', fin);
+  window.addEventListener('keydown', ev => { if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'SELECT') return;
+    if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'z'){ ev.preventDefault(); if (HIST.length){ ETAT = fusionner(DEFAUT(), JSON.parse(HIST.pop())); rafraichir(); } }
+    else if (ev.key.toLowerCase() === 'r' && dernierStand !== null){ memoriser(); const s = ETAT.village.stands[dernierStand], p = posStands()[dernierStand]; s.x = p.x; s.z = p.z; s.rot = ((s.rot || 0) + Math.PI/2) % (Math.PI*2); rafraichir(); } });
+}
+// VARIANTES D'IMPLANTATION — les mêmes ensembles, disposés autrement, mémorisés dans ce navigateur et exportables
+function variantes(){ try { return JSON.parse(localStorage.getItem('implantation-presets') || '{}'); } catch(e){ return {}; } }
+function ecrireVariantes(v){ try { localStorage.setItem('implantation-presets', JSON.stringify(v)); } catch(e){} }
+function panneauVariantes(){ const v = variantes(), noms = Object.keys(v).sort();
+  return `<h2>Variantes d'implantation</h2>
+    <div class="preset"><b>Référence</b><span class="note">catwalk, flancs, camion</span><button data-var-ref="1">Charger</button></div>
+    ${noms.map(n => `<div class="preset"><span>${n.replace(/</g,'&lt;')}</span><button data-var-charger="${n.replace(/"/g,'&quot;')}">Charger</button><button class="sec" data-var-suppr="${n.replace(/"/g,'&quot;')}" title="supprimer">✕</button></div>`).join('')}
+    <div class="row" style="padding:4px 10px 8px"><input type="text" id="varNom" placeholder="nom de la variante" style="flex:1"><button id="varSauver">Enregistrer l'implantation actuelle</button></div>
+    <p class="note" style="padding:0 10px 6px;margin:0">Glisse les éléments dans la 3D, puis enregistre : chaque variante garde les mêmes ensembles (matériel, stands, puissances) disposés autrement. Exporter JSON → la démo et Unreal reprennent la variante.</p>`; }
+function brancherVariantes(){
+  side.querySelectorAll('[data-var-ref]').forEach(b => b.onclick = () => { memoriser(); ETAT = DEFAUT(); rafraichir(); });
+  side.querySelectorAll('[data-var-charger]').forEach(b => b.onclick = () => { const v = variantes()[b.dataset.varCharger]; if (v){ memoriser(); ETAT = fusionner(DEFAUT(), v); rafraichir(); } });
+  side.querySelectorAll('[data-var-suppr]').forEach(b => b.onclick = () => { const v = variantes(); if (confirm(`Supprimer la variante « ${b.dataset.varSuppr} » ?`)){ delete v[b.dataset.varSuppr]; ecrireVariantes(v); mettreAJourPanneau(); } });
+  const bs = document.getElementById('varSauver'); if (bs) bs.onclick = () => { const n = (document.getElementById('varNom').value || '').trim(); if (!n) return alert('Donne un nom à la variante'); const v = variantes(); v[n] = JSON.parse(JSON.stringify(ETAT)); ecrireVariantes(v); mettreAJourPanneau(); };
+}
 
 /* =====================================================================
    VUES, EXPORT PNG, INITIALISATION
@@ -575,6 +642,7 @@ function init(){
   controls = new THREE.OrbitControls(camera, renderer.domElement); controls.target.set(...VUES.persp.cible); controls.maxPolarAngle = Math.PI*.495; controls.update();
   document.querySelectorAll('#bar button[data-view]').forEach(b => b.addEventListener('click', () => allerVue(b.dataset.view)));
   document.getElementById('btnPng').addEventListener('click', () => { renderer.render(scene, camera); telecharger('implantation-' + Date.now() + '.png', renderer.domElement.toDataURL('image/png')); });
+  installerSouris();
   redimensionner(); window.addEventListener('resize', redimensionner); rafraichir(); boucle();
 }
 function redimensionner(){ const vue = document.getElementById('view'), w = vue.clientWidth, h = vue.clientHeight; renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix(); renderer.domElement.style.width = w+'px'; renderer.domElement.style.height = h+'px'; }
