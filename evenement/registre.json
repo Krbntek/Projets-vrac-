@@ -1,0 +1,379 @@
+{
+ "version": 1,
+ "evenement": "Mapping Saint-Denis — parvis",
+ "objets": [
+  {
+   "id": "vp-01",
+   "categorie": "materiel",
+   "type": "videoprojecteur",
+   "nom": "Tri-DLP laser 40 000 lm 4K (classe)",
+   "quantite": 2,
+   "fournisseur": "Novelty (à confirmer)",
+   "dimensions_m": {
+    "l": 0.62,
+    "h": 0.42,
+    "p": 0.7
+   },
+   "poids_kg": null,
+   "puissance_w": 4200,
+   "specifique": {
+    "lumens": 40000,
+    "optique_tr": "1.4-2.4"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "CALCULS-MAPPING §3.6"
+   },
+   "implantation": {
+    "groupe": "projecteurs"
+   },
+   "notes": "poids inconnu tant que le modèle n'est pas arrêté ; 4 machines pour 80 lux, 2 posées dans le plan",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "laser-01",
+   "categorie": "materiel",
+   "type": "laser",
+   "nom": "Laser RGB 10 W",
+   "quantite": 2,
+   "dimensions_m": {
+    "l": 0.4,
+    "h": 0.24,
+    "p": 0.4
+   },
+   "poids_kg": null,
+   "puissance_w": 600,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "lasers"
+   },
+   "notes": "prestataire certifié + NOHD + déclaration DGAC",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "ech-01",
+   "categorie": "structure",
+   "type": "echafaudage",
+   "nom": "Plateforme VP 9 × 3 m, plancher à 10 m, garde-corps, bâche",
+   "quantite": 1,
+   "dimensions_m": {
+    "l": 9,
+    "h": 12.4,
+    "p": 3
+   },
+   "poids_kg": null,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "plateforme"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "cont-01",
+   "categorie": "structure",
+   "type": "conteneur",
+   "nom": "Régie étanche — conteneur 20' aménagé (vitre, clim)",
+   "quantite": 1,
+   "dimensions_m": {
+    "l": 6.06,
+    "h": 2.59,
+    "p": 2.44
+   },
+   "poids_kg": 2300,
+   "puissance_w": 3000,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "regie"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "tonn-01",
+   "categorie": "structure",
+   "type": "tonnelle",
+   "nom": "Tonnelle 3 × 3 m",
+   "quantite": 8,
+   "dimensions_m": {
+    "l": 3,
+    "h": 3,
+    "p": 3
+   },
+   "poids_kg": 25,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "notes": "lestage 4 × 20 kg par tonnelle, obligatoire en extérieur",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "pa-01",
+   "categorie": "materiel",
+   "type": "enceinte",
+   "nom": "Line array (tête) sur mât",
+   "quantite": 8,
+   "dimensions_m": {
+    "l": 0.9,
+    "h": 0.32,
+    "p": 0.6
+   },
+   "poids_kg": null,
+   "puissance_w": null,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "sub-01",
+   "categorie": "materiel",
+   "type": "sub",
+   "nom": "Sub 18\"",
+   "quantite": 4,
+   "dimensions_m": {
+    "l": 1.2,
+    "h": 0.65,
+    "p": 1.2
+   },
+   "poids_kg": null,
+   "puissance_w": null,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "tot-01",
+   "categorie": "materiel",
+   "type": "totem",
+   "nom": "Totem lumière 5,5 m + wash LED",
+   "quantite": 4,
+   "dimensions_m": {
+    "l": 1,
+    "h": 5.5,
+    "p": 1
+   },
+   "poids_kg": null,
+   "puissance_w": 800,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "stand-01",
+   "categorie": "stand",
+   "type": "prevention",
+   "nom": "Prévention",
+   "quantite": 1,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "village",
+    "ordre": 0
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "stand-02",
+   "categorie": "stand",
+   "type": "secours",
+   "nom": "Poste de secours",
+   "quantite": 1,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "village",
+    "ordre": 1
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "stand-03",
+   "categorie": "stand",
+   "type": "accueil",
+   "nom": "Accueil · infos",
+   "quantite": 1,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "village",
+    "ordre": 2
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "stand-04",
+   "categorie": "stand",
+   "type": "buvette",
+   "nom": "Buvette",
+   "quantite": 1,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "village",
+    "ordre": 3
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "stand-05",
+   "categorie": "stand",
+   "type": "buvette",
+   "nom": "Restauration",
+   "quantite": 1,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "village",
+    "ordre": 4
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "stand-06",
+   "categorie": "stand",
+   "type": "asso",
+   "nom": "Asso 1",
+   "quantite": 1,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "village",
+    "ordre": 5
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "stand-07",
+   "categorie": "stand",
+   "type": "asso",
+   "nom": "Asso 2",
+   "quantite": 1,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "village",
+    "ordre": 6
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "stand-08",
+   "categorie": "stand",
+   "type": "asso",
+   "nom": "Asso 3",
+   "quantite": 1,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "implantation": {
+    "groupe": "village",
+    "ordre": 7
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "zone-public",
+   "categorie": "espace",
+   "type": "zone",
+   "nom": "Zone public 60 × 54 m (3 240 m², ~6 500 pers. à 2/m²)",
+   "position_m": {
+    "x": 0,
+    "z": 33
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "ctr-01",
+   "categorie": "contrainte",
+   "type": "chantier",
+   "nom": "Chantier tour nord (mars 2025 → ~2030), échafaudage > 90 m côté nord",
+   "valeur": "à vérifier auprès du CMN",
+   "emetteur": "CMN",
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "impact": [
+    "emprise parvis",
+    "travée gauche de la façade"
+   ],
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "ctr-02",
+   "categorie": "contrainte",
+   "type": "eclairage-public",
+   "nom": "Extinction de l'éclairage public pendant le show",
+   "valeur": "à négocier",
+   "emetteur": "Ville de Saint-Denis",
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "impact": [
+    "rendu du mapping"
+   ],
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "pers-01",
+   "categorie": "personne",
+   "type": "regie",
+   "nom": "Régie vidéo / mapping",
+   "equipe": "technique",
+   "quantite": 2,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "pers-02",
+   "categorie": "personne",
+   "type": "laseriste",
+   "nom": "Opérateur laser certifié",
+   "equipe": "technique",
+   "quantite": 1,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  }
+ ]
+}

@@ -1,0 +1,56 @@
+{
+  "_commentaire": "Implantation exportée depuis outils/implantation-3d.html (bouton Exporter JSON). Mètres. X = axe façade (0 = centre), Y = hauteur, Z = recul depuis le plan de la façade. C'est la SOURCE : on modifie ici (ou dans le visualiseur), puis on relance generer_projet_unreal.py.",
+  "projet": {
+    "nom": "Basilique Saint-Denis — parvis",
+    "facade": {
+      "largeur": 32.5, "hauteur": 37.3, "profondeur": 3.0,
+      "contour": [[-16.25,0],[-16.25,29.2],[-5.9,29.2],[0,37.3],[5.9,29.2],[5.2,29.2],
+                  [5.2,50.6],[6.1,50.6],[6.7,54.6],[10.5,60.1],[14.3,54.6],[14.9,50.6],
+                  [15.8,50.6],[15.8,29.2],[16.25,29.2],[16.25,0]],
+      "rosace": {"x": 0, "y": 22.5, "r": 3.0},
+      "ouvertures": [
+        [-2.6,2.6,0,5.5],[-12.3,-6.9,0,3.3],[6.9,12.3,0,3.3],
+        [-2.95,2.95,13.6,24],
+        [-11.25,-7.95,12.2,23],[-7.95,-4.65,12.2,23],[7.95,11.25,12.2,23],[11.25,14.55,12.2,23],
+        [6.3,9.5,30.1,36.3],[11.5,14.7,30.1,36.3],[6.3,9.5,37,49],[11.5,14.7,37,49]
+      ]
+    },
+    "zonePublic": {"x0": -30, "x1": 30, "z0": 6, "z1": 60, "hautYeux": 2.5, "densite": 2},
+    "voisins": [
+      {"nom": "bâti ouest", "x0": -55, "x1": -30, "z0": 0,  "z1": 50,  "h": 16},
+      {"nom": "bâti est",   "x0": 32,  "x1": 60,  "z0": 0,  "z1": 45,  "h": 14},
+      {"nom": "fond ouest", "x0": -60, "x1": -40, "z0": 62, "z1": 100, "h": 12},
+      {"nom": "fond est",   "x0": 40,  "x1": 70,  "z0": 62, "z1": 110, "h": 18}
+    ],
+    "nef": {"x0": -16.25, "x1": 16.25, "z0": -108, "z1": -3, "h": 24}
+  },
+  "bloc": {"x": 0, "z": 70, "hauteurVP": 10, "largeurPlateforme": 9, "profondeurPlateforme": 3},
+  "projecteurs": [
+    {"nom": "VP1 — bas",  "dx": -1.3, "cx": 0, "cy": 9.7,  "tr": 2.02, "ratio": 1.7778, "lumens": 40000},
+    {"nom": "VP2 — haut", "dx": 1.3,  "cx": 0, "cy": 27.6, "tr": 2.02, "ratio": 1.7778, "lumens": 40000}
+  ],
+  "lasers": [
+    {"nom": "Laser 1", "dx": -3.6, "dy": -1.0, "tx": -6, "ty": 17, "puissance": 10},
+    {"nom": "Laser 2", "dx": 3.6,  "dy": -1.0, "tx": 8,  "ty": 20, "puissance": 10}
+  ],
+  "regie": {"longueur": 6.06, "largeur": 2.44, "hauteur": 2.59, "ecart": 0.4},
+  "village": {
+    "allee": 4.0, "pas": 3.6, "cote": 3.0, "ecartRegie": 1.5,
+    "stands": [
+      {"nom": "Prévention",       "type": "prevention"},
+      {"nom": "Poste de secours", "type": "secours"},
+      {"nom": "Accueil · infos",  "type": "accueil"},
+      {"nom": "Buvette",          "type": "buvette"},
+      {"nom": "Restauration",     "type": "buvette"},
+      {"nom": "Asso 1",           "type": "asso"},
+      {"nom": "Asso 2",           "type": "asso"},
+      {"nom": "Asso 3",           "type": "asso"}
+    ]
+  },
+  "sono": {"x": 19.5, "z": 4, "hauteur": 6.5, "ouverture": 90, "portee": 62, "visee": 10, "subs": 2,
+           "delais": 0, "delaiX": 13, "delaiZ": 38, "delaiH": 5},
+  "lumieres": {
+    "totems": [{"x": -31, "z": 10, "h": 5.5}, {"x": 31, "z": 10, "h": 5.5}, {"x": -31, "z": 56, "h": 5.5}, {"x": 31, "z": 56, "h": 5.5}],
+    "wash":   [{"x": -13, "z": 9, "tx": -10, "ty": 26}, {"x": 13, "z": 9, "tx": 10.5, "ty": 44}]
+  }
+}

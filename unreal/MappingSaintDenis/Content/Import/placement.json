@@ -1,0 +1,538 @@
+{
+ "unites": "cm",
+ "repere": "Unreal : X avant (= recul Z du modèle), Y droite (= X modèle), Z haut (= Y modèle)",
+ "acteurs": [
+  {
+   "acteur": "Facade",
+   "element": "SM_Facade",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Nef",
+   "element": "SM_Nef",
+   "location_cm": [
+    -300,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Voisin_1_bâti_ouest",
+   "element": "SM_Voisin_1",
+   "location_cm": [
+    2500.0,
+    -4250.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Voisin_2_bâti_est",
+   "element": "SM_Voisin_2",
+   "location_cm": [
+    2250.0,
+    4600.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Voisin_3_fond_ouest",
+   "element": "SM_Voisin_3",
+   "location_cm": [
+    8100.0,
+    -5000.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Voisin_4_fond_est",
+   "element": "SM_Voisin_4",
+   "location_cm": [
+    8600.0,
+    5500.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Sol",
+   "element": "SM_Sol",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "ZonePublic",
+   "element": "SM_ZonePublic",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "PlateformeVP",
+   "element": "SM_PlateformeVP",
+   "location_cm": [
+    7000.0,
+    0.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Regie_etanche",
+   "element": "SM_Regie",
+   "location_cm": [
+    7312.0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stand_Prévention",
+   "element": "SM_Tonnelle_prevention",
+   "location_cm": [
+    7734.0,
+    -350.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stand_Poste_de_secours",
+   "element": "SM_Tonnelle_secours",
+   "location_cm": [
+    7734.0,
+    350.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stand_Accueil_-_infos",
+   "element": "SM_Tonnelle_accueil",
+   "location_cm": [
+    8094.0,
+    -350.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stand_Buvette",
+   "element": "SM_Tonnelle_buvette",
+   "location_cm": [
+    8094.0,
+    350.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stand_Restauration",
+   "element": "SM_Tonnelle_buvette",
+   "location_cm": [
+    8454.0,
+    -350.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stand_Asso_1",
+   "element": "SM_Tonnelle_asso",
+   "location_cm": [
+    8454.0,
+    350.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stand_Asso_2",
+   "element": "SM_Tonnelle_asso",
+   "location_cm": [
+    8814.0,
+    -350.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stand_Asso_3",
+   "element": "SM_Tonnelle_asso",
+   "location_cm": [
+    8814.0,
+    350.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "PA_jardin",
+   "element": "SM_PA_Stack",
+   "location_cm": [
+    400,
+    -1950.0,
+    0
+   ],
+   "yaw_deg": 10.0
+  },
+  {
+   "acteur": "PA_cour",
+   "element": "SM_PA_Stack",
+   "location_cm": [
+    400,
+    1950.0,
+    0
+   ],
+   "yaw_deg": -10.0
+  },
+  {
+   "acteur": "Sono_Couverture",
+   "element": "SM_Sono_Couverture",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Totem_1",
+   "element": "SM_Totem",
+   "location_cm": [
+    1000,
+    -3100,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Totem_2",
+   "element": "SM_Totem",
+   "location_cm": [
+    1000,
+    3100,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Totem_3",
+   "element": "SM_Totem",
+   "location_cm": [
+    5600,
+    -3100,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Totem_4",
+   "element": "SM_Totem",
+   "location_cm": [
+    5600,
+    3100,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Wash_1",
+   "element": "SM_WashFacade",
+   "location_cm": [
+    900,
+    -1300,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Wash_2",
+   "element": "SM_WashFacade",
+   "location_cm": [
+    900,
+    1300,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "VP_1",
+   "element": "SM_Projecteur",
+   "location_cm": [
+    7000,
+    -130.0,
+    1000
+   ],
+   "yaw_deg": 358.94
+  },
+  {
+   "acteur": "ConeVP_1",
+   "element": "SM_ConeVP_1",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "VP_2",
+   "element": "SM_Projecteur",
+   "location_cm": [
+    7000,
+    130.0,
+    1000
+   ],
+   "yaw_deg": 1.06
+  },
+  {
+   "acteur": "ConeVP_2",
+   "element": "SM_ConeVP_2",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Laser_1",
+   "element": "SM_Laser",
+   "location_cm": [
+    7000,
+    -360.0,
+    900.0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauLaser_1",
+   "element": "SM_FaisceauLaser_1",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Laser_2",
+   "element": "SM_Laser",
+   "location_cm": [
+    7000,
+    360.0,
+    900.0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauLaser_2",
+   "element": "SM_FaisceauLaser_2",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauTotem_1",
+   "element": "SM_FaisceauTotem_1",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauTotem_2",
+   "element": "SM_FaisceauTotem_2",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauTotem_3",
+   "element": "SM_FaisceauTotem_3",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauTotem_4",
+   "element": "SM_FaisceauTotem_4",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauWash_1",
+   "element": "SM_FaisceauWash_1",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauWash_2",
+   "element": "SM_FaisceauWash_2",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  }
+ ],
+ "lumieres": [
+  {
+   "nom": "Light_VP_1",
+   "location_cm": [
+    7000,
+    -130.0,
+    1000
+   ],
+   "cible_cm": [
+    0,
+    0,
+    969.9999999999999
+   ],
+   "lumens": 40000,
+   "cone_deg": 27.8
+  },
+  {
+   "nom": "Light_VP_2",
+   "location_cm": [
+    7000,
+    130.0,
+    1000
+   ],
+   "cible_cm": [
+    0,
+    0,
+    2760.0
+   ],
+   "lumens": 40000,
+   "cone_deg": 27.8
+  },
+  {
+   "nom": "Light_Totem_1",
+   "location_cm": [
+    1000,
+    -3100,
+    550.0
+   ],
+   "cible_cm": [
+    3300.0,
+    0.0,
+    0
+   ],
+   "lumens": 20000,
+   "cone_deg": 60.0
+  },
+  {
+   "nom": "Light_Totem_2",
+   "location_cm": [
+    1000,
+    3100,
+    550.0
+   ],
+   "cible_cm": [
+    3300.0,
+    0.0,
+    0
+   ],
+   "lumens": 20000,
+   "cone_deg": 60.0
+  },
+  {
+   "nom": "Light_Totem_3",
+   "location_cm": [
+    5600,
+    -3100,
+    550.0
+   ],
+   "cible_cm": [
+    3300.0,
+    0.0,
+    0
+   ],
+   "lumens": 20000,
+   "cone_deg": 60.0
+  },
+  {
+   "nom": "Light_Totem_4",
+   "location_cm": [
+    5600,
+    3100,
+    550.0
+   ],
+   "cible_cm": [
+    3300.0,
+    0.0,
+    0
+   ],
+   "lumens": 20000,
+   "cone_deg": 60.0
+  },
+  {
+   "nom": "Light_Wash_1",
+   "location_cm": [
+    900,
+    -1300,
+    50.0
+   ],
+   "cible_cm": [
+    0,
+    -1000,
+    2600
+   ],
+   "lumens": 15000,
+   "cone_deg": 30.0
+  },
+  {
+   "nom": "Light_Wash_2",
+   "location_cm": [
+    900,
+    1300,
+    50.0
+   ],
+   "cible_cm": [
+    0,
+    1050.0,
+    4400
+   ],
+   "lumens": 15000,
+   "cone_deg": 30.0
+  }
+ ]
+}
