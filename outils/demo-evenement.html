@@ -38,6 +38,9 @@
   #rec::before{content:"●";margin-right:6px;animation:cl 1s infinite}
   @keyframes cl{50%{opacity:.2}}
   .note{font-size:11px;color:var(--dim)}
+  #legpan{display:none;position:absolute;top:58px;left:16px;width:420px;max-height:calc(100% - 230px);overflow:auto;background:rgba(5,7,10,.88);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:12.5px;line-height:1.45;backdrop-filter:blur(6px)}
+  #legpan h3{margin:8px 0 4px;font-size:13px;color:var(--acc)} #legpan ul{margin:0 0 6px 16px;padding:0} #legpan li{margin:2px 0}
+  #legpan .num{display:inline-block;min-width:22px;height:22px;border-radius:11px;background:var(--acc);color:#1a1200;font-weight:700;text-align:center;line-height:22px;margin-right:6px}
   @media(max-width:700px){#stats{display:none} #titre{font-size:18px}}
 </style>
 </head>
@@ -45,6 +48,7 @@
 <div id="view"></div>
 <div id="logo">Démo d'implantation · maquette de travail, volumes voisins indicatifs</div>
 <div id="rec">ENREGISTREMENT</div>
+<div id="legpan"></div>
 <div id="stats"></div>
 <div id="hud">
   <div id="titre">—<small id="phase"></small></div>
@@ -57,6 +61,7 @@
     <select id="cam"><option value="cine">Caméra : plan-séquence</option><option value="orbite">Caméra : orbite lente</option><option value="public">Caméra : dans le public</option><option value="mairie">Caméra : balcon de la mairie</option><option value="libre">Caméra : libre (souris)</option></select>
     <button id="video">⏺ Enregistrer la vidéo</button>
     <button id="png">⤓ Image</button>
+    <button id="leg">① Légende technique</button>
     <label class="note"><input type="file" id="imp" accept=".json" style="display:none"><button id="impb" style="padding:5px 9px">Charger une implantation JSON</button></label>
   </div>
   <div id="phases"></div>
@@ -70,6 +75,21 @@
    Si le visualiseur a été utilisé dans ce navigateur, on reprend SON
    implantation (localStorage). Sinon, celle-ci.
    ===================================================================== */
+// LÉGENDE TECHNIQUE — ce qui est dessiné et ce qu'il faut faire vérifier avant de s'engager
+const LEGENDE = `
+<div style="font-weight:700;margin-bottom:4px">Éléments techniques à vérifier</div>
+<div class="note">Les repères numérotés sont posés sur la maquette. Chaque ligne = une question à poser au loueur, au monteur ou à la Ville.</div>
+<h3><span class="num">1</span>Façade mappée</h3><ul><li>accord écrit CMN / DRAC pour projeter ; <b>aucune fixation</b> sur le monument</li><li>emprise du chantier de la tour nord sur le parvis et la travée gauche</li><li>image limitée au corps de façade, tour en wash</li></ul>
+<h3><span class="num">2</span>Tour VP — échafaudage 9 × 3 m, plancher à 10 m</h3><ul><li>charge admissible : 2 VP (~95 kg chacun) + 2 lasers + 2 techniciens + bâche</li><li>ancrage / lestage et <b>prise au vent de la bâche</b> (démontage au-delà de 50 km/h)</li><li>garde-corps, plinthes, accès par échelle à crinoline ou escalier</li><li>PV de montage et contrôle avant mise en service</li></ul>
+<h3><span class="num">3</span>Régie étanche 20' devant la tour</h3><ul><li>alimentation dédiée <b>63 A tri</b>, terre, différentiels, secours (onduleur)</li><li>étanchéité, clim, vitre vers la façade, porte côté tour (hors public)</li><li>passages de câbles au sol protégés ; en <b>dehors</b> du cône des VP (ici : oui, le bas du faisceau passe à 9 m au-dessus)</li></ul>
+<h3><span class="num">4</span>Podium central 1,50 m</h3><ul><li>charge 500 kg/m², platelage antidérapant, jupe fermée</li><li><b>garde-corps 1,10 m</b> sur trois côtés, lisse intermédiaire</li><li>escalier 1,20 m, marches 19 cm, <b>mains courantes des deux côtés</b>, nez de marche contrastés, éclairé</li><li>accès PMR : rampe ou pupitre au sol en alternative</li><li>un régisseur de podium pour le micro ouvert</li></ul>
+<h3><span class="num">5</span>Village en rond — 8 tonnelles 3 × 3</h3><ul><li>lestage 4 × 20 kg par tonnelle, toits démontés si vent fort</li><li>dégagements de <b>4 m</b> entre tonnelles, entrée libre côté tour</li><li>extincteurs buvette / restauration, électricité des stands, éclairage de secours</li><li>poste de secours et prévention visibles dès l'entrée</li></ul>
+<h3><span class="num">6</span>Sono — PA jardin / cour</h3><ul><li>niveaux : <b>102 dB(A)</b> et 118 dB(C) sur 15 min (décret 2017), afficheur de niveau en régie</li><li>mâts lestés, enceintes hors du cône des VP</li><li>horaires et information des riverains</li></ul>
+<h3><span class="num">7</span>Lumières — totems et wash de façade</h3><ul><li>lestage des totems, câbles DMX et puissance protégés</li><li>wash de façade hors cône VP, pas de faisceau vers les fenêtres riveraines</li></ul>
+<h3><span class="num">8</span>Éclairage public</h3><ul><li><b>extinction par la Ville</b> de 22 h à 23 h 30, rallumage pour la sortie</li><li>qui tient l'interrupteur, et un contact pendant le show</li></ul>
+<h3><span class="num">9</span>Zone public — sans barrières</h3><ul><li>jauge à 2 pers/m², marquage au sol et agents plutôt que vauban</li><li>dégagements et voies pompiers libres (4 m), circulation vers métro et tram</li><li>plan de prévention préfecture / SSIAP / secouristes selon la jauge</li></ul>
+<h3><span class="num">10</span>Lasers</h3><ul><li>classe et puissance, <b>calcul NOHD</b> du prestataire, zone d'exclusion</li><li><b>déclaration DGAC</b> : aucun faisceau vers le ciel, cibles sur la façade seule</li><li>opérateur certifié présent, arrêt d'urgence en régie</li></ul>
+<div class="note" style="margin-top:6px">Rappel : la maquette vérifie la géométrie. Elle ne remplace ni la commission de sécurité, ni les notes de calcul, ni les déclarations.</div>`;
 const DEFAUT = () => ({
   projet: {
     nom: "Basilique Saint-Denis — parvis",
@@ -84,13 +104,14 @@ const DEFAUT = () => ({
   bloc:{x:0,z:70,hauteurVP:10,largeurPlateforme:9,profondeurPlateforme:3},
   projecteurs:[{nom:"VP1 — bas",dx:-1.3,cx:0,cy:9.7,tr:2.02,ratio:16/9,lumens:40000},{nom:"VP2 — haut",dx:1.3,cx:0,cy:27.6,tr:2.02,ratio:16/9,lumens:40000}],
   lasers:[{nom:"Laser 1",dx:-3.6,dy:-1,tx:-6,ty:17,puissance:10},{nom:"Laser 2",dx:3.6,dy:-1,tx:8,ty:20,puissance:10}],
-  regie:{longueur:6.06,largeur:2.44,hauteur:2.59,ecart:0.4},
-  village:{allee:4,pas:3.6,cote:3,ecartRegie:1.5,stands:[{nom:"Prévention",type:"prevention"},{nom:"Poste de secours",type:"secours"},{nom:"Accueil · infos",type:"accueil"},{nom:"Buvette",type:"buvette"},{nom:"Restauration",type:"buvette"},{nom:"Asso 1",type:"asso"},{nom:"Asso 2",type:"asso"},{nom:"Asso 3",type:"asso"}]},
+  regie:{longueur:6.06,largeur:2.44,hauteur:2.59,ecart:0.4,position:'devant'},
+  podium:{largeur:6,profondeur:5,hauteur:1.5,escalier:'arriere'},
+  village:{forme:'rond',rayon:11,ecartTour:3,allee:4,pas:3.6,cote:3,ecartRegie:1.5,stands:[{nom:"Prévention",type:"prevention"},{nom:"Poste de secours",type:"secours"},{nom:"Accueil · infos",type:"accueil"},{nom:"Buvette",type:"buvette"},{nom:"Restauration",type:"buvette"},{nom:"Asso 1",type:"asso"},{nom:"Asso 2",type:"asso"},{nom:"Asso 3",type:"asso"}]},
   sono:{x:19.5,z:4,hauteur:6.5,ouverture:90,portee:62,visee:10,subs:2,delais:0,delaiX:13,delaiZ:38,delaiH:5},
   lumieres:{totems:[{x:-31,z:10,h:5.5},{x:31,z:10,h:5.5},{x:-31,z:56,h:5.5},{x:31,z:56,h:5.5}],wash:[{x:-13,z:9,tx:-10,ty:26},{x:13,z:9,tx:10.5,ty:44}]}
 });
 let E = DEFAUT();
-try { const s = JSON.parse(localStorage.getItem('implantation-3d')||'null'); if (s && s.bloc) { E = Object.assign(DEFAUT(), s); if (!E.projet) E.projet = DEFAUT().projet; } } catch(e){}
+try { const s = JSON.parse(localStorage.getItem('implantation-3d')||'null'); if (s && s.bloc) { const d = DEFAUT(); E = Object.assign(d, s); if (!E.projet) E.projet = d.projet; if (!E.podium) E.podium = d.podium; E.regie = Object.assign(d.regie, E.regie); E.village = Object.assign(d.village, E.village); } } catch(e){}
 const P = () => E.projet;
 
 /* =====================================================================
@@ -101,7 +122,7 @@ const P = () => E.projet;
 const PHASES = [
   {t:16.0, nom:"Montage",              sous:"Plateforme, régie et village en place. Parvis fermé au public, accès pompiers libres.",             public:0.00, ep:true,  vil:false, son:false, lum:false, map:false, las:false},
   {t:18.0, nom:"Ouverture du village", sous:"Les stands ouvrent — prévention et poste de secours en tête d'allée, à côté de la régie.",             public:0.15, ep:true,  vil:true,  son:false, lum:false, map:false, las:false, scn:false},
-  {t:18.6, nom:"Scène ouverte",        sous:"Micro ouvert au bout de l'allée : chant, slam, prises de parole des assos. On s'inscrit à l'accueil, juste à côté. Tout le monde est invité à monter.", public:0.35, ep:true, vil:true, son:false, lum:false, map:false, las:false, scn:true},
+  {t:18.6, nom:"Scène ouverte",        sous:"Podium ouvert au centre du village : chant, slam, prises de parole des assos. On s'inscrit au stand Accueil, à deux pas. Tout le monde est invité à monter.", public:0.35, ep:true, vil:true, son:false, lum:false, map:false, las:false, scn:true},
   {t:19.5, nom:"Le parvis se remplit", sous:"Sono en fond, lumières d'ambiance. La scène ouverte tourne, le public reste dans la zone délimitée.", public:0.55, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false, scn:true},
   {t:21.0, nom:"Crépuscule",           sous:"Dernières lueurs. Éclairage public encore allumé, dernier passage sur la scène ouverte avant le show.", public:0.85, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false, scn:true},
   {t:22.0, nom:"Extinction",           sous:"La Ville éteint l'éclairage public du parvis : c'est la condition du rendu.",                           public:1.00, ep:false, vil:true,  son:true,  lum:true,  map:false, las:false},
@@ -261,12 +282,30 @@ function dessinerMapping(t, s){
 let scene, camera, renderer, controls, sun, hemi, fog;
 const G = {};                                   // groupes et objets à animer
 const posPlateforme = () => { const b = E.bloc; return {x0:b.x-b.largeurPlateforme/2, x1:b.x+b.largeurPlateforme/2, z0:b.z-b.profondeurPlateforme/2, z1:b.z+b.profondeurPlateforme/2, h:b.hauteurVP}; };
-const regieBox = () => { const b = E.bloc, r = E.regie, pl = posPlateforme(); const zc = pl.z1 + r.ecart + r.largeur/2; return {x:b.x, z:zc, L:r.longueur, l:r.largeur, h:r.hauteur, z1:zc + r.largeur/2}; };
-function posStands(){ const b = E.bloc, v = E.village, rg = regieBox(), out = []; const z0 = rg.z1 + v.ecartRegie + v.cote/2;
-  v.stands.forEach((s,i) => { const rang = Math.floor(i/2), c = i%2 ? 1 : -1; out.push({nom:s.nom, type:s.type, x:b.x + c*(v.allee/2 + v.cote/2), z:z0 + rang*v.pas}); }); return out; }
+const regieBox = () => { const b = E.bloc, r = E.regie, pl = posPlateforme(); const zc = r.position === 'devant' ? pl.z0 - r.ecart - r.largeur/2 : pl.z1 + r.ecart + r.largeur/2; return {x:b.x, z:zc, L:r.longueur, l:r.largeur, h:r.hauteur, z0:zc - r.largeur/2, z1:zc + r.largeur/2}; };
+// centre du village en rond (et du podium) : derrière la tour, à ecartTour + rayon
+const centreVillage = () => { const b = E.bloc, v = E.village, pl = posPlateforme(); return {x:b.x, z:pl.z1 + v.ecartTour + v.rayon}; };
+function posStands(){ const b = E.bloc, v = E.village, out = [];
+  if (v.forme === 'rond'){ // sur un cercle, de face vers le centre, en laissant l'entrée libre côté tour (ouverture de 60°)
+    const c = centreVillage(), n = v.stands.length;
+    v.stands.forEach((s,i) => { const a = (n > 1 ? (i/(n-1) - .5) * (300*Math.PI/180) : 0) + Math.PI;   // a = 0 pointe vers la tour
+      out.push({nom:s.nom, type:s.type, x:c.x + Math.sin(a)*v.rayon, z:c.z - Math.cos(a)*v.rayon, rot:Math.PI - a}); });
+    return out; }
+  const rg = regieBox(), z0 = Math.max(rg.z1, posPlateforme().z1) + v.ecartRegie + v.cote/2;
+  v.stands.forEach((s,i) => { const rang = Math.floor(i/2), c = i%2 ? 1 : -1; out.push({nom:s.nom, type:s.type, x:b.x + c*(v.allee/2 + v.cote/2), z:z0 + rang*v.pas, rot:0}); }); return out; }
 const TENTE = {prevention:0x4fa3ff, secours:0xf85149, accueil:0xffb454, buvette:0xe4c05a, asso:0xe8e0c8};
 
 const std = (o) => new THREE.MeshStandardMaterial(Object.assign({roughness:.85, metalness:0}, o));
+function etiquette(texte, x, y, z, largeur=6, couleur='#ffb454'){
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+  g.fillStyle = 'rgba(10,12,16,.82)'; g.beginPath(); g.roundRect ? g.roundRect(0,0,512,128,28) : g.rect(0,0,512,128); g.fill();
+  g.strokeStyle = couleur; g.lineWidth = 6; g.stroke();
+  g.font = 'bold 64px -apple-system, Segoe UI, Roboto, sans-serif'; g.fillStyle = couleur; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texte, 256, 66);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false, transparent:true}));
+  sp.scale.set(largeur, largeur/4, 1); sp.position.set(x, y, z); sp.renderOrder = 20; sp.visible = false; return sp;
+}
+G.legendes = [];
+function marquer(num, x, y, z){ const sp = etiquette(String(num), x, y, z, 5.5); scene.add(sp); G.legendes.push(sp); }
 function boite(x0,x1,y0,y1,z0,z1,m){ const o = new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0), m); o.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2); o.castShadow = o.receiveShadow = true; return o; }
 function cyl(a,b,r,m,seg=8){ const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length();
   const o = new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,seg), m); o.position.copy(A).add(B).multiplyScalar(.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
@@ -275,63 +314,89 @@ function coneMesh(sommet, base, rayon, mat){ const A = new THREE.Vector3(...somm
   const o = new THREE.Mesh(g, mat); o.position.copy(A); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
 
 function creerFoule(pts, opt){
-  // pts : [x,z] par personne. Une personne = un corps (capsule) + une tête (sphère) ;
-  // les couleurs passent par des groupes d'InstancedMesh (pas de couleur par instance avec three r128).
-  const VET = [0x1f2a44,0x3a3f48,0x151515,0xa3262b,0xe7e2d8,0x2f6b4f,0xcdb996,0x3b5998], PEAU = [0xf1c9a5,0xc68e6a,0x7a4a2e];
-  const gCorps = THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.2,.95,2,8) : new THREE.CylinderGeometry(.19,.22,1.25,8);
-  const gTete = new THREE.SphereGeometry(.13,8,6), gBras = new THREE.BoxGeometry(.07,.55,.07), gTel = new THREE.PlaneGeometry(.1,.16);
-  const pers = pts.map((p,i) => ({x:p[0], z:p[1], s:.88 + rnd()*.24, ph:rnd()*6.28, vet:Math.floor(rnd()*VET.length), peau:Math.floor(rnd()*PEAU.length), rot:rnd()*6.28, bras:rnd() < (opt.bras||0), tel:rnd() < (opt.tel||0)}));
-  const corps = VET.map(c => new THREE.InstancedMesh(gCorps, std({color:c, roughness:.95}), pers.length));
-  const tetes = PEAU.map(c => new THREE.InstancedMesh(gTete, std({color:c, roughness:.8}), pers.length));
-  const bras = new THREE.InstancedMesh(gBras, std({color:0x3a3f48, roughness:.95}), pers.length);
-  const tels = new THREE.InstancedMesh(gTel, new THREE.MeshBasicMaterial({color:0xcfe8ff}), pers.length);
-  [...corps, ...tetes, bras, tels].forEach(m => { m.castShadow = false; m.count = 0; m.frustumCulled = false; scene.add(m); });
+  // Une personne = 2 jambes + torse + 2 bras + tête + cheveux, répartis dans des InstancedMesh par
+  // couleur (three r128 n'a pas de couleur par instance fiable). pts : [x, z, (yaw)] ; opt.groupes :
+  // les gens sont en petits groupes qui se font face ; opt.marcheurs : part des gens qui déambulent.
+  const VET = [0x1f2a44,0x3a3f48,0x151515,0xa3262b,0xe7e2d8,0x2f6b4f,0xcdb996,0x3b5998], PEAU = [0xf1c9a5,0xc68e6a,0x7a4a2e], PANT = [0x1c2430,0x101010,0x5a5248], CHEV = [0x1a1210,0x5a3a22,0xc9a24a];
+  const gTorse = THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.19,.38,2,8) : new THREE.CylinderGeometry(.17,.2,.62,8);
+  const gJambe = new THREE.CylinderGeometry(.075,.085,.82,6), gBrasH = new THREE.CylinderGeometry(.045,.05,.6,6), gTete = new THREE.SphereGeometry(.12,8,6), gChev = new THREE.SphereGeometry(.128,8,6);
+  const gBras = new THREE.BoxGeometry(.07,.55,.07), gTel = new THREE.PlaneGeometry(.1,.16);
+  const pers = pts.map((p,i) => ({x:p[0], z:p[1], x0:p[0], z0:p[1], yaw:(p[2] !== undefined ? p[2] : rnd()*6.28), s:.9 + rnd()*.22, ph:rnd()*6.28, vet:Math.floor(rnd()*8), peau:Math.floor(rnd()*3), pant:Math.floor(rnd()*3), chev:Math.floor(rnd()*3),
+    bras:rnd() < (opt.bras||0), tel:rnd() < (opt.tel||0), marche:rnd() < (opt.marcheurs||0), dir:rnd()*6.28, vit:.25 + rnd()*.35}));
+  // groupes en conversation : on tire des centres et on oriente chacun vers le centre le plus proche
+  if (opt.groupes){ const centres = []; for (let i = 0; i < pers.length/4; i++){ const q = pers[Math.floor(rnd()*pers.length)]; centres.push([q.x + (rnd()-.5)*1.4, q.z + (rnd()-.5)*1.4]); }
+    pers.forEach(q => { let best = null, bd = 9; centres.forEach(c => { const d = Math.hypot(c[0]-q.x, c[1]-q.z); if (d < bd){ bd = d; best = c; } });
+      if (best && bd < 2.2 && !q.marche) q.yaw = Math.atan2(best[0]-q.x, best[1]-q.z) + (rnd()-.5)*.5; }); }
+  const N = pers.length, mk = (g, c, n) => { const m = new THREE.InstancedMesh(g, std({color:c, roughness:.92}), n); m.castShadow = false; m.count = 0; m.frustumCulled = false; scene.add(m); return m; };
+  const torses = VET.map(c => mk(gTorse, c, N)), brasH = VET.map(c => mk(gBrasH, c, 2*N)), jambes = PANT.map(c => mk(gJambe, c, 2*N)), tetes = PEAU.map(c => mk(gTete, c, N)), chevs = CHEV.map(c => mk(gChev, c, N));
+  const bras = mk(gBras, 0x3a3f48, N), tels = new THREE.InstancedMesh(gTel, new THREE.MeshBasicMaterial({color:0xcfe8ff}), N); tels.count = 0; tels.frustumCulled = false; scene.add(tels);
   const dm = new THREE.Object3D();
-  return { pers, n:0, dansShow:false, y0:(opt.y0||0),
-    maj(frac, t, show){            // frac : part des personnes présentes ; show : bras levés et téléphones
-      const n = Math.round(clamp(frac,0,1) * pers.length), cnt = corps.map(()=>0), cnt2 = tetes.map(()=>0); let nb = 0, nt = 0;
-      for (let i = 0; i < n; i++){ const q = pers[i], bob = Math.sin(t*60*1.7 + q.ph)*.04*(show ? 2.2 : 1), tw = Math.sin(t*60*.9 + q.ph)*.12;
-        dm.position.set(q.x, this.y0 + .62*q.s + bob, q.z); dm.rotation.set(0, q.rot + tw, 0); dm.scale.set(1, q.s, 1); dm.updateMatrix();
-        corps[q.vet].setMatrixAt(cnt[q.vet]++, dm.matrix);
-        dm.position.set(q.x, this.y0 + 1.36*q.s + bob, q.z); dm.scale.set(1,1,1); dm.updateMatrix(); tetes[q.peau].setMatrixAt(cnt2[q.peau]++, dm.matrix);
-        if (show && q.bras){ const sw = Math.sin(t*60*2.3 + q.ph)*.25; dm.position.set(q.x + Math.cos(q.rot)*.24, this.y0 + 1.5*q.s + bob, q.z - Math.sin(q.rot)*.24); dm.rotation.set(sw, q.rot, .15); dm.updateMatrix(); bras.setMatrixAt(nb++, dm.matrix); }
-        if (show && q.tel){ dm.position.set(q.x - Math.cos(q.rot)*.2, this.y0 + 1.42*q.s + bob, q.z + Math.sin(q.rot)*.2); dm.rotation.set(0, q.rot, 0); dm.updateMatrix(); tels.setMatrixAt(nt++, dm.matrix); } }
-      corps.forEach((m,k) => { m.count = cnt[k]; m.instanceMatrix.needsUpdate = true; }); tetes.forEach((m,k) => { m.count = cnt2[k]; m.instanceMatrix.needsUpdate = true; });
+  return { pers, n:0, y0:(opt.y0||0),
+    maj(frac, t, show, dt){
+      const n = Math.round(clamp(frac,0,1) * pers.length), cT = [0,0,0,0,0,0,0,0], cB = [0,0,0,0,0,0,0,0], cJ = [0,0,0], cH = [0,0,0], cC = [0,0,0]; let nb = 0, nt = 0;
+      const tt = t*3600;   // secondes réelles de la soirée : les gens bougent à leur rythme, pas à celui de la lecture
+      for (let i = 0; i < n; i++){ const q = pers[i], y0 = this.y0;
+        let yaw = q.yaw, pas = 0, bob = Math.sin(tt*1.7 + q.ph)*.025;
+        if (show){ yaw = Math.PI + (rnd()*0 + Math.sin(q.ph)*.25); bob *= 2.2; }           // pendant le show, tout le monde regarde la façade
+        else if (q.marche && dt !== undefined){ q.x += Math.sin(q.dir)*q.vit*dt; q.z += Math.cos(q.dir)*q.vit*dt;   // déambulation lente, demi-tour au bout de 4 m
+          if (Math.hypot(q.x-q.x0, q.z-q.z0) > 4){ q.dir += Math.PI + (rnd()-.5); } yaw = q.dir; pas = Math.sin(tt*4.2 + q.ph)*.45; }
+        const sy = Math.sin(yaw), cy = Math.cos(yaw), lat = (k) => [q.x + cy*k, q.z - sy*k];   // latéral (droite du personnage)
+        // jambes
+        for (const side of [-1, 1]){ const [lx, lz] = lat(side*.11); dm.position.set(lx, y0 + .41*q.s + bob*.3, lz); dm.rotation.set(side*pas, yaw, 0); dm.scale.set(1, q.s, 1); dm.updateMatrix(); jambes[q.pant].setMatrixAt(cJ[q.pant]++, dm.matrix); }
+        // torse
+        dm.position.set(q.x, y0 + 1.1*q.s + bob, q.z); dm.rotation.set(0, yaw + Math.sin(tt*.9+q.ph)*.06, 0); dm.scale.set(1, q.s, 1); dm.updateMatrix(); torses[q.vet].setMatrixAt(cT[q.vet]++, dm.matrix);
+        // bras le long du corps (ou un seul si l'autre est levé / tient le téléphone)
+        for (const side of [-1, 1]){ if (show && ((q.bras && side > 0) || (q.tel && side < 0))) continue;
+          const [ax, az] = lat(side*.27); dm.position.set(ax, y0 + 1.05*q.s + bob, az); dm.rotation.set(-side*pas*.8, yaw, side*.08); dm.scale.set(1, q.s, 1); dm.updateMatrix(); brasH[q.vet].setMatrixAt(cB[q.vet]++, dm.matrix); }
+        // tête et cheveux
+        dm.position.set(q.x, y0 + 1.56*q.s + bob, q.z); dm.rotation.set(0, yaw, 0); dm.scale.set(1,1,1); dm.updateMatrix(); tetes[q.peau].setMatrixAt(cH[q.peau]++, dm.matrix);
+        dm.position.set(q.x - sy*.02, y0 + 1.6*q.s + bob, q.z - cy*.02); dm.scale.set(1,.75,1); dm.updateMatrix(); chevs[q.chev].setMatrixAt(cC[q.chev]++, dm.matrix);
+        if (show && q.bras){ const [ax, az] = lat(.27), sw = Math.sin(tt*2.3 + q.ph)*.25; dm.position.set(ax, y0 + 1.62*q.s + bob, az); dm.rotation.set(sw, yaw, .15); dm.scale.set(1,1,1); dm.updateMatrix(); bras.setMatrixAt(nb++, dm.matrix); }
+        if (show && q.tel){ const [ax, az] = lat(-.22); dm.position.set(ax + sy*.15, y0 + 1.45*q.s + bob, az + cy*.15); dm.rotation.set(-.3, yaw, 0); dm.scale.set(1,1,1); dm.updateMatrix(); tels.setMatrixAt(nt++, dm.matrix); } }
+      torses.forEach((m,k) => { m.count = cT[k]; m.instanceMatrix.needsUpdate = true; }); brasH.forEach((m,k) => { m.count = cB[k]; m.instanceMatrix.needsUpdate = true; });
+      jambes.forEach((m,k) => { m.count = cJ[k]; m.instanceMatrix.needsUpdate = true; }); tetes.forEach((m,k) => { m.count = cH[k]; m.instanceMatrix.needsUpdate = true; }); chevs.forEach((m,k) => { m.count = cC[k]; m.instanceMatrix.needsUpdate = true; });
       bras.count = nb; bras.instanceMatrix.needsUpdate = true; tels.count = nt; tels.instanceMatrix.needsUpdate = true; this.n = n;
     } };
 }
 function construireScene(){
-  // SCÈNE OUVERTE : au bout de l'allée du village, face au village. Petite, basse, accueillante.
-  const st = posStands(), b = E.bloc, zFin = (st.length ? Math.max(...st.map(q=>q.z)) : regieBox().z1) + E.village.pas/2 + 1.5;
-  const cx = b.x, cz = zFin + 2.2, L = 6, Pf = 4, H = .6; G.scene = {cx, cz};
-  scene.add(boite(cx-L/2, cx+L/2, 0, H, cz-Pf/2, cz+Pf/2, std({color:0x2a2d33, roughness:.7})));                       // praticable
-  scene.add(boite(cx-L/2-.05, cx+L/2+.05, H-.03, H+.02, cz-Pf/2-.05, cz-Pf/2+.03, std({color:0xffffff, emissive:0xffb454, emissiveIntensity:0}))); G.sceneLed = scene.children[scene.children.length-1];
-  // fond de scène : bâche imprimée « SCÈNE OUVERTE »
-  const tc = document.createElement('canvas'); tc.width = 768; tc.height = 320; const g = tc.getContext('2d');
-  const gr = g.createLinearGradient(0,0,768,0); gr.addColorStop(0,'#ff8a3d'); gr.addColorStop(1,'#ffb454'); g.fillStyle = gr; g.fillRect(0,0,768,320);
-  g.fillStyle = '#1a1200'; g.font = '700 86px Georgia, serif'; g.textAlign = 'center'; g.fillText('SCÈNE OUVERTE', 384, 120);
-  g.font = '600 44px -apple-system, Segoe UI, sans-serif'; g.fillText('à vous ! chant · slam · parole libre', 384, 200);
-  g.font = '34px -apple-system, Segoe UI, sans-serif'; g.fillText('inscriptions au stand Accueil ➜', 384, 262);
-  const fond = new THREE.Mesh(new THREE.PlaneGeometry(L, 2.5), std({map:new THREE.CanvasTexture(tc), roughness:.8, emissive:0xffffff, emissiveMap:new THREE.CanvasTexture(tc), emissiveIntensity:0}));
-  fond.position.set(cx, H+1.3, cz+Pf/2-.1); fond.rotation.y = Math.PI; scene.add(fond); G.sceneFond = fond;
-  [cx-L/2+.2, cx+L/2-.2].forEach(x => scene.add(cyl([x,0,cz+Pf/2],[x,H+2.7,cz+Pf/2],.04, std({color:0x8c9096, metalness:.5}))));
-  // micro, retours, deux projecteurs sur pieds
-  scene.add(cyl([cx,H,cz-.8],[cx,H+1.5,cz-.8],.015, std({color:0x222})));
-  scene.add(boite(cx-.06,cx+.06,H+1.45,H+1.62,cz-.86,cz-.74, std({color:0x111, metalness:.6})));
-  [-1.6,1.6].forEach(dx => scene.add(boite(cx+dx-.3, cx+dx+.3, H, H+.35, cz-Pf/2+.1, cz-Pf/2+.5, std({color:0x1c1f24}))));
+  // PODIUM CENTRAL : au milieu du village en rond, 1,50 m maxi, escalier à l'arrière avec mains
+  // courantes, garde-corps sur trois côtés, face à la tour (donc à la façade). Le public l'entoure.
+  const c = centreVillage(), pd = E.podium, cx = c.x, cz = c.z, L = pd.largeur, Pf = pd.profondeur, H = Math.min(1.5, pd.hauteur); G.scene = {cx, cz, H};
+  const mStruct = std({color:0x2a2d33, roughness:.7}), mAlu = std({color:0xb9c0c8, metalness:.6, roughness:.35}), mBois = std({color:0x6b5540, roughness:.9});
+  scene.add(boite(cx-L/2, cx+L/2, H-.12, H, cz-Pf/2, cz+Pf/2, mBois));                                               // plancher
+  scene.add(boite(cx-L/2+.1, cx+L/2-.1, 0, H-.12, cz-Pf/2+.1, cz+Pf/2-.1, std({color:0x111418})));                     // jupe
+  for (const x of [cx-L/2+.2, cx+L/2-.2]) for (const z of [cz-Pf/2+.2, cz, cz+Pf/2-.2]) scene.add(cyl([x,0,z],[x,H-.1,z],.04,mAlu));
+  // garde-corps 1,10 m sur les côtés et l'arrière (pas devant : c'est la face jouée), lisse basse à 0,5 m
+  const gc = [[cx-L/2,cz-Pf/2,cx-L/2,cz+Pf/2],[cx+L/2,cz-Pf/2,cx+L/2,cz+Pf/2],[cx-L/2,cz+Pf/2,cx+L/2-1.4,cz+Pf/2]];
+  gc.forEach(([x0,z0,x1,z1]) => { for (const hh of [H+.5, H+1.1]) scene.add(cyl([x0,hh,z0],[x1,hh,z1],.025,mAlu)); const n = Math.max(1, Math.round(Math.hypot(x1-x0,z1-z0)/1.5)); for (let i = 0; i <= n; i++){ const x = x0+(x1-x0)*i/n, z = z0+(z1-z0)*i/n; scene.add(cyl([x,H,z],[x,H+1.1,z],.025,mAlu)); } });
+  scene.add(boite(cx-L/2, cx+L/2, H, H+.12, cz-Pf/2-.02, cz-Pf/2+.03, std({color:0xffffff, emissive:0xffb454, emissiveIntensity:0}))); G.sceneLed = scene.children[scene.children.length-1];   // nez de scène éclairé
+  // escalier arrière droit : 8 marches de 19 cm, 1,20 m de large, mains courantes des deux côtés, nez de marche contrastés
+  const nM = 8, gm = H/nM, pm = .28, ex0 = cx+L/2-1.3, ez = cz+Pf/2;
+  for (let i = 0; i < nM; i++){ const y1 = gm*(i+1), z0 = ez + (nM-1-i)*pm; scene.add(boite(ex0, ex0+1.2, y1-.05, y1, z0, z0+pm, mStruct)); scene.add(boite(ex0, ex0+1.2, y1-.005, y1+.012, z0, z0+.05, std({color:0xffe14d}))); }
+  for (const x of [ex0, ex0+1.2]){ const zb = ez + nM*pm; scene.add(cyl([x,gm,zb],[x,H,ez],.025,mAlu)); scene.add(cyl([x,gm+.95,zb],[x,H+.95,ez],.028,mAlu)); scene.add(cyl([x,0,zb],[x,gm+.95,zb],.028,mAlu)); scene.add(cyl([x,H,ez],[x,H+1.1,ez],.028,mAlu)); }
+  G.escalier = {x:ex0+.6, z:ez+nM*pm/2};
+  // micro, retours, et deux projecteurs sur pieds à 3,5 m en avant du podium
+  scene.add(cyl([cx,H,cz-1.2],[cx,H+1.5,cz-1.2],.015, std({color:0x222}))); scene.add(boite(cx-.06,cx+.06,H+1.45,H+1.62,cz-1.26,cz-1.14, std({color:0x111, metalness:.6})));
+  [-1.8,1.8].forEach(dx => scene.add(boite(cx+dx-.3, cx+dx+.3, H, H+.35, cz-Pf/2+.1, cz-Pf/2+.5, std({color:0x1c1f24}))));
   G.sceneLum = [];
-  [[cx-L/2-1.2, 0x2fb8ff],[cx+L/2+1.2, 0xff5a8a]].forEach(([x, col]) => { scene.add(cyl([x,0,cz-Pf/2-1.2],[x,3.4,cz-Pf/2-1.2],.04, std({color:0x2b2f36, metalness:.5})));
-    scene.add(boite(x-.15,x+.15,3.2,3.5,cz-Pf/2-1.35,cz-Pf/2-1.05, std({color:0x111418})));
-    const l = new THREE.SpotLight(col, 0, 18, .7, .5, 1.2); l.position.set(x,3.4,cz-Pf/2-1.2); l.target.position.set(cx,H+1,cz); scene.add(l, l.target);
-    const f = coneMesh([x,3.3,cz-Pf/2-1.2],[cx,H+.6,cz], 2.2, new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending})); scene.add(f);
-    G.sceneLum.push({l, f}); });
-  // qui est là : deux sur scène, une file sur le côté, un demi-cercle devant, dans l'allée
-  const surScene = [[cx-.6, cz-.3],[cx+.7, cz+.2]];
-  const file = []; for (let i = 0; i < 7; i++) file.push([cx+L/2+.8 + (rnd()-.5)*.3, cz - 1 + i*.7]);
-  const devant = []; for (let i = 0; i < 70; i++){ const a = Math.PI + (rnd()-.5)*1.9, r = 2.6 + rnd()*5.5; devant.push([cx + Math.cos(a)*r*.9, cz - Pf/2 + Math.sin(a)*r - 1.2]); }
+  [[cx-L/2-3, 0x2fb8ff],[cx+L/2+3, 0xff5a8a]].forEach(([x, col]) => { const z = cz-Pf/2-2.5; scene.add(cyl([x,0,z],[x,3.6,z],.04, std({color:0x2b2f36, metalness:.5}))); scene.add(boite(x-.15,x+.15,3.4,3.7,z-.15,z+.15, std({color:0x111418})));
+    const l = new THREE.SpotLight(col, 0, 20, .65, .5, 1.2); l.position.set(x,3.6,z); l.target.position.set(cx,H+1.2,cz); scene.add(l, l.target);
+    const f = coneMesh([x,3.5,z],[cx,H+.8,cz], 2.4, new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending})); scene.add(f); G.sceneLum.push({l, f}); });
+  // bannière au-dessus de l'entrée du village (côté tour) : l'invitation se lit en arrivant
+  const tc = document.createElement('canvas'); tc.width = 1024; tc.height = 256; const g = tc.getContext('2d');
+  const gr = g.createLinearGradient(0,0,1024,0); gr.addColorStop(0,'#ff8a3d'); gr.addColorStop(1,'#ffb454'); g.fillStyle = gr; g.fillRect(0,0,1024,256);
+  g.fillStyle = '#1a1200'; g.textAlign = 'center'; g.font = '700 96px Georgia, serif'; g.fillText('SCÈNE OUVERTE', 512, 108);
+  g.font = '600 46px -apple-system, Segoe UI, sans-serif'; g.fillText('à vous ! · chant · slam · parole libre · inscriptions au stand Accueil', 512, 190);
+  const tx = new THREE.CanvasTexture(tc), ban = new THREE.Mesh(new THREE.PlaneGeometry(8, 2), std({map:tx, emissiveMap:tx, emissive:0xffffff, emissiveIntensity:0, side:THREE.DoubleSide}));
+  const zb = posPlateforme().z1 + E.village.ecartTour*.6; ban.position.set(cx, 4.2, zb); scene.add(ban); G.sceneFond = ban;
+  [cx-4, cx+4].forEach(x => scene.add(cyl([x,0,zb],[x,5.3,zb],.045, std({color:0x8c9096, metalness:.5}))));
+  // qui est là : deux sur le podium, une file au pied de l'escalier, un anneau de public autour
+  const surScene = [[cx-.7, cz-.2, Math.PI],[cx+.8, cz+.3, Math.PI]];
+  const file = []; for (let i = 0; i < 7; i++) file.push([G.escalier.x + .9 + i*.75 + (rnd()-.5)*.2, G.escalier.z + (rnd()-.5)*.4, -Math.PI/2]);
+  const autour = []; for (let i = 0; i < 110; i++){ const a = rnd()*6.28, r = 4.2 + rnd()*4.6; const x = cx + Math.sin(a)*r, z = cz + Math.cos(a)*r; autour.push([x, z, Math.atan2(cx-x, cz-z)]); }
   G.fouleScene = creerFoule(surScene, {y0:H, bras:1, tel:0});
   G.fouleFile = creerFoule(file, {});
-  G.fouleDevant = creerFoule(devant, {bras:.35, tel:.25});
+  G.fouleDevant = creerFoule(autour, {bras:.35, tel:.25});
 }
 
 function construire(){
@@ -376,15 +441,20 @@ function construire(){
   // régie
   const rg = regieBox(); scene.add(boite(rg.x-rg.L/2,rg.x+rg.L/2,0,rg.h,rg.z-rg.l/2,rg.z+rg.l/2, std({color:0xd7dde4, roughness:.5, metalness:.3})));
   const fen = new THREE.Mesh(new THREE.PlaneGeometry(2.4,.9), std({color:0x1d2a3d, emissive:0x9fd3ff, emissiveIntensity:0})); fen.position.set(rg.x+.6,1.6,rg.z-rg.l/2-.02); fen.rotation.y = Math.PI; scene.add(fen); G.regieFen = fen;
+  const porte = new THREE.Mesh(new THREE.PlaneGeometry(1,2.2), std({color:0x9aa4ae})); porte.position.set(rg.x-rg.L/2+.9,1.1,rg.z+rg.l/2+.02); scene.add(porte);   // porte côté tour, à l'abri du public
+  scene.add(boite(rg.x+rg.L/2-1.2, rg.x+rg.L/2-.2, rg.h, rg.h+.6, rg.z-.5, rg.z+.5, std({color:0xbfc6cf})));   // clim
   // village
   G.stands = [];
   posStands().forEach(s => {
-    const c = E.village.cote, h0 = 2.2, h1 = 3.0;
-    [[s.x-c/2,s.z-c/2],[s.x+c/2,s.z-c/2],[s.x+c/2,s.z+c/2],[s.x-c/2,s.z+c/2]].forEach(([x,z]) => scene.add(cyl([x,0,z],[x,h0,z],.035, std({color:0x8c9096, metalness:.5}))));
+    const c = E.village.cote, h0 = 2.2, h1 = 3.0, grp = new THREE.Group();   // tonnelle construite à l'origine, comptoir côté -z, puis tournée vers le centre
+    [[-c/2,-c/2],[c/2,-c/2],[c/2,c/2],[-c/2,c/2]].forEach(([x,z]) => grp.add(cyl([x,0,z],[x,h0,z],.035, std({color:0x8c9096, metalness:.5}))));
     const g = new THREE.ConeGeometry(c*Math.SQRT1_2*1.02, h1-h0, 4, 1); g.rotateY(Math.PI/4);
-    const toit = new THREE.Mesh(g, std({color:TENTE[s.type]||0xe8e0c8, map:texTente, roughness:.9, side:THREE.DoubleSide, emissive:TENTE[s.type]||0xe8e0c8, emissiveIntensity:0})); toit.position.set(s.x,h0+(h1-h0)/2,s.z); toit.castShadow = true; scene.add(toit);
-    scene.add(boite(s.x-c/2+.2,s.x+c/2-.2,0,.95,s.z-c/2+.1,s.z-c/2+.7, std({color:0x6b5a44})));
-    const l = new THREE.PointLight(0xffe0b0, 0, 9, 2); l.position.set(s.x,h0-.2,s.z); scene.add(l); G.stands.push({toit, l});
+    const toit = new THREE.Mesh(g, std({color:TENTE[s.type]||0xe8e0c8, map:texTente, roughness:.9, side:THREE.DoubleSide, emissive:TENTE[s.type]||0xe8e0c8, emissiveIntensity:0})); toit.position.set(0,h0+(h1-h0)/2,0); toit.castShadow = true; grp.add(toit);
+    grp.add(boite(-c/2+.2,c/2-.2,0,.95,-c/2+.1,-c/2+.7, std({color:0x6b5a44})));
+    [[-c/2,-c/2],[c/2,-c/2],[c/2,c/2],[-c/2,c/2]].forEach(([x,z]) => grp.add(boite(x-.2,x+.2,0,.18,z-.2,z+.2, std({color:0x3a3f48}))));   // lests
+    const l = new THREE.PointLight(0xffe0b0, 0, 9, 2); l.position.set(0,h0-.2,0); grp.add(l);
+    grp.position.set(s.x, 0, s.z); grp.rotation.y = s.rot || 0; scene.add(grp); G.stands.push({toit, l});
+    const et = etiquette(s.nom, s.x, 4.1, s.z, 5, '#e6edf3'); scene.add(et); G.legendes.push(et);   // nom du stand, avec la légende
   });
   // sono : 2 stacks
   const so = E.sono; G.pa = [];
@@ -423,13 +493,15 @@ function construire(){
   for (let i = 0; i < capa; i++){ // grappes : on tire des centres puis on les peuple, plus dense vers la façade
     const u = rnd(), x = Z.x0 + 1 + rnd()*(Z.x1-Z.x0-2), z = Z.z0 + 1 + Math.pow(u, .65)*(Z.z1-Z.z0-2);
     pts.push([x + (rnd()-.5)*1.2, z + (rnd()-.5)*1.2]); }
-  G.foule = creerFoule(pts, {bras:.22, tel:.18});
+  G.foule = creerFoule(pts, {bras:.22, tel:.18, groupes:true, marcheurs:.12});
   // scène ouverte au bout de l'allée du village
   construireScene();
-  // barrières de la zone public (lisibles pour la mairie)
-  const mb = std({color:0xcfd4da, metalness:.5, roughness:.4});
-  for (let x = Z.x0; x <= Z.x1; x += 2.5){ scene.add(boite(x-1.2,x+1.2,.2,1.1,Z.z1-.05,Z.z1+.05,mb)); scene.add(boite(x-1.2,x+1.2,.2,1.1,Z.z0-.05,Z.z0+.05,mb)); }
-  for (let z = Z.z0; z <= Z.z1; z += 2.5){ scene.add(boite(Z.x0-.05,Z.x0+.05,.2,1.1,z-1.2,z+1.2,mb)); scene.add(boite(Z.x1-.05,Z.x1+.05,.2,1.1,z-1.2,z+1.2,mb)); }
+  // pas de barrières : la zone public est tenue par le marquage au sol et les agents, pas par des vauban
+  // légende technique : repères numérotés sur les éléments à vérifier (voir LEGENDE)
+  const pl2 = posPlateforme(), rg2 = regieBox(), cv = centreVillage(), so2 = E.sono;
+  marquer(1, 0, 40, 0); marquer(2, (pl2.x0+pl2.x1)/2, pl2.h+4.2, (pl2.z0+pl2.z1)/2); marquer(3, rg2.x, rg2.h+2, rg2.z);
+  marquer(4, cv.x, G.scene.H+3.6, cv.z); marquer(5, cv.x + E.village.rayon, 4.6, cv.z); marquer(6, so2.x, so2.hauteur+1.6, so2.z); marquer(7, E.lumieres.totems[1].x, E.lumieres.totems[1].h+1.6, E.lumieres.totems[1].z);
+  marquer(8, 34, 10.8, 30); marquer(9, (Z.x0+Z.x1)/2, 3, (Z.z0+Z.z1)/2); marquer(10, E.bloc.x+3.6, pl2.h+1.6, pl2.z1+1.2);
 }
 
 /* =====================================================================
@@ -468,11 +540,11 @@ function appliquer(t, dt){
     o.beam.scale.set(1, L / o.beam.geometry.parameters.height, 1); o.beam.position.copy(A).add(B).multiplyScalar(.5); o.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize());
     o.pt.position.set(tx,ty,.1); o.beam.material.opacity = s.las * .9; o.pt.material.opacity = s.las; });
   // foules : public dans la zone, et autour de la scène ouverte
-  G.foule.maj(s.public, t, s.map > .5 || s.las > .5);
-  G.fouleScene.maj(s.scn, t, true); G.fouleFile.maj(s.scn, t, false); G.fouleDevant.maj(s.scn * (.5 + .5*s.public), t, s.scn > .5);
+  G.foule.maj(s.public, t, s.map > .5 || s.las > .5, dt);
+  G.fouleScene.maj(s.scn, t, true); G.fouleFile.maj(s.scn, t, false); G.fouleDevant.maj(s.scn * (.5 + .5*s.public), t, false, dt);
   const pulse = .75 + .25*Math.sin(t*60*2.6);
   G.sceneLum.forEach(o => { o.l.intensity = s.scn * nuit * 2.4 * pulse; o.f.material.opacity = s.scn * nuit * .16 * pulse; });
-  G.sceneLed.material.emissiveIntensity = s.scn * 1.5 * pulse; G.sceneFond.material.emissiveIntensity = s.scn * (nuit * .8 + .15);
+  G.sceneLed.material.emissiveIntensity = s.scn * 1.5 * pulse; G.sceneFond.material.emissiveIntensity = nuit * .9 + .1;
   // exposition : la nuit, on laisse les lumières artificielles faire le travail
   renderer.toneMappingExposure = lerp(1.05, .85, jour);
   // HUD
@@ -501,9 +573,9 @@ function appliquer(t, dt){
 const CLES = [
   {t:16.0, p:[-90,45,150], c:[0,10,50]},   // vue d'ensemble, montage
   {t:18.0, p:[-30,12,110], c:[0,2,80]},    // le village
-  {t:18.6, p:[11,3.2,104],  c:[0,1.6,96]},   // la scène ouverte, à hauteur d'homme
-  {t:19.0, p:[-9,4,101],   c:[0,1.5,95]},   // on tourne autour
-  {t:19.5, p:[22,6,98],    c:[0,3,74]},    // la régie dos à dos
+  {t:18.6, p:[14,3.4,98],  c:[0,2.2,85.5]},  // le podium, à hauteur d'homme, en entrant dans le village
+  {t:19.0, p:[-12,5.5,90], c:[0,2,85.5]},    // on tourne autour
+  {t:19.5, p:[20,6,60],    c:[0,3,68]},    // la régie devant la tour
   {t:21.0, p:[0,2.2,52],   c:[0,14,0]},    // dans le public, face à la façade
   {t:22.0, p:[-40,20,90],  c:[0,15,10]},   // extinction : on voit la place s'éteindre
   {t:22.6, p:[-18,6,46],   c:[0,18,0]},    // le mapping, de près
@@ -549,6 +621,8 @@ function init(){
   controls.enabled = false;
   document.getElementById('png').addEventListener('click', () => { renderer.render(scene, camera); const a = document.createElement('a'); a.href = renderer.domElement.toDataURL('image/png'); a.download = `demo-${document.getElementById('heure').textContent.replace(':','h')}.png`; a.click(); });
   document.getElementById('video').addEventListener('click', basculerVideo);
+  const lp = document.getElementById('legpan'); lp.innerHTML = LEGENDE;
+  document.getElementById('leg').addEventListener('click', e => { const on = lp.style.display !== 'block'; lp.style.display = on ? 'block' : 'none'; e.target.classList.toggle('on', on); G.legendes.forEach(sp => sp.visible = on); });
   document.getElementById('impb').addEventListener('click', () => document.getElementById('imp').click());
   document.getElementById('imp').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const j = JSON.parse(txt); localStorage.setItem('implantation-3d', JSON.stringify(j)); location.reload(); } catch(err){ alert('JSON illisible'); } }); });
   redim(); window.addEventListener('resize', redim); boucle();
