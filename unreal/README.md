@@ -82,6 +82,31 @@ Le cycle est toujours le même, dans ce sens :
 Si tu retravailles un `SM_*` directement dans Unreal, fais-le sur une **copie** sous un
 autre nom, sinon le prochain import l'écrase.
 
+## La démo animée (pour la mairie)
+
+Deux versions du même scénario (16 h → 2 h : montage, village, crépuscule, extinction,
+mapping, lasers, sortie), avec les **mêmes paramètres** dans
+`Content/Import/demo_params.json` — matériaux (couleur, rugosité, métal, relief,
+émission des fenêtres et vitraux), soleil (élévation, température de couleur, ciel),
+lumières (lumens, Kelvin, cônes), caméra (plan-séquence), foule :
+
+- **`outils/demo-evenement.html`** — autonome, dans un navigateur, textures
+  procédurales, bouton *Enregistrer la vidéo* (WebM) et *Image* (PNG). C'est la
+  version à montrer tout de suite, vérifiée en rendu.
+- **`Content/Python/demo_sequence.py`** — à lancer après `assembler_scene.py` :
+  crée les matériaux à paramètres dans `/Game/Implantation/Materials`, le soleil
+  + Sky Atmosphere + nuages + brouillard volumétrique (ce qui rend les cônes et
+  faisceaux visibles dans l'air), les candélabres et lumières de stands, puis la
+  **Level Sequence `Seq_Soiree`** (100 s à 30 i/s, 1 h = 10 s) : rotation et
+  intensité du soleil, allumage des groupes par phase, visibilité des volumes
+  d'étude, caméra CineCamera sur le plan-séquence. Rendu vidéo : *Movie Render
+  Queue* sur `Seq_Soiree`. Non exécuté dans Unreal ici (voir avertissement ci-dessous).
+
+L'image du mapping : dans la démo HTML c'est une toile procédurale animée
+(nappes, lignes d'architecture, rosace qui pulse). Dans Unreal, `M_ImageMapping`
+attend un **Render Target ou un Media Player** : branche ta vidéo de contenu dessus,
+masquée au corps de façade (la tour reste en wash).
+
 ## Ce qui n'est pas là
 
 - Pas de `.uasset` ni de `.umap` versionnés : ils sont produits par l'éditeur au

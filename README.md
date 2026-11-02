@@ -4,6 +4,9 @@
 - **[`outils/calculateur-mapping.html`](outils/calculateur-mapping.html)** —
   calculateur de dimensionnement (éclairement, optique, pavage, composition).
   Générique : il sert à tous les chantiers. Source unique, à ne pas dupliquer.
+- **[`outils/demo-evenement.html`](outils/demo-evenement.html)** — la **démo animée**
+  de la soirée (16 h → 2 h) pour la mairie : ciel, extinction, foule, village, show,
+  caméra plan-séquence, enregistrement vidéo direct.
 - **[`outils/implantation-3d.html`](outils/implantation-3d.html)** —
   maquette 3D de l'implantation : façade, place, projecteurs, lasers, régie,
   vue de dessus, et contrôle géométrique de la sécurité laser.

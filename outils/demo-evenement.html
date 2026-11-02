@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Démo animée — l'événement au fil de la soirée</title>
+<style>
+  :root{--bg:#0b0d11;--txt:#eef1f5;--dim:#9aa3ad;--acc:#ffb454;--line:#2a3138}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
+            font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+  #view{position:absolute;inset:0}
+  #view canvas{display:block;width:100%;height:100%}
+  #hud{position:absolute;left:0;right:0;bottom:0;padding:14px 18px 16px;
+       background:linear-gradient(transparent,rgba(5,7,10,.88) 40%);pointer-events:none}
+  #hud>*{pointer-events:auto}
+  #titre{font-size:26px;font-weight:700;letter-spacing:-.01em;text-shadow:0 2px 12px #000}
+  #titre small{font-size:15px;font-weight:400;color:var(--acc);margin-left:10px}
+  #sous{color:var(--dim);font-size:14px;margin:2px 0 10px;max-width:900px;text-shadow:0 1px 6px #000}
+  #ligne{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  button,select{background:#1b2027;color:var(--txt);border:1px solid var(--line);border-radius:7px;
+         padding:7px 12px;font:inherit;cursor:pointer}
+  button:hover{border-color:var(--acc)} button.on{background:var(--acc);color:#1a1200;border-color:var(--acc)}
+  #heure{font-variant-numeric:tabular-nums;font-size:20px;font-weight:700;min-width:64px}
+  input[type=range]{flex:1;min-width:220px;accent-color:var(--acc)}
+  #phases{display:flex;gap:4px;margin-top:6px}
+  .ph{flex:1;height:5px;border-radius:3px;background:#2a3138;position:relative}
+  .ph.on{background:var(--acc)}
+  .ph span{position:absolute;top:8px;left:0;font-size:10.5px;color:var(--dim);white-space:nowrap}
+  #stats{position:absolute;top:14px;right:16px;background:rgba(5,7,10,.72);border:1px solid var(--line);
+         border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.75;min-width:250px;backdrop-filter:blur(6px)}
+  #stats b{color:var(--acc);font-variant-numeric:tabular-nums}
+  #stats .et{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#555}
+  #stats .et.on{background:#3fb950;box-shadow:0 0 6px #3fb950}
+  #logo{position:absolute;top:14px;left:16px;font-size:12px;color:var(--dim);background:rgba(5,7,10,.6);
+        padding:6px 10px;border-radius:8px}
+  #rec{display:none;position:absolute;top:58px;left:16px;color:#f85149;font-weight:700;font-size:13px}
+  #rec::before{content:"●";margin-right:6px;animation:cl 1s infinite}
+  @keyframes cl{50%{opacity:.2}}
+  .note{font-size:11px;color:var(--dim)}
+  @media(max-width:700px){#stats{display:none} #titre{font-size:18px}}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div id="logo">Démo d'implantation · maquette de travail, volumes voisins indicatifs</div>
+<div id="rec">ENREGISTREMENT</div>
+<div id="stats"></div>
+<div id="hud">
+  <div id="titre">—<small id="phase"></small></div>
+  <div id="sous"></div>
+  <div id="ligne">
+    <button id="play">▶ Lecture</button>
+    <span id="heure">16:00</span>
+    <input type="range" id="tl" min="16" max="26" step="0.01" value="16">
+    <select id="vitesse"><option value="20">1 h = 20 s</option><option value="10" selected>1 h = 10 s</option><option value="5">1 h = 5 s</option><option value="2">1 h = 2 s</option></select>
+    <select id="cam"><option value="cine">Caméra : plan-séquence</option><option value="orbite">Caméra : orbite lente</option><option value="public">Caméra : dans le public</option><option value="mairie">Caméra : balcon de la mairie</option><option value="libre">Caméra : libre (souris)</option></select>
+    <button id="video">⏺ Enregistrer la vidéo</button>
+    <button id="png">⤓ Image</button>
+    <label class="note"><input type="file" id="imp" accept=".json" style="display:none"><button id="impb" style="padding:5px 9px">Charger une implantation JSON</button></label>
+  </div>
+  <div id="phases"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* =====================================================================
+   DONNÉES — même schéma que outils/implantation-3d.html.
+   Si le visualiseur a été utilisé dans ce navigateur, on reprend SON
+   implantation (localStorage). Sinon, celle-ci.
+   ===================================================================== */
+const DEFAUT = () => ({
+  projet: {
+    nom: "Basilique Saint-Denis — parvis",
+    facade: { largeur:32.5, hauteur:37.3, profondeur:3.0,
+      contour: [[-16.25,0],[-16.25,29.2],[-5.9,29.2],[0,37.3],[5.9,29.2],[5.2,29.2],[5.2,50.6],[6.1,50.6],[6.7,54.6],[10.5,60.1],[14.3,54.6],[14.9,50.6],[15.8,50.6],[15.8,29.2],[16.25,29.2],[16.25,0]],
+      rosace:{x:0,y:22.5,r:3.0},
+      ouvertures:[[-2.6,2.6,0,5.5],[-12.3,-6.9,0,3.3],[6.9,12.3,0,3.3],[-2.95,2.95,13.6,24],[-11.25,-7.95,12.2,23],[-7.95,-4.65,12.2,23],[7.95,11.25,12.2,23],[11.25,14.55,12.2,23],[6.3,9.5,30.1,36.3],[11.5,14.7,30.1,36.3],[6.3,9.5,37,49],[11.5,14.7,37,49]] },
+    zonePublic:{x0:-30,x1:30,z0:6,z1:60,hautYeux:2.5,densite:2},
+    voisins:[{nom:"bâti ouest",x0:-55,x1:-30,z0:0,z1:50,h:16},{nom:"bâti est",x0:32,x1:60,z0:0,z1:45,h:14},{nom:"fond ouest",x0:-60,x1:-40,z0:62,z1:100,h:12},{nom:"fond est",x0:40,x1:70,z0:62,z1:110,h:18}],
+    nef:{x0:-16.25,x1:16.25,z0:-108,z1:-3,h:24}
+  },
+  bloc:{x:0,z:70,hauteurVP:10,largeurPlateforme:9,profondeurPlateforme:3},
+  projecteurs:[{nom:"VP1 — bas",dx:-1.3,cx:0,cy:9.7,tr:2.02,ratio:16/9,lumens:40000},{nom:"VP2 — haut",dx:1.3,cx:0,cy:27.6,tr:2.02,ratio:16/9,lumens:40000}],
+  lasers:[{nom:"Laser 1",dx:-3.6,dy:-1,tx:-6,ty:17,puissance:10},{nom:"Laser 2",dx:3.6,dy:-1,tx:8,ty:20,puissance:10}],
+  regie:{longueur:6.06,largeur:2.44,hauteur:2.59,ecart:0.4},
+  village:{allee:4,pas:3.6,cote:3,ecartRegie:1.5,stands:[{nom:"Prévention",type:"prevention"},{nom:"Poste de secours",type:"secours"},{nom:"Accueil · infos",type:"accueil"},{nom:"Buvette",type:"buvette"},{nom:"Restauration",type:"buvette"},{nom:"Asso 1",type:"asso"},{nom:"Asso 2",type:"asso"},{nom:"Asso 3",type:"asso"}]},
+  sono:{x:19.5,z:4,hauteur:6.5,ouverture:90,portee:62,visee:10,subs:2,delais:0,delaiX:13,delaiZ:38,delaiH:5},
+  lumieres:{totems:[{x:-31,z:10,h:5.5},{x:31,z:10,h:5.5},{x:-31,z:56,h:5.5},{x:31,z:56,h:5.5}],wash:[{x:-13,z:9,tx:-10,ty:26},{x:13,z:9,tx:10.5,ty:44}]}
+});
+let E = DEFAUT();
+try { const s = JSON.parse(localStorage.getItem('implantation-3d')||'null'); if (s && s.bloc) { E = Object.assign(DEFAUT(), s); if (!E.projet) E.projet = DEFAUT().projet; } } catch(e){}
+const P = () => E.projet;
+
+/* =====================================================================
+   LE SCÉNARIO — la soirée, heure par heure. C'est lui que la mairie regarde.
+   Chaque phase fixe : public (fraction de la jauge), éclairage public,
+   village allumé, sono, lumières d'ambiance, mapping, lasers.
+   ===================================================================== */
+const PHASES = [
+  {t:16.0, nom:"Montage",              sous:"Plateforme, régie et village en place. Parvis fermé au public, accès pompiers libres.",             public:0.00, ep:true,  vil:false, son:false, lum:false, map:false, las:false},
+  {t:18.0, nom:"Ouverture du village", sous:"Les stands ouvrent — prévention et poste de secours en tête d'allée, à côté de la régie.",             public:0.15, ep:true,  vil:true,  son:false, lum:false, map:false, las:false},
+  {t:19.5, nom:"Le parvis se remplit", sous:"Sono en fond, lumières d'ambiance. Le public reste dans la zone délimitée, loin des faisceaux.",      public:0.55, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false},
+  {t:21.0, nom:"Crépuscule",           sous:"Dernières lueurs. Éclairage public encore allumé.",                                                     public:0.85, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false},
+  {t:22.0, nom:"Extinction",           sous:"La Ville éteint l'éclairage public du parvis : c'est la condition du rendu.",                           public:1.00, ep:false, vil:true,  son:true,  lum:true,  map:false, las:false},
+  {t:22.1, nom:"Le mapping",           sous:"Deux zones empilées sur le corps de façade, la tour en wash. Les faisceaux passent à plus de 9 m au-dessus des têtes.",   public:1.00, ep:false, vil:true,  son:true,  lum:false, map:true,  las:false},
+  {t:22.6, nom:"Les lasers",           sous:"Tracés sur la façade uniquement, jamais vers le public ni vers le ciel. Opérateur certifié en régie.",  public:1.00, ep:false, vil:true,  son:true,  lum:false, map:true,  las:true},
+  {t:23.3, nom:"Fin du show",          sous:"Rallumage progressif. Le village reste ouvert pour la sortie, les totems guident vers les accès.",     public:0.80, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false},
+  {t:24.3, nom:"Sortie du public",     sous:"Flux vers le métro et le tram. Poste de secours et accueil restent ouverts.",                          public:0.25, ep:true,  vil:true,  son:false, lum:true,  map:false, las:false},
+  {t:25.3, nom:"Démontage",            sous:"Parvis rendu propre avant 2 h.",                                                                       public:0.00, ep:true,  vil:false, son:false, lum:false, map:false, las:false},
+  {t:26.0, nom:"Fin",                  sous:"",                                                                                                      public:0.00, ep:true,  vil:false, son:false, lum:false, map:false, las:false}
+];
+function etatA(t){
+  let i = 0; while (i < PHASES.length-2 && PHASES[i+1].t <= t) i++;
+  const a = PHASES[i], b = PHASES[i+1], u = Math.min(1, Math.max(0, (t-a.t)/Math.max(.01, b.t-a.t)));
+  const s = u*u*(3-2*u);
+  const bl = (k) => (a[k] ? 1 : 0) * (1-s) + (b[k] ? 1 : 0) * s;
+  return {phase:a, public:a.public*(1-s)+b.public*s, ep:bl('ep'), vil:bl('vil'), son:bl('son'), lum:bl('lum'), map:bl('map'), las:bl('las')};
+}
+// soleil : élévation et azimut approchés pour Saint-Denis fin d'été (coucher ~20h45, nuit noire ~22h15)
+function soleil(t){
+  const el = Math.sin((t - 6.2) / (20.8 - 6.2) * Math.PI) * 55;   // degrés, 0 à 6h20 et 20h50
+  const az = (t - 13.5) / 12 * Math.PI;                              // sud à 13h30
+  return {el, az};
+}
+
+/* =====================================================================
+   TEXTURES PROCÉDURALES — pas de fichier externe à charger
+   ===================================================================== */
+function tex(w, h, fn, repeat){
+  const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (repeat) t.repeat.set(...repeat); t.anisotropy = 4; return t;
+}
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const texPierre = tex(1024, 1024, (g, w, h) => {
+  g.fillStyle = '#d8d1be'; g.fillRect(0, 0, w, h);
+  // appareil : assises de ~40 px, joints décalés
+  const ass = 40;
+  for (let y = 0; y < h; y += ass){
+    const dec = (y/ass) % 2 ? 60 : 0;
+    for (let x = -120 + dec; x < w; x += 120){
+      const v = 200 + rnd()*28; g.fillStyle = `rgb(${v+8},${v+2},${v-12})`; g.fillRect(x+1, y+1, 118, ass-2);
+      for (let k = 0; k < 20; k++){ g.fillStyle = `rgba(90,80,60,${rnd()*.08})`; g.fillRect(x+rnd()*118, y+rnd()*ass, rnd()*8, rnd()*3); }
+    }
+  }
+  g.fillStyle = 'rgba(70,60,45,.35)'; for (let y = 0; y < h; y += ass) g.fillRect(0, y, w, 1.5);
+  const img = g.getImageData(0,0,w,h), d = img.data;
+  for (let i = 0; i < d.length; i += 4){ const n = (rnd()-.5)*14; d[i]+=n; d[i+1]+=n; d[i+2]+=n; } g.putImageData(img,0,0);
+}, [1, 1]);
+const texPave = tex(512, 512, (g, w, h) => {
+  g.fillStyle = '#7f7a70'; g.fillRect(0,0,w,h);
+  for (let y = 0; y < h; y += 32) for (let x = 0; x < w; x += 32){ const v = 110 + rnd()*40; g.fillStyle = `rgb(${v},${v-3},${v-10})`; g.fillRect(x+1, y+1, 30, 30); }
+}, [40, 40]);
+const texBati = (fenetres=true) => tex(256, 256, (g, w, h) => {
+  g.fillStyle = '#b9b2a0'; g.fillRect(0,0,w,h);
+  if (fenetres) for (let y = 18; y < h-10; y += 40) for (let x = 14; x < w-10; x += 34){ g.fillStyle = rnd() > .45 ? '#1b2330' : '#3a3f48'; g.fillRect(x, y, 16, 24); }
+}, [3, 2]);
+const texBatiNuit = tex(256, 256, (g, w, h) => {   // fenêtres allumées (carte d'émission)
+  g.fillStyle = '#000'; g.fillRect(0,0,w,h);
+  for (let y = 18; y < h-10; y += 40) for (let x = 14; x < w-10; x += 34){ if (rnd() > .55){ g.fillStyle = `rgb(${220+rnd()*35},${170+rnd()*40},${90+rnd()*40})`; g.fillRect(x, y, 16, 24); } }
+}, [3, 2]);
+const texTente = tex(128, 128, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0,0,w,h); for (let i = 0; i < 300; i++){ g.fillStyle = `rgba(0,0,0,${rnd()*.05})`; g.fillRect(rnd()*w, rnd()*h, 3, 3); } });
+
+// le CONTENU du mapping : une toile animée, redessinée chaque frame pendant le show
+const mapC = document.createElement('canvas'); mapC.width = 512; mapC.height = 600;
+const texMapping = new THREE.CanvasTexture(mapC); texMapping.minFilter = THREE.LinearFilter;
+function dessinerMapping(t, s){
+  const g = mapC.getContext('2d'), w = mapC.width, h = mapC.height;
+  const F = P().facade, sx = w / F.largeur, sy = h / F.hauteur;        // 1 m -> px
+  g.fillStyle = '#000'; g.fillRect(0,0,w,h);
+  const tt = t*60;   // secondes de show "lentes"
+  // 1 — nappes de couleur qui montent le long des travées
+  const cols = [['#0b2a5e','#1b6fd1'],['#5e0b3a','#d11b7a'],['#5e3a0b','#f0a01b']];
+  for (let k = 0; k < 3; k++){
+    const x0 = w/3*k, ph = (tt*.08 + k*.33) % 1;
+    const gr = g.createLinearGradient(0, h, 0, 0); gr.addColorStop(0, cols[k][0]); gr.addColorStop(ph, cols[k][1]); gr.addColorStop(1, cols[k][0]);
+    g.fillStyle = gr; g.globalAlpha = .9; g.fillRect(x0, 0, w/3, h);
+  }
+  g.globalAlpha = 1;
+  // 2 — les lignes de l'architecture : corniches, contreforts, portails (sobre, lisible)
+  g.strokeStyle = 'rgba(255,240,200,.75)'; g.lineWidth = 2;
+  [[1.4],[10.6],[12.2],[18.8],[23.1],[25.9],[28.4]].forEach(([y]) => { g.beginPath(); g.moveTo(0, h - y*sy); g.lineTo(w, h - y*sy); g.stroke(); });
+  [-5.65, 5.65].forEach(x => { g.beginPath(); g.moveTo(w/2 + x*sx, h); g.lineTo(w/2 + x*sx, h - 29.2*sy); g.stroke(); });
+  // 3 — la rosace qui pulse
+  const r = F.rosace, rp = (r.r + .4*Math.sin(tt*.9)) * sx;
+  const rg = g.createRadialGradient(w/2 + r.x*sx, h - r.y*sy, rp*.2, w/2 + r.x*sx, h - r.y*sy, rp);
+  rg.addColorStop(0, 'rgba(255,230,160,.95)'); rg.addColorStop(1, 'rgba(255,200,80,0)');
+  g.fillStyle = rg; g.beginPath(); g.arc(w/2 + r.x*sx, h - r.y*sy, rp, 0, 7); g.fill();
+  // 4 — particules qui montent
+  g.fillStyle = 'rgba(255,255,255,.8)';
+  for (let i = 0; i < 90; i++){ const x = (i*97 % w), y = h - ((tt*20 + i*53) % h); g.fillRect(x, y, 2, 2 + (i%3)); }
+  texMapping.needsUpdate = true;
+}
+
+/* =====================================================================
+   SCÈNE
+   ===================================================================== */
+let scene, camera, renderer, controls, sun, hemi, fog;
+const G = {};                                   // groupes et objets à animer
+const posPlateforme = () => { const b = E.bloc; return {x0:b.x-b.largeurPlateforme/2, x1:b.x+b.largeurPlateforme/2, z0:b.z-b.profondeurPlateforme/2, z1:b.z+b.profondeurPlateforme/2, h:b.hauteurVP}; };
+const regieBox = () => { const b = E.bloc, r = E.regie, pl = posPlateforme(); const zc = pl.z1 + r.ecart + r.largeur/2; return {x:b.x, z:zc, L:r.longueur, l:r.largeur, h:r.hauteur, z1:zc + r.largeur/2}; };
+function posStands(){ const b = E.bloc, v = E.village, rg = regieBox(), out = []; const z0 = rg.z1 + v.ecartRegie + v.cote/2;
+  v.stands.forEach((s,i) => { const rang = Math.floor(i/2), c = i%2 ? 1 : -1; out.push({nom:s.nom, type:s.type, x:b.x + c*(v.allee/2 + v.cote/2), z:z0 + rang*v.pas}); }); return out; }
+const TENTE = {prevention:0x4fa3ff, secours:0xf85149, accueil:0xffb454, buvette:0xe4c05a, asso:0xe8e0c8};
+
+const std = (o) => new THREE.MeshStandardMaterial(Object.assign({roughness:.85, metalness:0}, o));
+function boite(x0,x1,y0,y1,z0,z1,m){ const o = new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0), m); o.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2); o.castShadow = o.receiveShadow = true; return o; }
+function cyl(a,b,r,m,seg=8){ const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length();
+  const o = new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,seg), m); o.position.copy(A).add(B).multiplyScalar(.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
+function coneMesh(sommet, base, rayon, mat){ const A = new THREE.Vector3(...sommet), B = new THREE.Vector3(...base), d = B.clone().sub(A), L = d.length();
+  const g = new THREE.ConeGeometry(rayon, L, 28, 1, true); g.translate(0,-L/2,0); g.rotateX(Math.PI);
+  const o = new THREE.Mesh(g, mat); o.position.copy(A); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
+
+function construire(){
+  const F = P().facade, Z = P().zonePublic;
+  // sol
+  const sol = new THREE.Mesh(new THREE.PlaneGeometry(260, 240), std({map:texPave, roughness:.95})); sol.rotation.x = -Math.PI/2; sol.position.set(0,0,60); sol.receiveShadow = true; scene.add(sol);
+  // façade texturée pierre
+  const forme = new THREE.Shape(); F.contour.forEach(([x,y],i) => i ? forme.lineTo(x,y) : forme.moveTo(x,y));
+  const gf = new THREE.ExtrudeGeometry(forme, {depth:F.profondeur, bevelEnabled:false}); gf.translate(0,0,-F.profondeur);
+  // UV planaires pour la pierre : 1 texture = 12 m
+  const uv = gf.attributes.uv, pos = gf.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i)/12, pos.getY(i)/12);
+  G.facade = new THREE.Mesh(gf, std({map:texPierre, roughness:.92})); G.facade.castShadow = G.facade.receiveShadow = true; scene.add(G.facade);
+  const vitre = std({color:0x1d2a3d, roughness:.3, metalness:.1, emissive:0x2a3a55, emissiveIntensity:0});
+  G.vitraux = [];
+  F.ouvertures.forEach(([x0,x1,y0,y1],i) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,y1-y0), i<3 ? std({color:0x2a2620}) : vitre.clone()); p.position.set((x0+x1)/2,(y0+y1)/2,.02); scene.add(p); if (i>=3) G.vitraux.push(p); });
+  const r = F.rosace; const rose = new THREE.Mesh(new THREE.RingGeometry(r.r*.72, r.r, 48), std({color:0xc8a24a, roughness:.35, metalness:.6})); rose.position.set(r.x,r.y,.03); scene.add(rose);
+  const vit = new THREE.Mesh(new THREE.CircleGeometry(r.r*.72, 48), vitre.clone()); vit.position.set(r.x,r.y,.04); scene.add(vit); G.vitraux.push(vit);
+  // l'image projetée : un plan sur la façade qui reçoit la toile du mapping
+  // limitée au corps de façade (le pignon compris) : la tour est traitée en wash, pas en mapping
+  const fi = new THREE.Shape(); [[-16.25,0],[-16.25,29.2],[-5.9,29.2],[0,37.3],[5.9,29.2],[16.25,29.2],[16.25,0]].forEach(([x,y],i) => i ? fi.lineTo(x,y) : fi.moveTo(x,y));
+  const gi = new THREE.ShapeGeometry(fi); { const uv = gi.attributes.uv, po = gi.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, (po.getX(i)+F.largeur/2)/F.largeur, po.getY(i)/F.hauteur); }
+  G.image = new THREE.Mesh(gi, new THREE.MeshBasicMaterial({map:texMapping, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false}));
+  G.image.position.set(0, 0, .08); scene.add(G.image);
+  // nef, voisins avec fenêtres (émission la nuit)
+  const n = P().nef; scene.add(boite(n.x0,n.x1,0,n.h,n.z0,n.z1, std({map:texPierre}))); scene.add(boite(n.x0-.5,n.x1+.5,n.h,n.h+1.5,n.z0,n.z1, std({color:0x4a463e})));
+  G.voisins = []; P().voisins.forEach(v => { const m = std({map:texBati(), emissiveMap:texBatiNuit, emissive:0xffffff, emissiveIntensity:0}); const b = boite(v.x0,v.x1,0,v.h,v.z0,v.z1,m); scene.add(b); G.voisins.push(b); });
+  // candélabres du parvis (éclairage public) : 8, sur les bords de la zone public
+  G.candelabres = [];
+  [[-34,2],[34,2],[-34,30],[34,30],[-34,58],[34,58],[-14,66],[14,66]].forEach(([x,z]) => {
+    const mat = std({color:0x2b2f36, metalness:.6, roughness:.4}); scene.add(cyl([x,0,z],[x,9,z],.12,mat));
+    const tete = new THREE.Mesh(new THREE.SphereGeometry(.45,12,8), std({color:0xfff2d0, emissive:0xffd9a0, emissiveIntensity:0})); tete.position.set(x,9.2,z); scene.add(tete);
+    const l = new THREE.PointLight(0xffd9a0, 0, 40, 2); l.position.set(x,9,z); scene.add(l); G.candelabres.push({tete, l});
+  });
+  // plateforme VP
+  const pl = posPlateforme(), me = std({color:0xc98a3c, roughness:.6, metalness:.3});
+  const xs = []; for (let x = pl.x0; x <= pl.x1+.01; x += (pl.x1-pl.x0)/Math.max(1,Math.round((pl.x1-pl.x0)/2.25))) xs.push(x);
+  xs.forEach(x => [pl.z0,pl.z1].forEach(z => scene.add(cyl([x,0,z],[x,pl.h-.25,z],.05,me))));
+  for (let y = 2; y < pl.h-.3; y += 2){ [pl.z0,pl.z1].forEach(z => scene.add(cyl([pl.x0,y,z],[pl.x1,y,z],.03,me))); [pl.x0,pl.x1].forEach(x => scene.add(cyl([x,y,pl.z0],[x,y,pl.z1],.03,me))); }
+  scene.add(boite(pl.x0-.15,pl.x1+.15,pl.h-.45,pl.h-.2,pl.z0-.15,pl.z1+.15, std({color:0x8a5a26})));
+  scene.add(boite(pl.x0-.2,pl.x1+.2,pl.h+2.3,pl.h+2.4,pl.z0-.2,pl.z1+.2, std({color:0xf2f2f2, transparent:true, opacity:.5})));
+  // régie
+  const rg = regieBox(); scene.add(boite(rg.x-rg.L/2,rg.x+rg.L/2,0,rg.h,rg.z-rg.l/2,rg.z+rg.l/2, std({color:0xd7dde4, roughness:.5, metalness:.3})));
+  const fen = new THREE.Mesh(new THREE.PlaneGeometry(2.4,.9), std({color:0x1d2a3d, emissive:0x9fd3ff, emissiveIntensity:0})); fen.position.set(rg.x+.6,1.6,rg.z-rg.l/2-.02); fen.rotation.y = Math.PI; scene.add(fen); G.regieFen = fen;
+  // village
+  G.stands = [];
+  posStands().forEach(s => {
+    const c = E.village.cote, h0 = 2.2, h1 = 3.0;
+    [[s.x-c/2,s.z-c/2],[s.x+c/2,s.z-c/2],[s.x+c/2,s.z+c/2],[s.x-c/2,s.z+c/2]].forEach(([x,z]) => scene.add(cyl([x,0,z],[x,h0,z],.035, std({color:0x8c9096, metalness:.5}))));
+    const g = new THREE.ConeGeometry(c*Math.SQRT1_2*1.02, h1-h0, 4, 1); g.rotateY(Math.PI/4);
+    const toit = new THREE.Mesh(g, std({color:TENTE[s.type]||0xe8e0c8, map:texTente, roughness:.9, side:THREE.DoubleSide, emissive:TENTE[s.type]||0xe8e0c8, emissiveIntensity:0})); toit.position.set(s.x,h0+(h1-h0)/2,s.z); toit.castShadow = true; scene.add(toit);
+    scene.add(boite(s.x-c/2+.2,s.x+c/2-.2,0,.95,s.z-c/2+.1,s.z-c/2+.7, std({color:0x6b5a44})));
+    const l = new THREE.PointLight(0xffe0b0, 0, 9, 2); l.position.set(s.x,h0-.2,s.z); scene.add(l); G.stands.push({toit, l});
+  });
+  // sono : 2 stacks
+  const so = E.sono; G.pa = [];
+  [-1,1].forEach(c => { const x = c*so.x, z = so.z; for (let i = 0; i < so.subs; i++) scene.add(boite(x-.6,x+.6,i*.7,i*.7+.65,z-.6,z+.6, std({color:0x1c1f24})));
+    scene.add(cyl([x,0,z],[x,so.hauteur,z],.04, std({color:0x8c9096, metalness:.5}))); for (let y = so.hauteur-.35; y > so.subs*.7+.2; y -= .38) scene.add(boite(x-.45,x+.45,y-.32,y,z-.3,z+.3, std({color:0x1c1f24})));
+    const led = new THREE.Mesh(new THREE.SphereGeometry(.08,8,6), std({color:0x3fb950, emissive:0x3fb950, emissiveIntensity:0})); led.position.set(x+.45, so.subs*.7+.3, z+.6); scene.add(led); G.pa.push(led); });
+  // totems + faisceaux ; wash façade
+  G.totems = []; G.wash = [];
+  const fm = () => new THREE.MeshBasicMaterial({color:0xb36bff, transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending});
+  E.lumieres.totems.forEach(t => { scene.add(cyl([t.x,0,t.z],[t.x,t.h,t.z],.06, std({color:0x2b2f36, metalness:.5}))); scene.add(boite(t.x-.35,t.x+.35,t.h-.35,t.h,t.z-.2,t.z+.2, std({color:0x111418})));
+    const cx = (Z.x0+Z.x1)/2, cz = (Z.z0+Z.z1)/2, d = new THREE.Vector3(cx-t.x, -t.h, cz-t.z); const base = new THREE.Vector3(t.x,t.h,t.z).add(d.clone().normalize().multiplyScalar(26));
+    const f = coneMesh([t.x,t.h-.2,t.z],[base.x,Math.max(.1,base.y),base.z], 7, fm()); scene.add(f);
+    const l = new THREE.SpotLight(0xb36bff, 0, 60, .6, .5, 1.2); l.position.set(t.x,t.h,t.z); l.target.position.set(cx,0,cz); scene.add(l, l.target); G.totems.push({f, l, t}); });
+  E.lumieres.wash.forEach(w => { scene.add(boite(w.x-.45,w.x+.45,0,.5,w.z-.35,w.z+.35, std({color:0x111418, metalness:.5})));
+    const f = coneMesh([w.x,.5,w.z],[w.tx,w.ty,0], 4.5, fm()); scene.add(f);
+    const l = new THREE.SpotLight(0xb36bff, 0, 80, .25, .6, 1); l.position.set(w.x,.5,w.z); l.target.position.set(w.tx,w.ty,0); scene.add(l, l.target); G.wash.push({f, l}); });
+  // VP : machines, cônes, spots
+  G.vps = [];
+  E.projecteurs.forEach(p => { const b = E.bloc, x = b.x+p.dx, y = b.hauteurVP, z = b.z, W = z/p.tr, H = W/p.ratio;
+    const corps = new THREE.Mesh(new THREE.BoxGeometry(.6,.42,.7), std({color:0x222730, metalness:.5, roughness:.4})); corps.position.set(x,y,z); corps.lookAt(new THREE.Vector3(p.cx,p.cy,0)); scene.add(corps);
+    const C = [[p.cx-W/2,p.cy-H/2,0],[p.cx+W/2,p.cy-H/2,0],[p.cx+W/2,p.cy+H/2,0],[p.cx-W/2,p.cy+H/2,0]], pos = [];
+    for (let i = 0; i < 4; i++) pos.push(x,y,z, ...C[i], ...C[(i+1)%4]);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+    const cone = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffc880, transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending})); scene.add(cone);
+    const l = new THREE.SpotLight(0xfff0dc, 0, 200, Math.atan((W/2)/z)*1.15, .3, 2); l.position.set(x,y,z); l.target.position.set(p.cx,p.cy,0); scene.add(l, l.target); G.vps.push({cone, l}); });
+  // lasers : faisceaux fins animés dans les limites de la façade
+  G.lasers = [];
+  E.lasers.forEach((l,i) => { const b = E.bloc, x = b.x+l.dx, y = b.hauteurVP+l.dy, z = b.z;
+    scene.add(boite(x-.2,x+.2,y-.12,y+.12,z-.2,z+.2, std({color:0x111418, metalness:.6})));
+    const m = new THREE.MeshBasicMaterial({color:i ? 0x3fb950 : 0x4fa3ff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false});
+    const beam = cyl([x,y,z],[l.tx,l.ty,0],.06,m); scene.add(beam);
+    const pt = new THREE.Mesh(new THREE.SphereGeometry(.35,10,8), m.clone()); pt.position.set(l.tx,l.ty,.1); scene.add(pt); G.lasers.push({beam, pt, src:[x,y,z], l}); });
+  // public : instances
+  const capa = Math.round((Z.x1-Z.x0)*(Z.z1-Z.z0)*Z.densite*.35);   // on dessine 35 % de la jauge, ça suffit à lire la foule
+  const gp = THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.22,.9,2,6) : new THREE.CylinderGeometry(.22,.22,1.3,6);  // CapsuleGeometry n'existe qu'à partir de r130
+  // pas de couleur par instance : avec three r128 elle assombrit tout le maillage instancié
+  G.foule = new THREE.InstancedMesh(gp, std({color:0x8a93a0, roughness:.9}), capa); G.foule.castShadow = false; G.foule.count = 0;
+  G.foulePos = []; const dm = new THREE.Object3D();
+  for (let i = 0; i < capa; i++){ // plus dense vers la façade, en laissant 6 m
+    const u = rnd(), x = Z.x0 + rnd()*(Z.x1-Z.x0), z = Z.z0 + Math.pow(u, .7)*(Z.z1-Z.z0), s = .85 + rnd()*.3;
+    dm.position.set(x, .65*s, z); dm.scale.set(1,s,1); dm.updateMatrix(); G.foule.setMatrixAt(i, dm.matrix); G.foulePos.push([x,z]);
+  }
+  G.foule.instanceMatrix.needsUpdate = true; scene.add(G.foule);
+  // barrières de la zone public (lisibles pour la mairie)
+  const mb = std({color:0xcfd4da, metalness:.5, roughness:.4});
+  for (let x = Z.x0; x <= Z.x1; x += 2.5){ scene.add(boite(x-1.2,x+1.2,.2,1.1,Z.z1-.05,Z.z1+.05,mb)); scene.add(boite(x-1.2,x+1.2,.2,1.1,Z.z0-.05,Z.z0+.05,mb)); }
+  for (let z = Z.z0; z <= Z.z1; z += 2.5){ scene.add(boite(Z.x0-.05,Z.x0+.05,.2,1.1,z-1.2,z+1.2,mb)); scene.add(boite(Z.x1-.05,Z.x1+.05,.2,1.1,z-1.2,z+1.2,mb)); }
+}
+
+/* =====================================================================
+   ANIMATION — état visuel en fonction de l'heure
+   ===================================================================== */
+const lerp = (a,b,u) => a+(b-a)*u, clamp = (v,a,b) => Math.min(b,Math.max(a,v));
+function appliquer(t, dt){
+  const s = etatA(t), so = soleil(t), F = P().facade;
+  // ciel et soleil
+  const jour = clamp((so.el + 6) / 18, 0, 1);               // 0 nuit, 1 plein jour (crépuscule civil ~ -6°)
+  const chaud = clamp(1 - Math.abs(so.el - 2) / 10, 0, 1);  // teinte orangée autour du coucher
+  const ciel = new THREE.Color().setRGB(lerp(.03, .62, jour) + chaud*.35*jour, lerp(.04, .76, jour) + chaud*.12*jour, lerp(.08, .92, jour));
+  scene.background = ciel; fog.color.copy(ciel);
+  const R = 300; sun.position.set(Math.sin(so.az)*R*Math.cos(so.el*Math.PI/180), Math.sin(so.el*Math.PI/180)*R, -Math.cos(so.az)*R*Math.cos(so.el*Math.PI/180));
+  sun.intensity = clamp(so.el / 25, 0, 1) * 1.6; sun.color.setRGB(1, lerp(.55, .96, clamp(so.el/15,0,1)), lerp(.3, .88, clamp(so.el/15,0,1)));
+  hemi.intensity = lerp(.06, .75, jour); hemi.color.copy(ciel);
+  // éclairage public et fenêtres
+  const nuit = 1 - jour, ep = s.ep * nuit;
+  G.candelabres.forEach(c => { c.l.intensity = ep * 2.2; c.tete.material.emissiveIntensity = ep * 2.5; });
+  G.voisins.forEach(v => v.material.emissiveIntensity = nuit * .9);
+  G.regieFen.material.emissiveIntensity = (t > 17 && t < 25.5) ? .8 : 0;
+  G.vitraux.forEach(v => v.material.emissiveIntensity = nuit * .5);
+  // village, sono, totems, wash
+  G.stands.forEach(st => { st.l.intensity = s.vil * nuit * 1.6; st.toit.material.emissiveIntensity = s.vil * nuit * .35; });
+  G.pa.forEach(led => led.material.emissiveIntensity = s.son * 2);
+  const teinte = new THREE.Color().setHSL((t*.11) % 1, .8, .6);
+  G.totems.forEach(o => { o.l.intensity = s.lum * nuit * 3; o.l.color.copy(teinte); o.f.material.color.copy(teinte); o.f.material.opacity = s.lum * nuit * .14; });
+  G.wash.forEach(o => { o.l.intensity = s.lum * nuit * 2.5; o.f.material.opacity = s.lum * nuit * .12; o.l.color.copy(teinte); o.f.material.color.copy(teinte); });
+  // mapping
+  G.vps.forEach(v => { v.cone.material.opacity = s.map * .07; v.l.intensity = s.map * .35; });
+  G.image.material.opacity = s.map * .95;
+  if (s.map > 0.01) dessinerMapping(t, s);
+  // lasers : balayage lent, cibles maintenues sur la façade
+  G.lasers.forEach((o,i) => { const a = t*2.1 + i*2, tx = clamp(o.l.tx + Math.sin(a)*5.5, -F.largeur/2+1, F.largeur/2-1), ty = clamp(o.l.ty + Math.cos(a*.7)*6, 2, F.hauteur-1);
+    const A = new THREE.Vector3(...o.src), B = new THREE.Vector3(tx,ty,0), d = B.clone().sub(A), L = d.length();
+    o.beam.scale.set(1, L / o.beam.geometry.parameters.height, 1); o.beam.position.copy(A).add(B).multiplyScalar(.5); o.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize());
+    o.pt.position.set(tx,ty,.1); o.beam.material.opacity = s.las * .9; o.pt.material.opacity = s.las; });
+  // foule
+  G.foule.count = Math.round(s.public * G.foule.instanceMatrix.count);
+  // exposition : la nuit, on laisse les lumières artificielles faire le travail
+  renderer.toneMappingExposure = lerp(1.05, .85, jour);
+  // HUD
+  const Z = P().zonePublic, capa = Math.round((Z.x1-Z.x0)*(Z.z1-Z.z0)*Z.densite);
+  const hh = Math.floor(t) % 24, mm = Math.floor((t%1)*60);
+  document.getElementById('heure').textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  document.getElementById('titre').firstChild.textContent = s.phase.nom; document.getElementById('phase').textContent = P().nom;
+  document.getElementById('sous').textContent = s.phase.sous;
+  const lmTot = E.projecteurs.reduce((a,p)=>a+p.lumens,0), W = E.bloc.z/E.projecteurs[0].tr, H = W/E.projecteurs[0].ratio, lux = lmTot*.7/(2*W*H);
+  document.getElementById('stats').innerHTML = `
+    <div>Public estimé <b>${Math.round(s.public*capa).toLocaleString('fr-FR')}</b> / ${capa.toLocaleString('fr-FR')} (2 pers/m²)</div>
+    <div><span class="et ${s.ep>.5?'on':''}"></span>Éclairage public ${s.ep>.5?'allumé':'<b>éteint</b>'}</div>
+    <div><span class="et ${s.vil>.5?'on':''}"></span>Village ${s.vil>.5?'ouvert':'fermé'}</div>
+    <div><span class="et ${s.son>.5?'on':''}"></span>Sono ${s.son>.5?'en service':'coupée'}</div>
+    <div><span class="et ${s.map>.5?'on':''}"></span>Mapping ${s.map>.5?`<b>${Math.round(lux)} lux</b> · ${(lmTot/1000)}k lm`:'éteint'}</div>
+    <div><span class="et ${s.las>.5?'on':''}"></span>Lasers ${s.las>.5?'sur façade seule':'éteints'}</div>
+    <div class="note" style="margin-top:4px">Soleil ${so.el.toFixed(0)}° · ${so.el < -6 ? 'nuit' : so.el < 0 ? 'crépuscule' : 'jour'}</div>`;
+  document.querySelectorAll('#phases .ph').forEach((el,i) => el.classList.toggle('on', PHASES[i].t <= t));
+}
+
+/* =====================================================================
+   CAMÉRAS
+   ===================================================================== */
+// plan-séquence : clés (heure → position, cible), interpolées en douceur
+const CLES = [
+  {t:16.0, p:[-90,45,150], c:[0,10,50]},   // vue d'ensemble, montage
+  {t:18.0, p:[-30,12,110], c:[0,2,80]},    // le village
+  {t:19.5, p:[22,6,98],    c:[0,3,74]},    // la régie dos à dos
+  {t:21.0, p:[0,2.2,52],   c:[0,14,0]},    // dans le public, face à la façade
+  {t:22.0, p:[-40,20,90],  c:[0,15,10]},   // extinction : on voit la place s'éteindre
+  {t:22.6, p:[-18,6,46],   c:[0,18,0]},    // le mapping, de près
+  {t:23.3, p:[60,30,120],  c:[0,15,30]},   // vue d'ensemble du show
+  {t:24.3, p:[0,80,120],   c:[0,0,60]},    // plan de dessus pour la sortie
+  {t:26.0, p:[-90,45,150], c:[0,10,50]}
+];
+function cameraCine(t){
+  let i = 0; while (i < CLES.length-2 && CLES[i+1].t <= t) i++;
+  const a = CLES[i], b = CLES[i+1], u = clamp((t-a.t)/(b.t-a.t), 0, 1), s = u*u*(3-2*u);
+  camera.position.set(lerp(a.p[0],b.p[0],s), lerp(a.p[1],b.p[1],s), lerp(a.p[2],b.p[2],s));
+  controls.target.set(lerp(a.c[0],b.c[0],s), lerp(a.c[1],b.c[1],s), lerp(a.c[2],b.c[2],s));
+}
+let modeCam = 'cine', orb = 0;
+function cameraMaj(t, dt){
+  if (modeCam === 'cine') cameraCine(t);
+  else if (modeCam === 'orbite'){ orb += dt*.06; camera.position.set(Math.sin(orb)*120, 45, 60+Math.cos(orb)*120); controls.target.set(0,12,40); }
+  else if (modeCam === 'public'){ camera.position.set(Math.sin(t)*2, 1.7, 44); controls.target.set(0,15,0); }
+  else if (modeCam === 'mairie'){ camera.position.set(-46, 9, 72); controls.target.set(0,12,30); }
+  controls.update();
+}
+
+/* =====================================================================
+   LECTURE, VIDÉO, INIT
+   ===================================================================== */
+let t = 16, lecture = false, dernier = performance.now(), rec = null, chunks = [];
+function init(){
+  const vue = document.getElementById('view');
+  scene = new THREE.Scene(); fog = new THREE.Fog(0x000000, 200, 520); scene.fog = fog;
+  camera = new THREE.PerspectiveCamera(40, 1, .1, 1500);
+  renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true}); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.outputEncoding = THREE.sRGBEncoding;
+  vue.appendChild(renderer.domElement);
+  hemi = new THREE.HemisphereLight(0xdfeeff, 0x6b6250, .8); scene.add(hemi);
+  sun = new THREE.DirectionalLight(0xfff1dc, 1.2); sun.castShadow = true; Object.assign(sun.shadow.camera, {left:-130, right:130, top:130, bottom:-130, far:700}); sun.shadow.mapSize.set(2048,2048); sun.shadow.bias = -.0005; scene.add(sun);
+  construire();
+  controls = new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.maxPolarAngle = Math.PI*.49;
+  const ph = document.getElementById('phases'); PHASES.slice(0,-1).forEach(p => { const d = document.createElement('div'); d.className = 'ph'; d.innerHTML = `<span>${String(Math.floor(p.t%24)).padStart(2,'0')}h ${p.nom}</span>`; ph.appendChild(d); });
+  const tl = document.getElementById('tl'), play = document.getElementById('play');
+  tl.addEventListener('input', () => { t = +tl.value; });
+  play.addEventListener('click', () => { lecture = !lecture; play.textContent = lecture ? '❚❚ Pause' : '▶ Lecture'; play.classList.toggle('on', lecture); if (lecture && t >= 25.99) t = 16; });
+  document.getElementById('cam').addEventListener('change', e => { modeCam = e.target.value; controls.enabled = (modeCam === 'libre'); });
+  controls.enabled = false;
+  document.getElementById('png').addEventListener('click', () => { renderer.render(scene, camera); const a = document.createElement('a'); a.href = renderer.domElement.toDataURL('image/png'); a.download = `demo-${document.getElementById('heure').textContent.replace(':','h')}.png`; a.click(); });
+  document.getElementById('video').addEventListener('click', basculerVideo);
+  document.getElementById('impb').addEventListener('click', () => document.getElementById('imp').click());
+  document.getElementById('imp').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const j = JSON.parse(txt); localStorage.setItem('implantation-3d', JSON.stringify(j)); location.reload(); } catch(err){ alert('JSON illisible'); } }); });
+  redim(); window.addEventListener('resize', redim); boucle();
+}
+function basculerVideo(){
+  const b = document.getElementById('video');
+  if (rec){ rec.stop(); return; }
+  if (!window.MediaRecorder || !renderer.domElement.captureStream){ alert("Ce navigateur ne sait pas enregistrer le canvas. Utilise Chrome ou Firefox, ou capture l'écran."); return; }
+  const flux = renderer.domElement.captureStream(30);
+  const type = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+  rec = new MediaRecorder(flux, {mimeType:type, videoBitsPerSecond: 8e6}); chunks = [];
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = () => { const blob = new Blob(chunks, {type: rec.mimeType}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'demo-implantation.' + (rec.mimeType.includes('mp4') ? 'mp4' : 'webm'); a.click(); rec = null; b.textContent = '⏺ Enregistrer la vidéo'; b.classList.remove('on'); document.getElementById('rec').style.display = 'none'; lecture = false; document.getElementById('play').textContent = '▶ Lecture'; document.getElementById('play').classList.remove('on'); };
+  // on lance depuis le début, en lecture, et on s'arrête tout seul à la fin
+  t = 16; lecture = true; document.getElementById('play').textContent = '❚❚ Pause'; document.getElementById('play').classList.add('on');
+  rec.start(500); b.textContent = '■ Arrêter'; b.classList.add('on'); document.getElementById('rec').style.display = 'block';
+}
+function redim(){ const v = document.getElementById('view'), w = v.clientWidth, h = v.clientHeight; renderer.setSize(w,h,false); camera.aspect = w/h; camera.updateProjectionMatrix(); renderer.domElement.style.width = w+'px'; renderer.domElement.style.height = h+'px'; }
+function boucle(){
+  requestAnimationFrame(boucle);
+  const now = performance.now(), dt = Math.min(.5, (now-dernier)/1000); dernier = now;   // plafond : pas de saut après un onglet masqué
+  if (lecture){ t += dt / (+document.getElementById('vitesse').value); if (t >= 26){ t = 26; lecture = false; document.getElementById('play').textContent = '▶ Lecture'; document.getElementById('play').classList.remove('on'); if (rec) rec.stop(); } document.getElementById('tl').value = t; }
+  appliquer(t, dt); cameraMaj(t, dt); renderer.render(scene, camera);
+}
+init();
+</script>
+</body>
+</html>
