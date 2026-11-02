@@ -55,49 +55,6 @@
    "modifie_le": "2026-11-02"
   },
   {
-   "id": "ech-01",
-   "categorie": "structure",
-   "type": "echafaudage",
-   "nom": "Plateforme VP 9 × 3 m, plancher à 10 m, garde-corps, bâche",
-   "quantite": 1,
-   "dimensions_m": {
-    "l": 9,
-    "h": 12.4,
-    "p": 3
-   },
-   "poids_kg": null,
-   "source": {
-    "entree": "2026-11-02_plan-initial"
-   },
-   "implantation": {
-    "groupe": "plateforme"
-   },
-   "statut": "a_confirmer",
-   "modifie_le": "2026-11-02"
-  },
-  {
-   "id": "cont-01",
-   "categorie": "structure",
-   "type": "conteneur",
-   "nom": "Régie étanche — conteneur 20' aménagé (vitre, clim)",
-   "quantite": 1,
-   "dimensions_m": {
-    "l": 6.06,
-    "h": 2.59,
-    "p": 2.44
-   },
-   "poids_kg": 2300,
-   "puissance_w": 3000,
-   "source": {
-    "entree": "2026-11-02_plan-initial"
-   },
-   "implantation": {
-    "groupe": "regie"
-   },
-   "statut": "a_confirmer",
-   "modifie_le": "2026-11-02"
-  },
-  {
    "id": "tonn-01",
    "categorie": "structure",
    "type": "tonnelle",
@@ -113,63 +70,6 @@
     "entree": "2026-11-02_plan-initial"
    },
    "notes": "lestage 4 × 20 kg par tonnelle, obligatoire en extérieur",
-   "statut": "a_confirmer",
-   "modifie_le": "2026-11-02"
-  },
-  {
-   "id": "pa-01",
-   "categorie": "materiel",
-   "type": "enceinte",
-   "nom": "Line array (tête) sur mât",
-   "quantite": 8,
-   "dimensions_m": {
-    "l": 0.9,
-    "h": 0.32,
-    "p": 0.6
-   },
-   "poids_kg": null,
-   "puissance_w": null,
-   "source": {
-    "entree": "2026-11-02_plan-initial"
-   },
-   "statut": "a_confirmer",
-   "modifie_le": "2026-11-02"
-  },
-  {
-   "id": "sub-01",
-   "categorie": "materiel",
-   "type": "sub",
-   "nom": "Sub 18\"",
-   "quantite": 4,
-   "dimensions_m": {
-    "l": 1.2,
-    "h": 0.65,
-    "p": 1.2
-   },
-   "poids_kg": null,
-   "puissance_w": null,
-   "source": {
-    "entree": "2026-11-02_plan-initial"
-   },
-   "statut": "a_confirmer",
-   "modifie_le": "2026-11-02"
-  },
-  {
-   "id": "tot-01",
-   "categorie": "materiel",
-   "type": "totem",
-   "nom": "Totem lumière 5,5 m + wash LED",
-   "quantite": 4,
-   "dimensions_m": {
-    "l": 1,
-    "h": 5.5,
-    "p": 1
-   },
-   "poids_kg": null,
-   "puissance_w": 800,
-   "source": {
-    "entree": "2026-11-02_plan-initial"
-   },
    "statut": "a_confirmer",
    "modifie_le": "2026-11-02"
   },
@@ -372,6 +272,849 @@
    "source": {
     "entree": "2026-11-02_plan-initial"
    },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "doc-02",
+   "categorie": "document",
+   "type": "book",
+   "nom": "Book NoName Prestation — parc son, lumière, DJ (25 p.)",
+   "date": "2026",
+   "emetteur": "NoName Prestation",
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "PDF book_noname_prestation.pdf (26 Mo, non versionné)"
+   },
+   "notes": "Parc listé : subs SACH118 (fabrication maison avec Sound Agency), TH118, KS28, SAPFX121, A15 Wide, line array KAMA TP-980, têtes T24N, Soundboks, EPM-8, console X32, DDJ-1000 / DDJ-400, Starway Mode B, PAR 64 LED, GrandMA3 Command Wing, SM58, DSP T-Rack 306 / 408, amplis Sanway D20K, Powersoft K10, D4×3000. Contact dans le PDF. Les quantités disponibles ne sont pas dans le book : à demander.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "sub-02",
+   "categorie": "materiel",
+   "type": "sub",
+   "nom": "SACH118 — sub 1 × 18\", 1 700 W AES, 141 dB (fabrication maison Sound Agency / NoName)",
+   "quantite": 16,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.6,
+    "h": 0.7,
+    "p": 0.75
+   },
+   "poids_kg": 60,
+   "puissance_w": 0,
+   "specifique": {
+    "hp": "1 × 18\"",
+    "w_aes": 1700,
+    "spl_max_db": 141,
+    "disposition": "4 stacks de 4 : x = ±17,2 et ±21 m, z = 4 m, hors du cône du VP 1 (une pile à ±8,5 m ombrait les portails latéraux) — 2 groupes L/R de 2 piles",
+    "cardioide": "1 sub inversé par pile recommandé (façade, riverains)"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche SACH118"
+   },
+   "implantation": {
+    "groupe": "sono",
+    "role": "sub"
+   },
+   "notes": "Dimensions et poids ESTIMÉS (caisse 18\" courante) : à relever sur la fiche NoName. Passif : la consommation est sur les amplis (amp-01). Remplace sub-01.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "pa-02",
+   "categorie": "materiel",
+   "type": "enceinte",
+   "nom": "KAMA TP-980 — élément line array (têtes principales et délais)",
+   "quantite": 12,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.9,
+    "h": 0.3,
+    "p": 0.55
+   },
+   "poids_kg": 38,
+   "puissance_w": 0,
+   "specifique": {
+    "disposition": "2 × 4 en stacks posés sur les piles de subs extérieures (jardin / cour) + 2 × 2 sur tours de délai à z = 38 m, x = ±13 m",
+    "estimation": "nombre estimé pour 52 × 54 m à 102 dB(A) LAeq 15 min ; à confirmer par prédiction acoustique (EASE / ArrayCalc équivalent)"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche KAMA TP-980"
+   },
+   "implantation": {
+    "groupe": "sono",
+    "role": "tete"
+   },
+   "notes": "Dimensions, poids, SPL et angles : à relever sur la fiche fabricant (non lisibles dans le book). Remplace pa-01.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "pa-03",
+   "categorie": "materiel",
+   "type": "enceinte",
+   "nom": "T24N — tête 2 × 12\" + 3\", 1 400 W AES (front-fill et retours catwalk)",
+   "quantite": 6,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.75,
+    "h": 0.45,
+    "p": 0.5
+   },
+   "poids_kg": 38,
+   "puissance_w": 0,
+   "specifique": {
+    "w_aes": 1400,
+    "disposition": "2 × 2 en in-fill sur les piles de subs intérieures (x = ±17,2 m) + 2 en wedge sur la tête de scène"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche T24N"
+   },
+   "implantation": {
+    "groupe": "sono",
+    "role": "front-fill / retour"
+   },
+   "notes": "Dimensions et poids estimés.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "mon-01",
+   "categorie": "materiel",
+   "type": "enceinte",
+   "nom": "EPM-8 — retour DJ (hayon)",
+   "quantite": 2,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.4,
+    "h": 0.35,
+    "p": 0.3
+   },
+   "poids_kg": 12,
+   "puissance_w": 0,
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, liste du parc"
+   },
+   "implantation": {
+    "groupe": "sono",
+    "role": "retour DJ"
+   },
+   "notes": "Sur pieds au sol, face au hayon. Modèle à préciser (actif ou passif ?).",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "amp-01",
+   "categorie": "materiel",
+   "type": "ampli",
+   "nom": "Sanway D20K — ampli 4 canaux, 20 000 W (subs)",
+   "quantite": 2,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.48,
+    "h": 0.09,
+    "p": 0.5
+   },
+   "poids_kg": 14,
+   "puissance_w": 3000,
+   "specifique": {
+    "canaux": 4,
+    "w_total": 20000,
+    "affectation": "8 canaux pour 16 SACH118 (2 subs en parallèle par canal, 4 Ω)"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche D20K"
+   },
+   "implantation": {
+    "groupe": "sono",
+    "emplacement": "racks aux pieds de façade, coffrets son jardin / cour"
+   },
+   "notes": "puissance_w = appel moyen estimé à 1/8 de la puissance nominale (programme musical). Crête bien supérieure : départ 32 A tri par coffret son.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "amp-02",
+   "categorie": "materiel",
+   "type": "ampli",
+   "nom": "Powersoft K10 — ampli 2 canaux (têtes TP-980)",
+   "quantite": 3,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.48,
+    "h": 0.09,
+    "p": 0.45
+   },
+   "poids_kg": 12,
+   "puissance_w": 1800,
+   "specifique": {
+    "canaux": 2,
+    "affectation": "12 TP-980 : 2 têtes par canal"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche K10"
+   },
+   "implantation": {
+    "groupe": "sono"
+   },
+   "notes": "Appel moyen estimé à 1/8 de la puissance nominale.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "amp-03",
+   "categorie": "materiel",
+   "type": "ampli",
+   "nom": "D4×3000 — ampli 4 × 3 000 W (front-fill, retours)",
+   "quantite": 1,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.48,
+    "h": 0.09,
+    "p": 0.45
+   },
+   "poids_kg": 12,
+   "puissance_w": 1500,
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche D4×3000"
+   },
+   "implantation": {
+    "groupe": "sono"
+   },
+   "notes": "Appel moyen estimé.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "dsp-01",
+   "categorie": "materiel",
+   "type": "processeur",
+   "nom": "T-Rack DSP 408 — 4 entrées / 8 sorties (système principal)",
+   "quantite": 1,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.48,
+    "h": 0.045,
+    "p": 0.25
+   },
+   "poids_kg": 3,
+   "puissance_w": 30,
+   "specifique": {
+    "sorties": "L, R, subs jardin, subs cour, front-fill, retours catwalk, délais (vers dsp-02), spare"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche T-Rack 408"
+   },
+   "implantation": {
+    "groupe": "sono",
+    "emplacement": "régie"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "dsp-02",
+   "categorie": "materiel",
+   "type": "processeur",
+   "nom": "T-Rack DSP 306 — 3 entrées / 6 sorties (délais, calage)",
+   "quantite": 1,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.48,
+    "h": 0.045,
+    "p": 0.25
+   },
+   "poids_kg": 3,
+   "puissance_w": 30,
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche T-Rack 306"
+   },
+   "implantation": {
+    "groupe": "sono",
+    "emplacement": "rack délais"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "mix-01",
+   "categorie": "materiel",
+   "type": "console",
+   "nom": "Behringer X32 — console numérique 32 entrées",
+   "quantite": 1,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.9,
+    "h": 0.2,
+    "p": 0.53
+   },
+   "poids_kg": 21,
+   "puissance_w": 120,
+   "specifique": {
+    "entrees_prevues": "DJ hayon (stéréo), DJ scène (stéréo), 4 micros catwalk, 4 micros scène ouverte, groupe live (8 DI / micros), micro régisseur, PC ambiance",
+    "sorties": "mains vers dsp-01, retours catwalk, retours DJ, enregistrement / captation (stéréo)"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche X32"
+   },
+   "implantation": {
+    "groupe": "sono",
+    "emplacement": "régie"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "dj-01",
+   "categorie": "materiel",
+   "type": "dj",
+   "nom": "Pioneer DDJ-1000 — contrôleur DJ (hayon et scène)",
+   "quantite": 2,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.7,
+    "h": 0.07,
+    "p": 0.36
+   },
+   "poids_kg": 6,
+   "puissance_w": 30,
+   "specifique": {
+    "emplacements": "hayon du camion (DJ d'ouverture et de clôture) ; tête de scène (DJ du set rap)",
+    "spare": "DDJ-400 en secours"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche DDJ-1000 / DDJ-400"
+   },
+   "implantation": {
+    "groupe": "sono"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "lum-01",
+   "categorie": "materiel",
+   "type": "projecteur_led",
+   "nom": "Starway Mode B — barre LED 150 W, 16 canaux DMX",
+   "quantite": 12,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 1.0,
+    "h": 0.1,
+    "p": 0.1
+   },
+   "poids_kg": 4,
+   "puissance_w": 150,
+   "specifique": {
+    "dmx_canaux": 16,
+    "affectation": "4 totems × 2 (ambiance public) + 2 wash de façade × 2"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche Starway Mode B"
+   },
+   "implantation": {
+    "groupe": "lumieres"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "lum-02",
+   "categorie": "materiel",
+   "type": "projecteur_led",
+   "nom": "PAR 64 LED",
+   "quantite": 12,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.25,
+    "h": 0.35,
+    "p": 0.25
+   },
+   "poids_kg": 3,
+   "puissance_w": 100,
+   "specifique": {
+    "affectation": "4 totems × 2 + 4 sur les pieds de scène (angles de la tête)"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche PAR 64 LED"
+   },
+   "implantation": {
+    "groupe": "lumieres"
+   },
+   "notes": "Puissance et mode DMX à relever (voir skill patch-lumiere pour le patch).",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "ctl-01",
+   "categorie": "materiel",
+   "type": "console",
+   "nom": "GrandMA3 Command Wing — console lumière (onPC)",
+   "quantite": 1,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.6,
+    "h": 0.1,
+    "p": 0.4
+   },
+   "poids_kg": 8,
+   "puissance_w": 100,
+   "specifique": {
+    "univers": "U1 totems (4 × (2 × 16 + 2 × 8) = 192 ch), U2 wash + scène + bandes LED (via décodeur DMX-LED)"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, fiche GrandMA3 Command Wing"
+   },
+   "implantation": {
+    "groupe": "lumieres",
+    "emplacement": "régie"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "mic-01",
+   "categorie": "materiel",
+   "type": "micro",
+   "nom": "Shure SM58 (+ pieds, câbles XLR)",
+   "quantite": 8,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.05,
+    "h": 0.16,
+    "p": 0.05
+   },
+   "poids_kg": 0.3,
+   "puissance_w": 0,
+   "specifique": {
+    "affectation": "4 catwalk / scène ouverte (dont 2 HF à prévoir), 2 groupe, 1 régisseur, 1 spare"
+   },
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, liste du parc"
+   },
+   "implantation": {
+    "groupe": "sono"
+   },
+   "notes": "Pour le défilé et le micro ouvert, des HF (main) seraient plus pratiques que des filaires : à demander.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "sbx-01",
+   "categorie": "materiel",
+   "type": "enceinte",
+   "nom": "Soundboks — enceinte autonome (coulisses / repos)",
+   "quantite": 1,
+   "fournisseur": "NoName Prestation",
+   "dimensions_m": {
+    "l": 0.43,
+    "h": 0.66,
+    "p": 0.32
+   },
+   "poids_kg": 15,
+   "puissance_w": 0,
+   "source": {
+    "entree": "2026-11-02_book-noname",
+    "ligne": "book NoName, liste du parc"
+   },
+   "implantation": {
+    "groupe": "repos"
+   },
+   "notes": "Optionnel : ordre à l'espace repos, batterie.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "sub-01",
+   "categorie": "materiel",
+   "type": "sub",
+   "nom": "Sub 18\"",
+   "quantite": 4,
+   "dimensions_m": {
+    "l": 1.2,
+    "h": 0.65,
+    "p": 1.2
+   },
+   "poids_kg": null,
+   "puissance_w": null,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "notes": "Remplacé par sub-02 (16 × SACH118) le 2026-11-02.",
+   "statut": "abandonne",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "pa-01",
+   "categorie": "materiel",
+   "type": "enceinte",
+   "nom": "Line array (tête) sur mât",
+   "quantite": 8,
+   "dimensions_m": {
+    "l": 0.9,
+    "h": 0.32,
+    "p": 0.6
+   },
+   "poids_kg": null,
+   "puissance_w": null,
+   "source": {
+    "entree": "2026-11-02_plan-initial"
+   },
+   "notes": "Remplacé par pa-02 (12 × KAMA TP-980) et pa-03 (6 × T24N) le 2026-11-02.",
+   "statut": "abandonne",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "tot-01",
+   "categorie": "materiel",
+   "type": "totem",
+   "nom": "Totem lumière 5,5 m (mât + embase lestée) — porte 2 × Mode B + 2 × PAR 64 LED",
+   "quantite": 4,
+   "dimensions_m": {
+    "l": 1,
+    "h": 5.5,
+    "p": 1
+   },
+   "poids_kg": 45,
+   "puissance_w": 0,
+   "specifique": {
+    "emplacement": "intervalles entre tonnelles, flancs jardin et cour : x = ±10,2 et ±18,6 m, z = 67,5 m"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "démo v5 : totems intégrés au village"
+   },
+   "implantation": {
+    "groupe": "lumieres"
+   },
+   "notes": "La puissance est portée par lum-01 et lum-02. Lestage de l'embase à définir (vent).",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "ech-01",
+   "categorie": "structure",
+   "type": "echafaudage",
+   "nom": "Tour VP Layher Allround — 3 travées × 3,07 m, 1 × 3,07 m de profondeur, 5 niveaux de 2 m, plancher à 10,3 m, garde-corps, bâche de toit",
+   "quantite": 1,
+   "dimensions_m": {
+    "l": 9.21,
+    "h": 12.9,
+    "p": 3.07
+   },
+   "poids_kg": 2600,
+   "specifique": {
+    "nomenclature": [
+     {
+      "piece": "Montant Allround 2,00 m",
+      "ref": "2603.200",
+      "qte": 44,
+      "confirme": "famille 2603.xxx (Layher DOC0345)"
+     },
+     {
+      "piece": "Montant Allround 1,00 m (garde-corps)",
+      "ref": "2603.100",
+      "qte": 8,
+      "confirme": "famille 2603.xxx"
+     },
+     {
+      "piece": "Embase (collier de départ)",
+      "ref": "2602.000",
+      "qte": 8,
+      "confirme": "Layher DOC0345"
+     },
+     {
+      "piece": "Vérin de pied 0,60 m",
+      "ref": "4001.060",
+      "qte": 8,
+      "confirme": "Layher DOC0345"
+     },
+     {
+      "piece": "Moise O 3,07 m",
+      "ref": "2607.307",
+      "qte": 70,
+      "confirme": "brochure Layher NL ; LW : 2601.307"
+     },
+     {
+      "piece": "Moise U 3,07 m (support planchers)",
+      "ref": "2611.307",
+      "qte": 6,
+      "confirme": "à confirmer"
+     },
+     {
+      "piece": "Diagonale 3,07 × 2,00 m",
+      "ref": "2620.307",
+      "qte": 40,
+      "confirme": "famille 2620.xxx (DOC0345)"
+     },
+     {
+      "piece": "Plancher acier LW 3,07 × 0,32 m",
+      "ref": "3883.307",
+      "qte": 27,
+      "confirme": "série 3883 (FIS 64), 19,3 kg"
+     },
+     {
+      "piece": "Plancher acier 3,07 × 0,19 m",
+      "ref": "?",
+      "qte": 3,
+      "confirme": "à confirmer"
+     },
+     {
+      "piece": "Plancher à trappe + échelle alu 3,07 × 0,61 m",
+      "ref": "?",
+      "qte": 5,
+      "confirme": "à confirmer"
+     },
+     {
+      "piece": "Plinthe 3,07 m",
+      "ref": "?",
+      "qte": 8,
+      "confirme": "Allround à confirmer (Blitz : 1757.307)"
+     },
+     {
+      "piece": "Lest béton ≈ 1 t, sanglé",
+      "ref": "hors Layher",
+      "qte": 8,
+      "confirme": "note de calcul au vent"
+     },
+     {
+      "piece": "Bâche de toit + filet + fixations",
+      "ref": "hors Layher",
+      "qte": 1,
+      "confirme": "démontage > 50 km/h"
+     }
+    ],
+    "charge": "2 VP (~95 kg), 2 lasers, 2 techniciens, bâche",
+    "acces": "plancher à trappe + échelle à chaque niveau, travée jardin"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "démo v5, nomenclature déduite de la géométrie ; références : Layher DOC0345, FIS 64, brochure Allround NL"
+   },
+   "implantation": {
+    "groupe": "plateforme"
+   },
+   "notes": "Poids ESTIMÉ structure seule (hors lests). Références vertes dans la démo = citées dans les documents Layher consultés ; les autres suivent la numérotation Layher (famille.longueur en cm) et sont à valider sur le catalogue « Layher Éléments » avant commande. Montage, PV et note de calcul par le monteur.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "cont-01",
+   "categorie": "structure",
+   "type": "conteneur",
+   "nom": "Régie étanche — conteneur 20' aménagé (vitre, clim), surélevé de 1,20 m sur praticables",
+   "quantite": 1,
+   "dimensions_m": {
+    "l": 6.06,
+    "h": 2.59,
+    "p": 2.44
+   },
+   "poids_kg": 2300,
+   "puissance_w": 3000,
+   "specifique": {
+    "surelevation_m": 1.2,
+    "praticables": "≈ 8 praticables 2 × 1 m + pieds 1,2 m + escalier côté tour",
+    "position": "1,6 m devant la tour, 3 m derrière la tête de scène"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "démo v5 : régie devant la tour, surélevée pour voir la façade par-dessus le podium"
+   },
+   "implantation": {
+    "groupe": "regie"
+   },
+   "notes": "Charge au sol des praticables (2,3 t + équipement) à vérifier ; sinon retour caméra en régie et régie au sol.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "pod-01",
+   "categorie": "structure",
+   "type": "podium",
+   "nom": "Podium-catwalk 1,50 m — tête 6 × 4 m + passerelle 2,4 × 12 m (praticables), 2 escaliers latéraux, garde-corps, jupes imprimées, bandes LED",
+   "quantite": 1,
+   "dimensions_m": {
+    "l": 6,
+    "h": 2.6,
+    "p": 16
+   },
+   "poids_kg": 1800,
+   "specifique": {
+    "surface_m2": 52.8,
+    "charge_kg_m2": 500,
+    "praticables": "≈ 12 × (2 × 1) pour la tête + 20 × (1,2 × 2) pour le catwalk, pieds 1,5 m",
+    "escaliers": "2 × 8 marches de 19 cm, 1,20 m, mains courantes doubles",
+    "garde_corps": "fond et côtés de la tête (1,10 m) ; catwalk sans garde-corps (face jouée) → à valider en commission",
+    "jauge": "35 personnes en défilé (1,5 m²/pers)"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "démo v5 : catwalk 3 m devant la régie"
+   },
+   "implantation": {
+    "groupe": "podium"
+   },
+   "notes": "Poids estimé. Accès PMR à trancher (plateforme élévatrice ou prise de parole au pied).",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "cam-01",
+   "categorie": "structure",
+   "type": "vehicule",
+   "nom": "Camion 20 m³ avec hayon — garé en long devant la façade : flanc = écran, hayon déployé = plateau DJ",
+   "quantite": 1,
+   "dimensions_m": {
+    "l": 7.3,
+    "h": 3.15,
+    "p": 2.2
+   },
+   "poids_kg": 3500,
+   "specifique": {
+    "caisse_m": "4,3 × 2,2 × 2,2, plancher à 0,95 m",
+    "hayon": "1,6 m déployé, charge ≈ 750 kg → 2 personnes maxi, béquilles, garde-corps amovible",
+    "ecran": "LED ou bâche imprimée 4,3 × 2,2 m sur le flanc côté public (≈ 9,5 m²)",
+    "position": "x = 0, z = 4,2 m (caisse de 3,1 à 5,3 m de la façade)",
+    "contrainte": "dans le bas du cône du VP 1 : ombre 0 → 2,5 m sur la façade, pas de DJ sur le hayon pendant le mapping"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "démo v5"
+   },
+   "implantation": {
+    "groupe": "camion"
+   },
+   "notes": "Moteur coupé, calage, extincteur. Charge réelle du hayon à lire sur la plaque du véhicule loué.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "tonn-02",
+   "categorie": "structure",
+   "type": "tonnelle",
+   "nom": "Tonnelles repos (6 × 3) et stockage (3 × 3) derrière la tour + bâche opaque 14 m",
+   "quantite": 2,
+   "dimensions_m": {
+    "l": 6,
+    "h": 2.5,
+    "p": 3
+   },
+   "poids_kg": 40,
+   "specifique": {
+    "repos": "4 bancs, table eau, 9 assis",
+    "stockage": "6 flight-cases, hors vue (bâche opaque côté public)"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "démo v5"
+   },
+   "implantation": {
+    "groupe": "repos"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "cab-01",
+   "categorie": "materiel",
+   "type": "passage_cables",
+   "nom": "Passages de câbles au sol — ≈ 280 m (dont ≈ 125 m roulables 5 voies dans les couloirs pompiers, ≈ 30 m 2 voies piétons dans le public)",
+   "quantite": 280,
+   "dimensions_m": {
+    "l": 1.0,
+    "h": 0.07,
+    "p": 0.5
+   },
+   "poids_kg": 12,
+   "puissance_w": 0,
+   "specifique": {
+    "troncs": "régie → jardin / cour derrière la zone public (z ≈ 63 m), couloirs latéraux (x = ±27,5 m), ligne de façade (z = 1,6 m) derrière le camion et les subs",
+    "traversees_public": "vers les tours de délai (z = 38 m), 2 voies jaune / noir",
+    "autres": "régie → podium (coulisses), TGBT → régie et tour, GE → TGBT"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "démo v5, tracés calculés"
+   },
+   "implantation": {
+    "groupe": "cables"
+   },
+   "notes": "Quantité = mètres linéaires ; poids par mètre. Les câbles eux-mêmes (puissance, audio, DMX, fibre) sont à chiffrer avec le loueur.",
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "arm-01",
+   "categorie": "materiel",
+   "type": "armoire_electrique",
+   "nom": "Armoires : TGBT 125 A tri + coffrets son jardin / cour 63 A + coffret lumière · stands 63 A",
+   "quantite": 4,
+   "dimensions_m": {
+    "l": 1.2,
+    "h": 1.8,
+    "p": 0.6
+   },
+   "poids_kg": 80,
+   "puissance_w": 0,
+   "specifique": {
+    "TGBT": "derrière la tour côté jardin (x = −6,5, z = 72), départs : son 63 A, vidéo 32 A, lumière 32 A, stands 63 A, régie 16 A tri, captation 16 A, repos 16 A",
+    "coffrets_son": "pieds de façade x = ±25, z = 1,6 m",
+    "coffret_lumiere_stands": "x = +6,5, z = 72",
+    "protection": "différentiels 30 mA par départ, terre commune, sélectivité"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "SYNOPTIQUES.md §2"
+   },
+   "implantation": {
+    "groupe": "electricite"
+   },
+   "statut": "a_confirmer",
+   "modifie_le": "2026-11-02"
+  },
+  {
+   "id": "ge-01",
+   "categorie": "materiel",
+   "type": "groupe_electrogene",
+   "nom": "Groupe électrogène 100 kVA insonorisé (option, si le coffret forain de la Ville est insuffisant)",
+   "quantite": 1,
+   "dimensions_m": {
+    "l": 3.2,
+    "h": 2.2,
+    "p": 1.5
+   },
+   "poids_kg": 2500,
+   "puissance_w": 0,
+   "specifique": {
+    "charge_prevue": "≈ 54 kW appelés → 67 % de 80 kW",
+    "carburant": "≈ 16 L/h à cette charge, 10 h → 160 L + réserve",
+    "position": "x = −12,5, z = 78, derrière les stands, hors vue"
+   },
+   "source": {
+    "entree": "2026-11-02_plan-initial",
+    "ligne": "SYNOPTIQUES.md §1"
+   },
+   "implantation": {
+    "groupe": "electricite"
+   },
+   "notes": "Demander d'abord la puissance disponible au coffret forain du parvis.",
    "statut": "a_confirmer",
    "modifie_le": "2026-11-02"
   }

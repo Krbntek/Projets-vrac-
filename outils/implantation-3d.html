@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Plan d'implantation 3D — mapping, sono, lumières, village</title>
+<title>Plan d'implantation 3D — mapping, catwalk, sono, lumières, village</title>
 <style>
   :root{--bg:#0e1116;--panel:#161b22;--line:#2a3138;--txt:#e6edf3;--dim:#8b949e;--acc:#ffb454;
         --ok:#3fb950;--warn:#f0883e;--bad:#f85149}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
             font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-  #wrap{display:grid;grid-template-columns:1fr 380px;height:100%}
+  #wrap{display:grid;grid-template-columns:1fr 390px;height:100%}
   #view{position:relative;min-height:0}
   #view canvas{display:block;width:100%;height:100%}
   #bar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 20px)}
@@ -19,7 +19,7 @@
   button:hover{border-color:var(--acc)}
   button.sec{background:transparent;color:var(--dim)}
   #legend{position:absolute;bottom:10px;left:10px;background:rgba(14,17,22,.85);padding:8px 10px;
-          border-radius:8px;font-size:12px;color:var(--dim);line-height:1.65;max-width:360px}
+          border-radius:8px;font-size:12px;color:var(--dim);line-height:1.65;max-width:380px}
   #legend b{color:var(--txt)}
   .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:middle}
   #side{background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:12px}
@@ -52,23 +52,24 @@
     <div id="bar">
       <button data-view="persp">Perspective</button>
       <button data-view="plan">Plan général</button>
-      <button data-view="bloc">Bloc central</button>
-      <button data-view="village">Village</button>
+      <button data-view="bloc">Tour · régie · catwalk</button>
+      <button data-view="flancs">Village (flancs)</button>
+      <button data-view="camion">Camion · DJ</button>
       <button data-view="cote">Côté</button>
       <button data-view="public">Depuis le public</button>
+      <button data-view="catwalk">Depuis le catwalk</button>
       <button class="sec" id="btnPng">⤓ PNG</button>
     </div>
     <div id="legend">
-      <div><span class="sw" style="background:#ffb454"></span><b>Vidéoprojecteur</b> — cône d'émission + image sur la façade</div>
+      <div><span class="sw" style="background:#ffb454"></span><b>Vidéoprojecteur</b> — cône d'émission + image sur la façade (ombre du camion comprise)</div>
       <div><span class="sw" style="background:#3fb950"></span><b>Laser</b> — vert conforme · orange à vérifier · rouge interdit</div>
-      <div><span class="sw" style="background:#9fd3ff55"></span><b>Zone public</b> · <span class="sw" style="background:#f0883e55"></span><b>Couverture sono</b></div>
-      <div><span class="sw" style="background:#d7dde4"></span><b>Régie</b> dos à dos avec la plateforme VP · <span class="sw" style="background:#e8e0c8"></span><b>Tonnelles</b> du village</div>
-      <div><span class="sw" style="background:#b36bff"></span><b>Lumières</b> — totems et wash de façade</div>
+      <div><span class="sw" style="background:#9fd3ff55"></span><b>Zone public</b> sans barrières · <span class="sw" style="background:#f0883e55"></span><b>Couverture sono</b></div>
+      <div><span class="sw" style="background:#d7dde4"></span><b>Régie</b> devant la tour Layher · <span class="sw" style="background:#6b5540"></span><b>Podium-catwalk</b> 3 m devant · <span class="sw" style="background:#eef0f2"></span><b>Camion 20 m³</b> + DJ</div>
+      <div><span class="sw" style="background:#e8e0c8"></span><b>Tonnelles</b> sur les flancs, face à la façade · <span class="sw" style="background:#b36bff"></span><b>Lumières</b> · <span class="sw" style="background:#ffd23f"></span><b>Câbles</b> et armoires</div>
     </div>
   </div>
   <aside id="side"></aside>
 </div>
-
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script>
@@ -93,7 +94,7 @@ const PROJET = {
       [6.3,9.5,30.1,36.3],[11.5,14.7,30.1,36.3],[6.3,9.5,37,49],[11.5,14.7,37,49]
     ]
   },
-  zonePublic: {x0:-30, x1:30, z0:6, z1:60, hautYeux:2.5, densite:2},
+  zonePublic: {x0:-26, x1:26, z0:7, z1:61, hautYeux:2.5, densite:2, densiteMax:3},
   voisins: [
     {nom:"bâti ouest", x0:-55, x1:-30, z0:0,  z1:50,  h:16},
     {nom:"bâti est",   x0: 32, x1: 60, z0:0,  z1:45,  h:14},
@@ -104,320 +105,260 @@ const PROJET = {
 };
 
 /* =====================================================================
-   ÉTAT — ce que l'on déplace.
-   Le BLOC CENTRAL est l'idée d'implantation : tout le monde au même
-   endroit, dans l'axe. Plateforme VP devant (côté façade), régie dos à
-   dos juste derrière, puis l'allée du village qui part vers l'arrière.
-   Déplacer le bloc déplace tout ; chaque élément garde sa place relative.
+   ÉTAT — ce que l'on déplace. Schéma version 2, le même que
+   outils/demo-evenement.html et unreal/implantation.json.
+   L'idée d'implantation : tout le monde au centre, dans l'axe. Tour Layher au fond,
+   régie devant la tour, podium-catwalk 3 m devant la régie, stands sur les flancs
+   face à la façade, camion-écran + DJ devant la façade, repos derrière la tour.
    ===================================================================== */
 const DEFAUT = () => ({
-  bloc: {x:0, z:70, hauteurVP:10, largeurPlateforme:9, profondeurPlateforme:3},
+  version: 2,
+  bloc:{x:0, z:70, hauteurVP:10.8, plancher:10.3, largeurPlateforme:9.21, profondeurPlateforme:3.07, travees:3, niveaux:5, hauteurNiveau:2.0, base:0.3},
   projecteurs: [
-    {nom:"VP1 — bas",  dx:-1.3, cx:0, cy:9.7,  tr:2.02, ratio:16/9, lumens:40000},
-    {nom:"VP2 — haut", dx: 1.3, cx:0, cy:27.6, tr:2.02, ratio:16/9, lumens:40000}
+    {nom:"VP1 — bas",  dx:-1.3, cx:0, cy:9.7,  tr:2.02, ratio:16/9, lumens:40000, puissance_w:4200},
+    {nom:"VP2 — haut", dx: 1.3, cx:0, cy:27.6, tr:2.02, ratio:16/9, lumens:40000, puissance_w:4200}
   ],
   lasers: [
-    {nom:"Laser 1", dx:-3.6, dy:-1.0, tx:-6, ty:17, puissance:10},
-    {nom:"Laser 2", dx: 3.6, dy:-1.0, tx: 8, ty:20, puissance:10}
+    {nom:"Laser 1", dx:-3.6, dy:0.6, tx:-6, ty:17, puissance:10},
+    {nom:"Laser 2", dx: 3.6, dy:0.6, tx: 8, ty:20, puissance:10}
   ],
-  regie: {longueur:6.06, largeur:2.44, hauteur:2.59, ecart:0.4},
-  village: {
-    allee:4.0, pas:3.6, cote:3.0, ecartRegie:1.5,
-    stands:[
-      {nom:"Prévention",       type:"prevention"},
-      {nom:"Poste de secours", type:"secours"},
-      {nom:"Accueil · infos",  type:"accueil"},
-      {nom:"Buvette",          type:"buvette"},
-      {nom:"Restauration",     type:"buvette"},
-      {nom:"Asso 1",           type:"asso"},
-      {nom:"Asso 2",           type:"asso"},
-      {nom:"Asso 3",           type:"asso"}
-    ]
+  regie:{longueur:6.06, largeur:2.44, hauteur:2.59, ecart:1.6, position:'devant', surelevation:1.2},
+  podium:{hauteur:1.5, ecartRegie:3, tete:{largeur:6, profondeur:4}, catwalk:{largeur:2.4, longueur:12}, escaliers:'cotes'},
+  camion:{x:0, z:4.2, longueur:7.3, largeur:2.2, cabine:2.35, plancher:0.95, hauteurCaisse:2.2, hayon:1.6, ecran:true, chargeHayonKg:750},
+  village:{forme:'flancs', cote:3, ecart:1.2, ecartTour:2.0, z:67.5,
+    stands:[{nom:"Prévention",type:"prevention"},{nom:"Poste de secours",type:"secours"},{nom:"Asso 1",type:"asso"},{nom:"Asso 2",type:"asso"},
+            {nom:"Accueil · infos",type:"accueil"},{nom:"Buvette",type:"buvette"},{nom:"Restauration",type:"buvette"},{nom:"Asso 3",type:"asso"}]},
+  repos:{x:0, z:75.5, tonnelle:{largeur:6, profondeur:3}, stockage:{x:0, z:79.2, largeur:3, profondeur:3}, bache:{z:72.8, demiLargeur:7, hauteur:2.2}},
+  sono:{z:4, stacks:[-21,-17.2,17.2,21], subsParStack:4, sub:{modele:"SACH118", l:0.6, h:0.7, p:0.75, wAES:1700},
+        tetes:{modele:"KAMA TP-980", parStackExterieur:4, frontFill:2, modeleFrontFill:"T24N"}, ouverture:90, portee:62, visee:10,
+        delais:2, delaiX:13, delaiZ:38, delaiH:5, delaiTetes:2},
+  lumieres:{totems:[{x:-10.2,z:67.5,h:5.5},{x:10.2,z:67.5,h:5.5},{x:-18.6,z:67.5,h:5.5},{x:18.6,z:67.5,h:5.5}],
+            wash:[{x:-13,z:5.5,tx:-10,ty:26},{x:13,z:5.5,tx:10.5,ty:44}],
+            scene:[{dx:-4.6,dz:1.0,h:3.6},{dx:4.6,dz:1.0,h:3.6}]},
+  electricite:{
+    armoires:[{nom:"TGBT 125 A tri",x:-6.5,z:72,l:1.2,h:1.8,p:.6},{nom:"Coffret son jardin 63 A",x:-25,z:1.6,l:.8,h:1.2,p:.4},{nom:"Coffret son cour 63 A",x:25,z:1.6,l:.8,h:1.2,p:.4},{nom:"Coffret lumière · stands 63 A",x:6.5,z:72,l:.8,h:1.2,p:.4}],
+    groupe:{nom:"GE 100 kVA insonorisé (si coffret forain insuffisant)",x:-12.5,z:78,l:3.2,h:2.2,p:1.5},
+    bilan:[{systeme:"Son",kw:14,depart:"63 A tri"},{systeme:"Lumière",kw:4.5,depart:"32 A tri"},{systeme:"Vidéo",kw:12.5,depart:"32 A tri"},{systeme:"Captation",kw:1.5,depart:"16 A mono"},{systeme:"Régie",kw:3,depart:"16 A tri"},{systeme:"Stands",kw:16,depart:"63 A tri"},{systeme:"Repos, balisage",kw:2,depart:"16 A mono"}]
   },
-  sono: {x:19.5, z:4, hauteur:6.5, ouverture:90, portee:62, visee:10, subs:2,
-         delais:0, delaiX:13, delaiZ:38, delaiH:5},
-  lumieres: {
-    totems:[{x:-31, z:10, h:5.5},{x:31, z:10, h:5.5},{x:-31, z:56, h:5.5},{x:31, z:56, h:5.5}],
-    wash:[{x:-13, z:9, tx:-10, ty:26},{x:13, z:9, tx:10.5, ty:44}]
-  },
-  options:{zone:true, voisins:true, cables:true, nef:true, echafaud:true, etiquettes:true,
-           sono:true, lumieres:true, village:true, cones:true}
+  options:{zone:true, voisins:true, cables:true, nef:true, echafaud:true, etiquettes:true, sono:true, lumieres:true, village:true, cones:true, camion:true, repos:true}
 });
 let ETAT = DEFAUT();
+function fusionner(base, s){ Object.keys(base).forEach(k => { if (s[k] === undefined) return; base[k] = (typeof base[k] === 'object' && !Array.isArray(base[k]) && base[k] !== null) ? Object.assign(base[k], s[k]) : s[k]; }); return base; }
 try { const s = JSON.parse(localStorage.getItem('implantation-3d') || 'null');
-      if (s && s.bloc && s.village) ETAT = Object.assign(DEFAUT(), s); } catch(e){}
-function sauver(){ try { localStorage.setItem('implantation-3d', JSON.stringify(ETAT)); } catch(e){} }
+      if (s && s.version === 2 && s.camion) ETAT = fusionner(DEFAUT(), s); } catch(e){}
+function sauver(){ try { localStorage.setItem('implantation-3d', JSON.stringify(Object.assign({projet:PROJET}, ETAT))); } catch(e){} }
 
 /* =====================================================================
-   POSITIONS ABSOLUES — tout dérive du bloc
+   POSITIONS ABSOLUES — tout dérive des données (même logique que la démo)
    ===================================================================== */
-function posPlateforme(){
-  const b = ETAT.bloc;
-  return {x0:b.x-b.largeurPlateforme/2, x1:b.x+b.largeurPlateforme/2,
-          z0:b.z-b.profondeurPlateforme/2, z1:b.z+b.profondeurPlateforme/2, y0:0, y1:b.hauteurVP, nom:"plateforme VP"};
-}
+function posPlateforme(){ const b = ETAT.bloc;
+  return {x0:b.x-b.largeurPlateforme/2, x1:b.x+b.largeurPlateforme/2, z0:b.z-b.profondeurPlateforme/2, z1:b.z+b.profondeurPlateforme/2, y0:0, y1:b.plancher+2.6, h:b.plancher, hVP:b.hauteurVP, nom:"tour VP"}; }
 function posProjecteur(p){ const b = ETAT.bloc; return {x:b.x+p.dx, y:b.hauteurVP, z:b.z}; }
 function posLaser(l){ const b = ETAT.bloc; return {x:b.x+l.dx, y:b.hauteurVP+l.dy, z:b.z}; }
-function regieAABB(){
-  const b = ETAT.bloc, r = ETAT.regie, pl = posPlateforme();
-  const zc = pl.z1 + r.ecart + r.largeur/2;              // dos à dos avec la plateforme
-  return {x0:b.x - r.longueur/2, x1:b.x + r.longueur/2, z0:zc - r.largeur/2, z1:zc + r.largeur/2,
-          y0:0, y1:r.hauteur, nom:"régie"};
-}
-function posStands(){
-  const b = ETAT.bloc, v = ETAT.village, rg = regieAABB(), out = [];
-  const zDebut = rg.z1 + v.ecartRegie + v.cote/2;
-  v.stands.forEach((s,i) => {
-    const rang = Math.floor(i/2), cote = i%2 ? 1 : -1;
-    const xc = b.x + cote*(v.allee/2 + v.cote/2);
-    const zc = zDebut + rang*v.pas;
-    out.push({x0:xc-v.cote/2, x1:xc+v.cote/2, z0:zc-v.cote/2, z1:zc+v.cote/2, y0:0, y1:3.0,
-              nom:s.nom, type:s.type, x:xc, z:zc});
-  });
-  return out;
-}
-function posSono(){
-  const s = ETAT.sono, out = [];
-  [-1,1].forEach(c => out.push({x0:c*s.x-.6, x1:c*s.x+.6, z0:s.z-.6, z1:s.z+.6, y0:0, y1:s.hauteur,
-                                nom:`PA ${c<0?'jardin':'cour'}`, x:c*s.x, z:s.z, cote:c, principal:true}));
-  for (let i=0;i<s.delais;i++){
-    const c = i%2 ? 1 : -1;
-    out.push({x0:c*s.delaiX-.5, x1:c*s.delaiX+.5, z0:s.delaiZ-.5, z1:s.delaiZ+.5, y0:0, y1:s.delaiH,
-              nom:`délai ${i+1}`, x:c*s.delaiX, z:s.delaiZ, cote:c, principal:false});
-  }
-  return out;
-}
-function posTotems(){
-  return ETAT.lumieres.totems.map((t,i) => ({x0:t.x-.4, x1:t.x+.4, z0:t.z-.4, z1:t.z+.4, y0:0, y1:t.h,
-                                            nom:`totem ${i+1}`, x:t.x, z:t.z, h:t.h}));
-}
+function regieAABB(){ const b = ETAT.bloc, r = ETAT.regie, pl = posPlateforme();
+  const zc = r.position === 'devant' ? pl.z0 - r.ecart - r.largeur/2 : pl.z1 + r.ecart + r.largeur/2, y0 = r.surelevation || 0;
+  return {x:b.x, z:zc, L:r.longueur, l:r.largeur, h:r.hauteur, x0:b.x - r.longueur/2, x1:b.x + r.longueur/2, z0:zc - r.largeur/2, z1:zc + r.largeur/2, y0, y1:y0 + r.hauteur, nom:"régie"}; }
+function podiumBox(){ const rg = regieAABB(), pd = ETAT.podium, H = Math.min(1.5, pd.hauteur), x = ETAT.bloc.x, tz1 = rg.z0 - pd.ecartRegie, tz0 = tz1 - pd.tete.profondeur;
+  return {H, x, tete:{x0:x-pd.tete.largeur/2, x1:x+pd.tete.largeur/2, z0:tz0, z1:tz1, y0:0, y1:H+1.1, nom:"tête de scène"}, cat:{x0:x-pd.catwalk.largeur/2, x1:x+pd.catwalk.largeur/2, z0:tz0-pd.catwalk.longueur, z1:tz0, y0:0, y1:H+2.0, nom:"catwalk"}}; }
+function camionAABB(){ const c = ETAT.camion, x0 = c.x - c.longueur/2;
+  return {x0, x1:c.x + c.longueur/2 + c.hayon, xc0:x0 + c.cabine, xh0:c.x + c.longueur/2, xh1:c.x + c.longueur/2 + c.hayon, z0:c.z - c.largeur/2, z1:c.z + c.largeur/2, y0:0, y1:c.plancher + c.hauteurCaisse, yp:c.plancher, yt:c.plancher + c.hauteurCaisse, nom:"camion", attendu:true}; }
+function posStands(){ const b = ETAT.bloc, v = ETAT.village, pl = posPlateforme(), n = v.stands.length, out = [], parCote = Math.ceil(n/2);
+  v.stands.forEach((s,i) => { let x, z, rot = 0;
+    if (v.forme === 'flancs'){ const side = i < parCote ? -1 : 1, k = side < 0 ? i : i - parCote; x = b.x + side*((pl.x1 - b.x) + v.ecartTour + v.cote/2 + k*(v.cote + v.ecart)); z = v.z; }
+    else { const rg = regieAABB(), rang = Math.floor(i/2), c = i%2 ? 1 : -1; x = b.x + c*((v.allee||4)/2 + v.cote/2); z = Math.max(rg.z1, pl.z1) + (v.ecartRegie||1.5) + v.cote/2 + rang*(v.pas||3.6); }
+    out.push({x0:x-v.cote/2, x1:x+v.cote/2, z0:z-v.cote/2, z1:z+v.cote/2, y0:0, y1:3.0, nom:s.nom, type:s.type, x, z, rot}); });
+  return out; }
+function posSono(){ const s = ETAT.sono, out = [], xMax = Math.max(...s.stacks.map(Math.abs));
+  s.stacks.forEach(x => { const ext = Math.abs(x) === xMax, top = s.subsParStack*s.sub.h + (ext ? s.tetes.parStackExterieur*.35 : s.tetes.frontFill*.4);
+    out.push({x0:x-s.sub.l/2-.1, x1:x+s.sub.l/2+.1, z0:s.z-s.sub.p/2, z1:s.z+s.sub.p/2, y0:0, y1:top, nom:`${ext?'PA':'front-fill'} ${x<0?'jardin':'cour'}`, x, z:s.z, cote:x<0?-1:1, principal:ext, top}); });
+  for (let i = 0; i < s.delais; i++){ const c = i%2 ? 1 : -1;
+    out.push({x0:c*s.delaiX-.7, x1:c*s.delaiX+.7, z0:s.delaiZ-.7, z1:s.delaiZ+.7, y0:0, y1:s.delaiH, nom:`délai ${c<0?'jardin':'cour'}`, x:c*s.delaiX, z:s.delaiZ, cote:c, principal:false}); }
+  return out; }
+function posTotems(){ return ETAT.lumieres.totems.map((t,i) => ({x0:t.x-.5, x1:t.x+.5, z0:t.z-.5, z1:t.z+.5, y0:0, y1:t.h+.4, nom:`totem ${i+1}`, x:t.x, z:t.z, h:t.h})); }
+function posRepos(){ const r = ETAT.repos; return [{x0:r.x-r.tonnelle.largeur/2, x1:r.x+r.tonnelle.largeur/2, z0:r.z-r.tonnelle.profondeur/2, z1:r.z+r.tonnelle.profondeur/2, y0:0, y1:2.4, nom:"repos"},
+  {x0:r.stockage.x-r.stockage.largeur/2, x1:r.stockage.x+r.stockage.largeur/2, z0:r.stockage.z-r.stockage.profondeur/2, z1:r.stockage.z+r.stockage.profondeur/2, y0:0, y1:2.4, nom:"stockage"}]; }
+function posElec(){ const el = ETAT.electricite, out = el.armoires.map(a => ({x0:a.x-a.l/2, x1:a.x+a.l/2, z0:a.z-a.p/2, z1:a.z+a.p/2, y0:0, y1:a.h, nom:a.nom}));
+  if (el.groupe){ const g = el.groupe; out.push({x0:g.x-g.l/2, x1:g.x+g.l/2, z0:g.z-g.p/2, z1:g.z+g.p/2, y0:0, y1:g.h, nom:"groupe électrogène"}); } return out; }
 /* tous les volumes susceptibles de couper un faisceau */
-function obstacles(){
-  const o = [regieAABB(), ...posSono(), ...posTotems()];
-  if (ETAT.options.village) o.push(...posStands());
-  return o;
-}
+function obstacles(){ const pb = podiumBox(), o = [regieAABB(), pb.tete, pb.cat, ...posSono(), ...posTotems(), ...posRepos(), ...posElec()];
+  if (ETAT.options.village) o.push(...posStands()); if (ETAT.options.camion) o.push(camionAABB()); return o; }
+// ombre du camion sur la façade par le VP bas
+function ombreCamion(){ const c = camionAABB(), b = ETAT.bloc, zc = c.z1, yt = c.yt; const h = yt - (b.hauteurVP - yt)*zc/(b.z - zc), k = b.z/(b.z - zc);
+  return {h:Math.max(0, h), x0:(c.x0 - b.x)*k + b.x, x1:(c.xh1 - b.x)*k + b.x}; }
+function exclusions(){ const pb = podiumBox(), s = ETAT.sono, out = [[pb.tete.x0-1, pb.tete.x1+1, pb.tete.z0-1, pb.tete.z1+1],[pb.cat.x0-1, pb.cat.x1+1, pb.cat.z0-1, pb.cat.z1]];
+  for (let i = 0; i < s.delais; i++){ const c = i%2 ? 1 : -1; out.push([c*s.delaiX-1.3, c*s.delaiX+1.3, s.delaiZ-1.3, s.delaiZ+1.3]); } return out; }
+function jauges(){ const Z = PROJET.zonePublic, ex = exclusions(); let brut = 0, net = 0;
+  for (let x = Z.x0+.5; x < Z.x1; x += 1) for (let z = Z.z0+.5; z < Z.z1; z += 1){ brut++; if (!ex.some(b => x>=b[0]&&x<=b[1]&&z>=b[2]&&z<=b[3])) net++; }
+  const pb = podiumBox(), pl = posPlateforme(), v = ETAT.village, st = posStands(), rg = regieAABB();
+  const xMax = st.length ? Math.max(...st.map(s => Math.abs(s.x - ETAT.bloc.x))) + v.cote/2 : 0, xMin = (pl.x1 - ETAT.bloc.x) + 1.5;
+  const flancs = st.length ? 2*(xMax - xMin)*Math.max(0, (v.z - v.cote/2) - Z.z1) : 0;
+  const scene = (pb.tete.x1-pb.tete.x0)*(pb.tete.z1-pb.tete.z0) + (pb.cat.x1-pb.cat.x0)*(pb.cat.z1-pb.cat.z0);
+  const coulisses = (pb.tete.x1 - pb.tete.x0 + 4)*(rg.z0 - pb.tete.z1), repos = ETAT.repos.tonnelle.largeur*ETAT.repos.tonnelle.profondeur, hayon = ETAT.camion.largeur*ETAT.camion.hayon;
+  return {brut, net, j2:Math.floor(net*Z.densite), j3:Math.floor(net*(Z.densiteMax||3)), flancs, scene, jScene:Math.floor(scene/1.5), coulisses, repos, jRepos:Math.floor(repos/2), hayon}; }
+function tracesCables(){ const rg = regieAABB(), Z = PROJET.zonePublic, s = ETAT.sono, el = ETAT.electricite, pb = podiumBox(), pl = posPlateforme(), zl = Z.z1 + 2.2, xs = Z.x1 + 1.5, zf = 1.6, cb = camionAABB(), out = [];
+  for (const c of [-1, 1]){ out.push({nom:`tronc ${c<0?'jardin':'cour'}`, type:'tronc', pts:[[rg.x + c*rg.L/2, zl],[c*xs, zl],[c*xs, zf],[c < 0 ? cb.x0 - 1.2 : cb.xh1 + .8, zf]]});
+    if (s.delais) out.push({nom:`délai ${c<0?'jardin':'cour'}`, type:'public', pts:[[c*xs, s.delaiZ],[c*s.delaiX, s.delaiZ]]}); }
+  out.push({nom:'régie → podium', type:'coulisses', pts:[[rg.x, rg.z0],[rg.x, pb.tete.z1]]});
+  const tg = el.armoires[0]; out.push({nom:'TGBT → régie', type:'tronc', pts:[[tg.x, tg.z],[tg.x, zl],[rg.x - rg.L/2, zl]]});
+  out.push({nom:'TGBT → tour', type:'tronc', pts:[[tg.x, tg.z],[tg.x, pl.z1+.3],[pl.x0 + 3.07 + .06, pl.z1 + .3]]});
+  if (el.groupe) out.push({nom:'GE → TGBT', type:'tronc', pts:[[el.groupe.x, el.groupe.z],[tg.x, el.groupe.z],[tg.x, tg.z]]});
+  return out; }
 
 /* =====================================================================
    PRIMITIVES
    ===================================================================== */
-const COULEURS = {pierre:0xd9d2bf, sombre:0x2a2620, vitrail:0x1d2a3d, pave:0x8a8478, voisin:0xb9b2a0,
-                  nef:0xcfc8b4, regie:0xd7dde4, echafaud:0xc98a3c, projo:0x222730, sono:0x1c1f24,
-                  totem:0x2b2f36, tente:0xe8e0c8};
+const COULEURS = {pierre:0xd9d2bf, sombre:0x2a2620, vitrail:0x1d2a3d, pave:0x8a8478, voisin:0xb9b2a0, nef:0xcfc8b4, regie:0xd7dde4, galva:0xb5bbc2, projo:0x222730, sono:0x1c1f24, totem:0x2b2f36, tente:0xe8e0c8, bois:0x6b5540, jupe:0x0e1013, camion:0xeef0f2};
 const TYPE_COULEUR = {prevention:0x4fa3ff, secours:0xf85149, accueil:0xffb454, buvette:0xe4c05a, asso:0xe8e0c8};
 const etat_couleur = {ok:0x3fb950, warn:0xf0883e, bad:0xf85149};
 let scene, camera, renderer, controls;
 const stat = new THREE.Group(), dyn = new THREE.Group();
-
 function mat(c, extra){ return new THREE.MeshStandardMaterial(Object.assign({color:c, roughness:.85, metalness:0}, extra||{})); }
-function boite(x0,x1,y0,y1,z0,z1, m){
-  const o = new THREE.Mesh(new THREE.BoxGeometry(x1-x0, y1-y0, z1-z0), m);
-  o.position.set((x0+x1)/2, (y0+y1)/2, (z0+z1)/2);
-  o.castShadow = o.receiveShadow = true; return o;
-}
-function cylindre(a, b, rayon, m, seg=8){
-  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b);
-  const dir = B.clone().sub(A), len = dir.length();
-  const o = new THREE.Mesh(new THREE.CylinderGeometry(rayon, rayon, len, seg), m);
-  o.position.copy(A).add(B).multiplyScalar(.5);
-  o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize()); return o;
-}
-function cone(sommet, base, rayon, couleur, opacite){
-  const A = new THREE.Vector3(...sommet), B = new THREE.Vector3(...base);
-  const dir = B.clone().sub(A), len = dir.length();
-  const g = new THREE.ConeGeometry(rayon, len, 24, 1, true);
-  g.translate(0, -len/2, 0); g.rotateX(Math.PI);          // pointe au sommet
-  const o = new THREE.Mesh(g, new THREE.MeshBasicMaterial({color:couleur, transparent:true, opacity:opacite,
-                                                           side:THREE.DoubleSide, depthWrite:false}));
-  o.position.copy(A);
-  o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dir.normalize()); return o;
-}
+function boite(x0,x1,y0,y1,z0,z1, m){ const o = new THREE.Mesh(new THREE.BoxGeometry(x1-x0, y1-y0, z1-z0), m); o.position.set((x0+x1)/2, (y0+y1)/2, (z0+z1)/2); o.castShadow = o.receiveShadow = true; return o; }
+function cylindre(a, b, rayon, m, seg=8){ const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length();
+  const o = new THREE.Mesh(new THREE.CylinderGeometry(rayon, rayon, L, seg), m); o.position.copy(A).add(B).multiplyScalar(.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
+function cone(sommet, base, rayon, couleur, opacite){ const A = new THREE.Vector3(...sommet), B = new THREE.Vector3(...base), d = B.clone().sub(A), L = d.length();
+  const g = new THREE.ConeGeometry(rayon, L, 24, 1, true); g.translate(0, -L/2, 0); g.rotateX(Math.PI);
+  const o = new THREE.Mesh(g, new THREE.MeshBasicMaterial({color:couleur, transparent:true, opacity:opacite, side:THREE.DoubleSide, depthWrite:false})); o.position.copy(A); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
 function etiquette(texte, x, y, z, largeur=6, couleur='#e6edf3'){
-  const c = document.createElement('canvas'); c.width = 512; c.height = 128;
-  const ctx = c.getContext('2d');
-  ctx.fillStyle = 'rgba(14,17,22,.78)'; ctx.fillRect(0,0,512,128);
-  ctx.font = 'bold 56px -apple-system, Segoe UI, Roboto, sans-serif';
-  ctx.fillStyle = couleur; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(texte, 256, 64);
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false}));
-  sp.scale.set(largeur, largeur/4, 1); sp.position.set(x, y, z); sp.renderOrder = 10; return sp;
-}
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+  g.fillStyle = 'rgba(10,12,16,.78)'; g.fillRect(0,0,512,128); g.font = 'bold 54px -apple-system, Segoe UI, Roboto, sans-serif'; g.fillStyle = couleur; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texte, 256, 66);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false, transparent:true}));
+  sp.scale.set(largeur, largeur/4, 1); sp.position.set(x, y, z); sp.renderOrder = 10; return sp; }
+const mAlu = () => mat(0xb9c0c8, {metalness:.6, roughness:.35}), mNoir = () => mat(0x111418, {roughness:.6});
 
 /* =====================================================================
-   FAÇADE ET SITE (statique)
+   ÉLÉMENTS STATIQUES
    ===================================================================== */
 function construireFacade(){
-  const f = PROJET.facade, forme = new THREE.Shape();
-  f.contour.forEach(([x,y],i) => i ? forme.lineTo(x,y) : forme.moveTo(x,y));
-  const g = new THREE.ExtrudeGeometry(forme, {depth:f.profondeur, bevelEnabled:false});
-  g.translate(0,0,-f.profondeur);
-  const corps = new THREE.Mesh(g, mat(COULEURS.pierre, {roughness:.9}));
-  corps.castShadow = corps.receiveShadow = true; stat.add(corps);
-  const vitre = mat(COULEURS.vitrail, {roughness:.3, metalness:.1}), porte = mat(COULEURS.sombre, {roughness:.6});
-  f.ouvertures.forEach(([x0,x1,y0,y1], i) => {
-    const p = new THREE.Mesh(new THREE.PlaneGeometry(x1-x0, y1-y0), i<3 ? porte : vitre);
-    p.position.set((x0+x1)/2, (y0+y1)/2, .02); stat.add(p);
-  });
-  const r = f.rosace;
-  const rose = new THREE.Mesh(new THREE.CircleGeometry(r.r, 48), mat(0xc8a24a, {roughness:.4, metalness:.5}));
-  rose.position.set(r.x, r.y, .03); stat.add(rose);
-  const vit = new THREE.Mesh(new THREE.CircleGeometry(r.r*.72, 48), vitre);
-  vit.position.set(r.x, r.y, .04); stat.add(vit);
+  const F = PROJET.facade, forme = new THREE.Shape(); F.contour.forEach(([x,y],i) => i ? forme.lineTo(x,y) : forme.moveTo(x,y));
+  const g = new THREE.ExtrudeGeometry(forme, {depth:F.profondeur, bevelEnabled:false}); g.translate(0,0,-F.profondeur);
+  const f = new THREE.Mesh(g, mat(COULEURS.pierre, {roughness:.95})); f.castShadow = f.receiveShadow = true; stat.add(f);
+  F.ouvertures.forEach(([x0,x1,y0,y1],i) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,y1-y0), mat(i<3?COULEURS.sombre:COULEURS.vitrail, {roughness:.3})); p.position.set((x0+x1)/2,(y0+y1)/2,.02); stat.add(p); });
+  const r = F.rosace, rose = new THREE.Mesh(new THREE.RingGeometry(r.r*.72, r.r, 48), mat(0xc8a24a, {roughness:.35, metalness:.6})); rose.position.set(r.x, r.y, .03); stat.add(rose);
+  const vit = new THREE.Mesh(new THREE.CircleGeometry(r.r*.72, 48), mat(COULEURS.vitrail, {roughness:.3})); vit.position.set(r.x, r.y, .04); stat.add(vit);
 }
 function construireSite(){
-  const sol = new THREE.Mesh(new THREE.PlaneGeometry(240, 220), mat(COULEURS.pave, {roughness:1}));
-  sol.rotation.x = -Math.PI/2; sol.position.set(0,0,60); sol.receiveShadow = true; stat.add(sol);
-  const n = PROJET.nef, nefM = new THREE.Group(); nefM.userData.groupe = 'nef';
-  nefM.add(boite(n.x0, n.x1, 0, n.h, n.z0, n.z1, mat(COULEURS.nef)));
-  nefM.add(boite(n.x0-.5, n.x1+.5, n.h, n.h+1.5, n.z0, n.z1, mat(0x5a5447)));
-  stat.add(nefM);
-  const vois = new THREE.Group(); vois.userData.groupe = 'voisins';
-  PROJET.voisins.forEach(v => vois.add(boite(v.x0, v.x1, 0, v.h, v.z0, v.z1, mat(COULEURS.voisin))));
-  stat.add(vois);
+  const sol = new THREE.Mesh(new THREE.PlaneGeometry(240, 220), mat(COULEURS.pave, {roughness:1})); sol.rotation.x = -Math.PI/2; sol.position.set(0,0,60); sol.receiveShadow = true; stat.add(sol);
+  const n = PROJET.nef, nefM = new THREE.Group(); nefM.userData.groupe = 'nef'; nefM.add(boite(n.x0, n.x1, 0, n.h, n.z0, n.z1, mat(COULEURS.nef))); nefM.add(boite(n.x0-.5, n.x1+.5, n.h, n.h+1.5, n.z0, n.z1, mat(0x5a5447))); stat.add(nefM);
+  const vois = new THREE.Group(); vois.userData.groupe = 'voisins'; PROJET.voisins.forEach(v => vois.add(boite(v.x0, v.x1, 0, v.h, v.z0, v.z1, mat(COULEURS.voisin)))); stat.add(vois);
 }
 
 /* =====================================================================
    ÉLÉMENTS DYNAMIQUES
    ===================================================================== */
-function dessinerPlateforme(g){
-  const pl = posPlateforme(), b = ETAT.bloc;
+function dessinerTour(g){
   if (!ETAT.options.echafaud) return;
-  const m = mat(COULEURS.echafaud, {roughness:.6});
-  // montants aux angles + lisses intermédiaires tous les ~2 m
-  const xs = [], zs = [pl.z0, pl.z1];
-  for (let x = pl.x0; x <= pl.x1 + .01; x += (pl.x1-pl.x0)/Math.max(1, Math.round((pl.x1-pl.x0)/2.25))) xs.push(x);
-  xs.forEach(x => zs.forEach(z => g.add(cylindre([x,0,z],[x,pl.y1-.25,z], .05, m))));
-  for (let y = 2; y < pl.y1 - .3; y += 2){
-    zs.forEach(z => g.add(cylindre([pl.x0,y,z],[pl.x1,y,z], .03, m)));
-    [pl.x0, pl.x1].forEach(x => g.add(cylindre([x,y,pl.z0],[x,y,pl.z1], .03, m)));
-  }
-  g.add(boite(pl.x0-.15, pl.x1+.15, pl.y1-.45, pl.y1-.2, pl.z0-.15, pl.z1+.15, mat(0x8a5a26, {roughness:.8})));
-  // garde-corps
-  [[pl.x0,pl.z0,pl.x1,pl.z0],[pl.x0,pl.z1,pl.x1,pl.z1],[pl.x0,pl.z0,pl.x0,pl.z1],[pl.x1,pl.z0,pl.x1,pl.z1]]
-    .forEach(([a,b2,c,d]) => g.add(cylindre([a,pl.y1+.9,b2],[c,pl.y1+.9,d], .025, m)));
-  // bâche de protection pluie sur les machines (toit léger)
-  g.add(boite(pl.x0-.2, pl.x1+.2, pl.y1+2.3, pl.y1+2.4, pl.z0-.2, pl.z1+.2,
-              mat(0xf2f2f2, {transparent:true, opacity:.55})));
-  if (ETAT.options.etiquettes) g.add(etiquette("PLATEFORME VP · " + b.hauteurVP + " m", b.x, pl.y1+3.4, b.z, 9));
+  const b = ETAT.bloc, pl = posPlateforme(), nx = b.travees, n = b.niveaux, hN = b.hauteurNiveau, base = b.base, L = b.profondeurPlateforme, m = mat(COULEURS.galva, {metalness:.75, roughness:.35}), md = mat(0x8f949a, {metalness:.5, roughness:.55});
+  const xs = []; for (let i = 0; i <= nx; i++) xs.push(pl.x0 + i*L); const zs = [pl.z0, pl.z1], ys = []; for (let k = 0; k <= n; k++) ys.push(base + k*hN);
+  xs.forEach(x => zs.forEach(z => { g.add(cylindre([x,0,z],[x,ys[n]+1.0,z],.024,m)); g.add(boite(x-.08,x+.08,0,.012,z-.08,z+.08,m)); }));
+  ys.forEach(y => { zs.forEach(z => g.add(cylindre([xs[0],y,z],[xs[nx],y,z],.024,m))); xs.forEach(x => g.add(cylindre([x,y,zs[0]],[x,y,zs[1]],.024,m))); });
+  for (const dy of [.5,1.0]){ const y = ys[n]+dy; zs.forEach(z => g.add(cylindre([xs[0],y,z],[xs[nx],y,z],.024,m))); [xs[0],xs[nx]].forEach(x => g.add(cylindre([x,y,zs[0]],[x,y,zs[1]],.024,m))); }
+  for (let k = 0; k < n; k++){ zs.forEach((z,zi) => { for (let i = 0; i < nx; i++){ const d = ((i+k+zi)%2) ? 1 : 0; g.add(cylindre([xs[i+d],ys[k],z],[xs[i+1-d],ys[k+1],z],.02,m)); } }); [xs[0],xs[nx]].forEach((x,xi) => { const d = ((k+xi)%2)?1:0; g.add(cylindre([x,ys[k],zs[d]],[x,ys[k+1],zs[1-d]],.02,m)); }); }
+  g.add(boite(pl.x0+.03, pl.x1-.03, ys[n], ys[n]+.06, pl.z0+.05, pl.z1-.05, md));
+  for (let k = 1; k < n; k++) g.add(boite(xs[0]+.03, xs[0]+.64, ys[k], ys[k]+.06, pl.z0+.05, pl.z1-.05, md));
+  g.add(boite(pl.x0-.25, pl.x1+.25, ys[n]+2.5, ys[n]+2.6, pl.z0-.25, pl.z1+.25, mat(0xf2f2f2, {transparent:true, opacity:.55})));
+  xs.forEach(x => [pl.z0-.95, pl.z1+.95].forEach(z => g.add(boite(x-.6,x+.6,0,.6,z-.3,z+.3, mat(0x9a9a94, {roughness:.95})))));
+  ETAT.projecteurs.forEach(p => g.add(boite(b.x+p.dx-.4, b.x+p.dx+.4, ys[n]+.06, b.hauteurVP-.21, b.z-.45, b.z+.45, mNoir())));
+  if (ETAT.options.etiquettes) g.add(etiquette(`TOUR LAYHER ${nx} × 3,07 · plancher ${b.plancher} m`, b.x, ys[n]+3.6, b.z, 11));
 }
-function cadreImage(p){
-  const P = posProjecteur(p), W = P.z / p.tr, H = W / p.ratio;
-  return {W, H, x0:p.cx-W/2, x1:p.cx+W/2, y0:p.cy-H/2, y1:p.cy+H/2};
+function dessinerRegie(g){
+  const b = regieAABB(), pl = posPlateforme();
+  if (b.y0 > 0){ g.add(boite(b.x0, b.x1, .08, b.y0, b.z0, b.z1, mat(COULEURS.jupe))); const n = 5, gm = b.y0/n, p = (pl.z0 - b.z1 - .2)/n, xe = b.x0 + .9; for (let i = 0; i < n; i++){ const y1 = gm*(n-i), z0 = b.z1 + i*p; g.add(boite(xe-.6, xe+.6, y1-.05, y1, z0, z0+p, mat(0x2a2d33))); } }
+  g.add(boite(b.x0,b.x1,b.y0,b.y1,b.z0,b.z1, mat(COULEURS.regie, {roughness:.5, metalness:.3})));
+  const porte = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.2), mat(0x9aa4ae)); porte.position.set(b.x0 + .9, b.y0 + 1.1, b.z1 + .02); g.add(porte);
+  const fen = new THREE.Mesh(new THREE.PlaneGeometry(3.2, .9), mat(0x1d2a3d, {roughness:.2, metalness:.4})); fen.position.set(b.x + .4, b.y0 + 1.6, b.z0 - .02); fen.rotation.y = Math.PI; g.add(fen);
+  g.add(boite(b.x1-1.2, b.x1-.2, b.y1, b.y1+.6, b.z-.5, b.z+.5, mat(0xbfc6cf)));
+  if (ETAT.options.etiquettes) g.add(etiquette(`RÉGIE 20' · +${b.y0} m`, b.x, b.y1+1.2, b.z, 7));
 }
+function dessinerPodium(g){
+  const pb = podiumBox(), H = pb.H, T = pb.tete, C = pb.cat, cx = pb.x, ma = mAlu();
+  [[T.x0,T.x1,T.z0,T.z1],[C.x0,C.x1,C.z0,C.z1]].forEach(([x0,x1,z0,z1]) => { g.add(boite(x0,x1,H-.12,H,z0,z1, mat(COULEURS.bois, {roughness:.9}))); g.add(boite(x0+.08,x1-.08,0,H-.12,z0+.08,z1-.08, mat(COULEURS.jupe))); });
+  [[T.x0+1.4, T.z1, T.x1-1.4, T.z1],[T.x0, T.z0, T.x0, T.z1-1.5],[T.x1, T.z0, T.x1, T.z1-1.5]].forEach(([x0,z0,x1,z1]) => { for (const hh of [H+.5, H+1.1]) g.add(cylindre([x0,hh,z0],[x1,hh,z1],.025,ma)); const n = Math.max(1, Math.round(Math.hypot(x1-x0,z1-z0)/1.5)); for (let i = 0; i <= n; i++){ const x = x0+(x1-x0)*i/n, z = z0+(z1-z0)*i/n; g.add(cylindre([x,H,z],[x,H+1.1,z],.025,ma)); } });
+  const nM = 8, gm = H/nM, pm = .28, zs0 = T.z1-1.4, zs1 = T.z1-.2;
+  for (const side of [-1,1]){ const xe = side < 0 ? T.x0 : T.x1; for (let i = 0; i < nM; i++){ const y1 = gm*(nM-i), x0 = xe + side*i*pm, x1 = xe + side*(i+1)*pm; g.add(boite(Math.min(x0,x1), Math.max(x0,x1), y1-.05, y1, zs0, zs1, mat(0x2a2d33))); }
+    const xb = xe + side*nM*pm; for (const z of [zs0, zs1]){ g.add(cylindre([xe,H+.95,z],[xb,gm+.95,z],.028,ma)); g.add(cylindre([xb,0,z],[xb,gm+.95,z],.028,ma)); } }
+  g.add(boite(C.x0, C.x1, H, H+.08, C.z0-.02, C.z0+.03, mat(0xffffff, {emissive:0xffb454, emissiveIntensity:.8})));
+  g.add(boite(cx-2.4,cx-.8,H,H+.9,T.z1-1.5,T.z1-.9, mNoir()));
+  ETAT.lumieres.scene.forEach(l => { const x = cx + l.dx, z = T.z0 + l.dz; g.add(cylindre([x,0,z],[x,l.h,z],.04, mat(0x2b2f36, {metalness:.5}))); g.add(boite(x-.15,x+.15,l.h-.2,l.h+.1,z-.15,z+.15, mNoir())); if (ETAT.options.lumieres) g.add(cone([x,l.h-.1,z],[cx,H+.8,T.z0-2], 2.6, 0xb36bff, .12)); });
+  if (ETAT.options.etiquettes){ g.add(etiquette(`PODIUM-CATWALK ${H} m · ${(T.x1-T.x0)}×${(T.z1-T.z0)} + ${(C.x1-C.x0)}×${(C.z1-C.z0)} m`, cx, H+3.2, (C.z0+T.z1)/2, 13)); }
+}
+function dessinerCamion(g){
+  if (!ETAT.options.camion) return;
+  const c = camionAABB(), mb = mat(COULEURS.camion, {roughness:.5, metalness:.2}), mn = mNoir(), ma = mAlu();
+  g.add(boite(c.x0+.1, c.xc0-.05, .4, 2.6, c.z0+.05, c.z1-.05, mb)); g.add(boite(c.x0, c.xh0, .5, c.yp, c.z0+.1, c.z1-.1, mn)); g.add(boite(c.xc0, c.xh0, c.yp, c.yt, c.z0, c.z1, mb));
+  [c.x0+1.0, c.xh0-1.2].forEach(x => [c.z0+.15, c.z1-.15].forEach(z => { const r = new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.3,16), mn); r.rotation.x = Math.PI/2; r.position.set(x,.5,z); g.add(r); }));
+  g.add(boite(c.xh0, c.xh1, c.yp-.08, c.yp, c.z0, c.z1, mat(0x8c9096, {metalness:.6, roughness:.4})));
+  [[c.xh0,c.z0,c.xh1,c.z0],[c.xh1,c.z0,c.xh1,c.z1]].forEach(([x0,z0,x1,z1]) => { for (const hh of [.5,1.0]) g.add(cylindre([x0,c.yp+hh,z0],[x1,c.yp+hh,z1],.02,ma)); });
+  const xd = (c.xh0+c.xh1)/2; g.add(boite(xd-.65, xd+.65, c.yp, c.yp+.9, c.z1-.65, c.z1-.15, mn));
+  if (ETAT.camion.ecran){ const e = new THREE.Mesh(new THREE.PlaneGeometry(c.xh0-c.xc0-.2, c.yt-c.yp-.2), mat(0x3a2a6a, {emissive:0x7b2fbf, emissiveIntensity:.6})); e.position.set((c.xc0+c.xh0)/2, (c.yp+c.yt)/2, c.z1+.02); g.add(e); }
+  // la silhouette du DJ, pour l'échelle
+  g.add(cylindre([xd,c.yp,c.z1-1.0],[xd,c.yp+1.5,c.z1-1.0],.18, mat(0x3a3f48))); const tete = new THREE.Mesh(new THREE.SphereGeometry(.12,10,8), mat(0xf1c9a5)); tete.position.set(xd, c.yp+1.64, c.z1-1.0); g.add(tete);
+  if (ETAT.options.etiquettes){ const om = ombreCamion(); g.add(etiquette(`CAMION 20 m³ · ÉCRAN · DJ HAYON · ombre ${om.h.toFixed(1)} m`, (c.x0+c.xh1)/2, c.yt+1.6, ETAT.camion.z, 12)); }
+}
+function cadreImage(p){ const P = posProjecteur(p), W = P.z / p.tr, H = W / p.ratio; return {W, H, x0:p.cx-W/2, x1:p.cx+W/2, y0:p.cy-H/2, y1:p.cy+H/2}; }
 function dessinerProjecteur(g, p){
   const im = cadreImage(p), P0 = posProjecteur(p), P = [P0.x, P0.y, P0.z];
   const C = [[im.x0,im.y0,0],[im.x1,im.y0,0],[im.x1,im.y1,0],[im.x0,im.y1,0]];
-  if (ETAT.options.cones){
-    const pos = [];
-    for (let i=0;i<4;i++) pos.push(...P, ...C[i], ...C[(i+1)%4]);
-    const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.computeVertexNormals();
+  if (ETAT.options.cones){ const pos = []; for (let i=0;i<4;i++) pos.push(...P, ...C[i], ...C[(i+1)%4]);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); geo.computeVertexNormals();
     g.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:.09, side:THREE.DoubleSide, depthWrite:false})));
     const edges = []; C.forEach(c => edges.push(...P, ...c)); for (let i=0;i<4;i++) edges.push(...C[i], ...C[(i+1)%4]);
-    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3));
-    g.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color:0xffb454})));
-  }
-  const lis = new THREE.Mesh(new THREE.PlaneGeometry(im.x1-im.x0, im.y1-im.y0),
-              new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:.22, depthWrite:false}));
-  lis.position.set((im.x0+im.x1)/2, (im.y0+im.y1)/2, .06); g.add(lis);
-  const corps = new THREE.Mesh(new THREE.BoxGeometry(.6,.42,.7), mat(COULEURS.projo, {roughness:.4, metalness:.5}));
-  corps.position.set(...P); corps.lookAt(new THREE.Vector3(p.cx, p.cy, 0)); corps.castShadow = true; g.add(corps);
-  const obj = new THREE.Mesh(new THREE.CylinderGeometry(.14,.14,.12,16), mat(0x0b0d10, {roughness:.2}));
-  obj.position.copy(corps.position).add(new THREE.Vector3(0,0,.4).applyQuaternion(corps.quaternion));
-  obj.quaternion.copy(corps.quaternion).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI/2,0,0)));
-  g.add(obj);
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3)); g.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color:0xffb454}))); }
+  const lis = new THREE.Mesh(new THREE.PlaneGeometry(im.x1-im.x0, im.y1-im.y0), new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:.22, depthWrite:false})); lis.position.set((im.x0+im.x1)/2, (im.y0+im.y1)/2, .06); g.add(lis);
+  if (ETAT.options.camion && im.y0 < 3){ const om = ombreCamion(); if (om.h > 0){ const ob = new THREE.Mesh(new THREE.PlaneGeometry(om.x1-om.x0, om.h), new THREE.MeshBasicMaterial({color:0x000000, transparent:true, opacity:.55, depthWrite:false})); ob.position.set((om.x0+om.x1)/2, om.h/2, .07); g.add(ob); } }
+  const corps = new THREE.Mesh(new THREE.BoxGeometry(.6,.42,.7), mat(COULEURS.projo, {roughness:.4, metalness:.5})); corps.position.set(...P); corps.lookAt(new THREE.Vector3(p.cx, p.cy, 0)); corps.castShadow = true; g.add(corps);
 }
 function dessinerLaser(g, l, statut){
   const c = etat_couleur[statut], L = posLaser(l);
   g.add(boite(L.x-.2,L.x+.2,L.y-.12,L.y+.12,L.z-.2,L.z+.2, mat(0x111418, {roughness:.4, metalness:.6})));
   g.add(cylindre([L.x,L.y,L.z],[l.tx,l.ty,0], .05, new THREE.MeshBasicMaterial({color:c})));
-  const pt = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshBasicMaterial({color:c}));
-  pt.position.set(l.tx, l.ty, .05); g.add(pt);
-}
-function dessinerRegie(g){
-  const b = regieAABB();
-  g.add(boite(b.x0,b.x1,0,b.y1,b.z0,b.z1, mat(COULEURS.regie, {roughness:.5, metalness:.3})));
-  // porte côté village (on travaille dos à la plateforme, face au village)
-  const porte = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 2.2), mat(0x9aa4ae));
-  porte.position.set(b.x0 + .9, 1.1, b.z1 + .02); g.add(porte);
-  const fen = new THREE.Mesh(new THREE.PlaneGeometry(2.4, .9), mat(0x1d2a3d, {roughness:.2, metalness:.4}));
-  fen.position.set((b.x0+b.x1)/2 + .6, 1.6, b.z0 - .02); fen.rotation.y = Math.PI; g.add(fen);  // vitre vers la façade
-  const grille = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .6), mat(0x40464e));
-  grille.position.set(b.x1 - 1.0, 2.1, b.z1 + .02); g.add(grille);
-  const clim = boite(b.x1-1.2, b.x1-.2, b.y1, b.y1+.6, (b.z0+b.z1)/2-.5, (b.z0+b.z1)/2+.5, mat(0xbfc6cf));
-  g.add(clim);
-  if (ETAT.options.etiquettes) g.add(etiquette("RÉGIE ÉTANCHE 20'", (b.x0+b.x1)/2, b.y1+1.2, (b.z0+b.z1)/2, 7));
+  const pt = new THREE.Mesh(new THREE.SphereGeometry(.25, 12, 8), new THREE.MeshBasicMaterial({color:c})); pt.position.set(l.tx, l.ty, .05); g.add(pt);
 }
 function dessinerTonnelle(g, s){
-  const c = ETAT.village.cote, h0 = 2.2, h1 = 3.0, col = TYPE_COULEUR[s.type] || COULEURS.tente;
-  const mPied = mat(0x8c9096, {metalness:.5, roughness:.4});
-  [[s.x0,s.z0],[s.x1,s.z0],[s.x1,s.z1],[s.x0,s.z1]].forEach(([x,z]) => g.add(cylindre([x,0,z],[x,h0,z], .035, mPied)));
-  // toit pyramidal
-  const geo = new THREE.ConeGeometry(c*Math.SQRT1_2*1.02, h1-h0, 4, 1);
-  geo.rotateY(Math.PI/4);
-  const toit = new THREE.Mesh(geo, mat(col, {roughness:.9, side:THREE.DoubleSide}));
-  toit.position.set(s.x, h0+(h1-h0)/2, s.z); toit.castShadow = true; g.add(toit);
-  // comptoir
-  g.add(boite(s.x0+.2, s.x1-.2, 0, .95, s.z0+.1, s.z0+.7, mat(0x6b5a44)));
-  if (s.type==='secours'){ const cr = new THREE.Mesh(new THREE.PlaneGeometry(.9,.9), mat(0xffffff)); cr.position.set(s.x, h0+.6, s.z1+.02); g.add(cr);
-    const pl = new THREE.Mesh(new THREE.PlaneGeometry(.6,.6), mat(0xf85149)); pl.position.set(s.x, h0+.6, s.z1+.03); g.add(pl); }
-  if (ETAT.options.etiquettes) g.add(etiquette(s.nom, s.x, h1+.6, s.z, 3.4));
+  const c = ETAT.village.cote, h0 = 2.2, h1 = 3.0, grp = new THREE.Group();
+  [[-c/2,-c/2],[c/2,-c/2],[c/2,c/2],[-c/2,c/2]].forEach(([x,z]) => grp.add(cylindre([x,0,z],[x,h0,z],.035, mat(0x8c9096, {metalness:.5}))));
+  const geo = new THREE.ConeGeometry(c*Math.SQRT1_2*1.02, h1-h0, 4, 1); geo.rotateY(Math.PI/4);
+  const toit = new THREE.Mesh(geo, mat(TYPE_COULEUR[s.type] || COULEURS.tente, {roughness:.9, side:THREE.DoubleSide})); toit.position.set(0, h0+(h1-h0)/2, 0); toit.castShadow = true; grp.add(toit);
+  grp.add(boite(-c/2+.2, c/2-.2, 0, .95, -c/2+.1, -c/2+.7, mat(0x6b5a44)));   // comptoir côté -z : vers la façade
+  if (s.type === 'secours'){ const cr = new THREE.Mesh(new THREE.PlaneGeometry(.9,.9), mat(0xffffff)); cr.position.set(0, h0+.5, -c/2-.02); cr.rotation.y = Math.PI; grp.add(cr); const pl = new THREE.Mesh(new THREE.PlaneGeometry(.6,.6), mat(0xf85149)); pl.position.set(0, h0+.5, -c/2-.03); pl.rotation.y = Math.PI; grp.add(pl); }
+  grp.position.set(s.x, 0, s.z); grp.rotation.y = s.rot || 0; g.add(grp);
+  if (ETAT.options.etiquettes) g.add(etiquette(s.nom, s.x, h1+1.0, s.z, 5));
+}
+function dessinerRepos(g){
+  if (!ETAT.options.repos) return; const r = ETAT.repos;
+  posRepos().forEach(b => { [[b.x0,b.z0],[b.x1,b.z0],[b.x1,b.z1],[b.x0,b.z1]].forEach(([x,z]) => g.add(cylindre([x,0,z],[x,2.2,z],.035, mat(0x8c9096, {metalness:.5})))); g.add(boite(b.x0-.1,b.x1+.1,2.27,2.33,b.z0-.1,b.z1+.1, mat(b.nom==='repos'?0xd8d2c4:0xb9bfc6))); if (ETAT.options.etiquettes) g.add(etiquette(b.nom.toUpperCase(), (b.x0+b.x1)/2, 3.3, (b.z0+b.z1)/2, 5)); });
+  for (let i = 0; i < 6; i++) g.add(boite(r.stockage.x-1.2+(i%3)*.8, r.stockage.x-.6+(i%3)*.8, 0, .9+Math.floor(i/3)*.3, r.stockage.z-1+Math.floor(i/3)*1.1, r.stockage.z-.4+Math.floor(i/3)*1.1, mat(0x15171b, {metalness:.4})));
+  const bz = r.bache.z; g.add(boite(-r.bache.demiLargeur, r.bache.demiLargeur, 0, r.bache.hauteur, bz-.02, bz+.02, mat(0x2b2f36, {roughness:.9})));
 }
 function dessinerSono(g){
-  const s = ETAT.sono;
+  const s = ETAT.sono, mN = mat(COULEURS.sono, {roughness:.6});
   posSono().forEach(st => {
-    const mN = mat(COULEURS.sono, {roughness:.6});
-    if (st.principal){
-      for (let i=0;i<s.subs;i++) g.add(boite(st.x-.6, st.x+.6, i*.7, i*.7+.65, st.z-.6, st.z+.6, mNoir(mN)));
-      const base = s.subs*.7 + .2, top = st.y1;
-      g.add(cylindre([st.x,0,st.z],[st.x,top,st.z], .04, mat(0x8c9096, {metalness:.5})));
-      for (let y = top - .35; y > base; y -= .38) g.add(boite(st.x-.45, st.x+.45, y-.32, y, st.z-.3, st.z+.3, mN));
-    } else {
-      g.add(cylindre([st.x,0,st.z],[st.x,st.y1,st.z], .04, mat(0x8c9096, {metalness:.5})));
-      for (let y = st.y1 - .3; y > st.y1 - 1.6; y -= .38) g.add(boite(st.x-.3, st.x+.3, y-.3, y, st.z-.22, st.z+.22, mN));
-    }
-    // secteur de couverture au sol
-    const ang = (s.ouverture/2) * Math.PI/180, az = (st.cote * -s.visee) * Math.PI/180;   // visée vers l'intérieur
-    const forme = new THREE.Shape(); forme.moveTo(0,0);
-    const portee = st.principal ? s.portee : s.portee*.45;
-    for (let a = -ang; a <= ang + 1e-6; a += ang/12) forme.lineTo(Math.sin(a+az)*portee, Math.cos(a+az)*portee);
-    forme.lineTo(0,0);
-    const sect = new THREE.Mesh(new THREE.ShapeGeometry(forme), new THREE.MeshBasicMaterial({color:0xf0883e, transparent:true, opacity:.10, side:THREE.DoubleSide, depthWrite:false}));
-    sect.rotation.x = -Math.PI/2; sect.position.set(st.x, .04, st.z); g.add(sect);
-    if (ETAT.options.etiquettes) g.add(etiquette(st.nom.toUpperCase(), st.x, st.y1+1.0, st.z, 5));
+    if (st.principal !== undefined && st.top !== undefined){ for (let i = 0; i < s.subsParStack; i++) g.add(boite(st.x-s.sub.l/2, st.x+s.sub.l/2, i*s.sub.h, (i+1)*s.sub.h-.03, st.z-s.sub.p/2, st.z+s.sub.p/2, mN));
+      const top = s.subsParStack*s.sub.h, nT = st.principal ? s.tetes.parStackExterieur : s.tetes.frontFill, hT = st.principal ? .35 : .4, dl = st.principal ? .5 : .3;
+      for (let k = 0; k < nT; k++) g.add(boite(st.x-dl, st.x+dl, top+k*hT, top+(k+1)*hT-.02, st.z-s.sub.p/2+.1, st.z+s.sub.p/2-.05, mN));
+      if (st.principal){ const ang = (s.ouverture/2)*Math.PI/180, az = (st.cote * -s.visee)*Math.PI/180, forme = new THREE.Shape(); forme.moveTo(0,0);
+        for (let a = -ang; a <= ang + 1e-6; a += ang/12) forme.lineTo(Math.sin(a+az)*s.portee, Math.cos(a+az)*s.portee); forme.lineTo(0,0);
+        const sect = new THREE.Mesh(new THREE.ShapeGeometry(forme), new THREE.MeshBasicMaterial({color:0xf0883e, transparent:true, opacity:.10, side:THREE.DoubleSide, depthWrite:false})); sect.rotation.x = -Math.PI/2; sect.position.set(st.x, .04, st.z); g.add(sect); }
+      if (ETAT.options.etiquettes) g.add(etiquette(`${st.nom.toUpperCase()} · ${s.subsParStack} × ${s.sub.modele}${st.principal ? ' + ' + nT + ' × ' + s.tetes.modele : ' + ' + nT + ' × ' + s.tetes.modeleFrontFill}`, st.x, st.y1+1.2, st.z, 9)); }
+    else { for (const [dx,dz] of [[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]]) g.add(cylindre([st.x+dx,0,st.z+dz],[st.x+dx*.3,st.y1-1,st.z+dz*.3],.025, mAlu())); g.add(cylindre([st.x,0,st.z],[st.x,st.y1-.9,st.z],.05, mAlu()));
+      for (let k = 0; k < s.delaiTetes; k++) g.add(boite(st.x-.5, st.x+.5, st.y1-.9+k*.36, st.y1-.9+(k+1)*.36-.02, st.z-.3, st.z+.3, mN));
+      if (ETAT.options.etiquettes) g.add(etiquette(`${st.nom.toUpperCase()} · ${s.delaiTetes} × ${s.tetes.modele}`, st.x, st.y1+1.0, st.z, 7)); }
   });
-  function mNoir(m){ return m; }
 }
 function dessinerLumieres(g){
-  const L = ETAT.lumieres, mTot = mat(COULEURS.totem, {metalness:.5, roughness:.4});
-  posTotems().forEach(t => {
-    g.add(boite(t.x-.5, t.x+.5, 0, .25, t.z-.5, t.z+.5, mTot));
-    g.add(cylindre([t.x,0,t.z],[t.x,t.h,t.z], .06, mTot));
-    g.add(boite(t.x-.35, t.x+.35, t.h-.35, t.h, t.z-.2, t.z+.2, mat(0x111418)));
-    // faisceau wash vers le public (centre de la zone)
-    const Z = PROJET.zonePublic, cx = (Z.x0+Z.x1)/2, cz = (Z.z0+Z.z1)/2;
-    const dir = new THREE.Vector3(cx - t.x, 0 - t.h, cz - t.z);
-    const base = new THREE.Vector3(t.x, t.h, t.z).add(dir.clone().normalize().multiplyScalar(Math.min(26, dir.length())));
-    g.add(cone([t.x,t.h-.2,t.z],[base.x,Math.max(base.y,.1),base.z], 7, 0xb36bff, .12));
-    if (ETAT.options.etiquettes) g.add(etiquette(t.nom, t.x, t.h+1.0, t.z, 4));
-  });
-  L.wash.forEach((w,i) => {
-    g.add(boite(w.x-.45, w.x+.45, 0, .5, w.z-.35, w.z+.35, mat(0x111418, {metalness:.5})));
-    g.add(cone([w.x,.5,w.z],[w.tx,w.ty,0], 4.5, 0xb36bff, .14));
-    if (ETAT.options.etiquettes) g.add(etiquette(`wash ${i+1}`, w.x, 1.6, w.z, 3.5));
-  });
+  const L = ETAT.lumieres, mTot = mat(COULEURS.totem, {metalness:.5, roughness:.4}), Z = PROJET.zonePublic, cx = (Z.x0+Z.x1)/2, cz = (Z.z0+Z.z1)/2;
+  posTotems().forEach(t => { g.add(boite(t.x-.5, t.x+.5, 0, .25, t.z-.5, t.z+.5, mTot)); g.add(cylindre([t.x,0,t.z],[t.x,t.h,t.z], .06, mTot)); g.add(boite(t.x-.5,t.x+.5,t.h-.3,t.h-.15,t.z-.1,t.z+.1, mNoir())); g.add(boite(t.x-.5,t.x+.5,t.h-.1,t.h+.05,t.z-.1,t.z+.1, mNoir()));
+    const dir = new THREE.Vector3(cx - t.x, -t.h, cz - t.z), base = new THREE.Vector3(t.x, t.h, t.z).add(dir.clone().normalize().multiplyScalar(Math.min(26, dir.length())));
+    g.add(cone([t.x,t.h-.2,t.z],[base.x,Math.max(base.y,.1),base.z], 7, 0xb36bff, .12)); if (ETAT.options.etiquettes) g.add(etiquette(t.nom, t.x, t.h+1.0, t.z, 4)); });
+  L.wash.forEach((w,i) => { g.add(boite(w.x-.45, w.x+.45, 0, .5, w.z-.35, w.z+.35, mat(0x111418, {metalness:.5}))); g.add(cone([w.x,.5,w.z],[w.tx,w.ty,0], 4.5, 0xb36bff, .14)); if (ETAT.options.etiquettes) g.add(etiquette(`wash ${i+1}`, w.x, 1.6, w.z, 3.5)); });
 }
 function dessinerCables(g){
-  const r = regieAABB(), rx = (r.x0+r.x1)/2, rz = (r.z0+r.z1)/2, pts = [];
-  posSono().forEach(s => pts.push([s.x, s.z]));
-  posTotems().forEach(t => pts.push([t.x, t.z]));
-  ETAT.lumieres.wash.forEach(w => pts.push([w.x, w.z]));
-  pts.forEach(([x,z]) => {
-    const lg = new THREE.BufferGeometry();
-    lg.setAttribute('position', new THREE.Float32BufferAttribute([rx,.08,rz, x,.08,z], 3));
-    const ln = new THREE.Line(lg, new THREE.LineDashedMaterial({color:0x58a6ff, dashSize:.6, gapSize:.3}));
-    ln.computeLineDistances(); g.add(ln);
-  });
+  const mC = mat(0x15171b, {roughness:.8}), mJ = mat(0xffd23f, {roughness:.7}), mR = mat(0x2a2a2a);
+  tracesCables().forEach(c => { const w = c.type === 'public' ? .9 : .5, h = c.type === 'public' ? .09 : .07;
+    for (let i = 0; i < c.pts.length-1; i++){ const [x0,z0] = c.pts[i], [x1,z1] = c.pts[i+1], L = Math.hypot(x1-x0, z1-z0); if (L < .05) continue;
+      const seg = boite(-L/2, L/2, 0, h, -w/2, w/2, c.type === 'public' ? mR : mC); seg.position.set((x0+x1)/2, 0, (z0+z1)/2); seg.rotation.y = -Math.atan2(z1-z0, x1-x0); g.add(seg);
+      const pas = c.type === 'tronc' ? 2.0 : 1.0; for (let d = pas/2; d < L; d += pas){ const u = d/L, ray = boite(-.06, .06, h, h+.012, -w/2, w/2, mJ); ray.position.set(x0+(x1-x0)*u, 0, z0+(z1-z0)*u); ray.rotation.y = -Math.atan2(z1-z0, x1-x0); g.add(ray); } } });
+  posElec().forEach(a => { g.add(boite(a.x0, a.x1, 0, a.y1, a.z0, a.z1, mat(0x9aa4ae, {metalness:.4, roughness:.5}))); if (ETAT.options.etiquettes) g.add(etiquette(a.nom, (a.x0+a.x1)/2, a.y1+1.0, (a.z0+a.z1)/2, 6.5, '#ffd23f')); });
 }
 
 /* =====================================================================
@@ -425,95 +366,65 @@ function dessinerCables(g){
    ===================================================================== */
 function dansZonePublic(x,y,z){ const Z = PROJET.zonePublic; return x>=Z.x0 && x<=Z.x1 && z>=Z.z0 && z<=Z.z1; }
 function dansBoite(b,x,y,z){ return x>=b.x0 && x<=b.x1 && z>=b.z0 && z<=b.z1 && y>=b.y0 && y<=b.y1; }
-function sectionCone(p, z){
-  // coupe du cône d'un projecteur à la profondeur z (0 = façade, P.z = machine)
-  const P = posProjecteur(p), im = cadreImage(p), t = Math.min(1, Math.max(0, z / P.z));
-  const l = (a,b) => a + (b-a)*t;
-  return {x0:l(im.x0,P.x), x1:l(im.x1,P.x), y0:l(im.y0,P.y), y1:l(im.y1,P.y)};
-}
-function obstructions(p){
-  const P = posProjecteur(p), hits = [];
-  obstacles().forEach(o => {
-    if (o.z1 <= 0 || o.z0 >= P.z - .5) return;
-    for (const z of [Math.max(o.z0, 0), Math.min(o.z1, P.z-.5)]){
-      const s = sectionCone(p, z);
-      if (o.x1 > s.x0 && o.x0 < s.x1 && o.y1 > s.y0 && o.y0 < s.y1){ hits.push(o.nom); break; }
-    }
-  });
-  return hits;
-}
+function sectionCone(p, z){ const P = posProjecteur(p), im = cadreImage(p), t = Math.min(1, Math.max(0, z / P.z)), l = (a,b) => a + (b-a)*t; return {x0:l(im.x0,P.x), x1:l(im.x1,P.x), y0:l(im.y0,P.y), y1:l(im.y1,P.y)}; }
+function obstructions(p){ const P = posProjecteur(p), hits = [];
+  obstacles().forEach(o => { if (o.z1 <= 0 || o.z0 >= P.z - .5) return;
+    for (const z of [Math.max(o.z0, 0), Math.min(o.z1, P.z-.5)]){ const s = sectionCone(p, z); if (o.x1 > s.x0 && o.x0 < s.x1 && o.y1 > s.y0 && o.y0 < s.y1){ hits.push(o); break; } } });
+  return hits; }
 function evaluerProjecteur(p){
   const F = PROJET.facade, Z = PROJET.zonePublic, res = [], P = posProjecteur(p), im = cadreImage(p);
-  let statut = 'ok';
-  const pousser = (niv,msg) => { res.push({niv,msg}); if (niv==='bad') statut='bad'; else if (niv==='warn' && statut!=='bad') statut='warn'; };
-  if (dansZonePublic(P.x,P.y,P.z)) pousser('bad', `plateforme dans la zone public`); else pousser('ok', `plateforme hors zone public`);
-  if (P.z < 55 || P.z > 80) pousser('warn', `distance ${P.z.toFixed(0)} m hors de la plage conseillée 55–80 m`);
-  else pousser('ok', `distance ${P.z.toFixed(0)} m dans la plage conseillée`);
-  // bas du cône au-dessus des têtes au bord de la zone public le plus proche de la machine
+  let statut = 'ok'; const pousser = (niv,msg) => { res.push({niv,msg}); if (niv==='bad') statut='bad'; else if (niv==='warn' && statut!=='bad') statut='warn'; };
+  if (dansZonePublic(P.x,P.y,P.z)) pousser('bad', `tour dans la zone public`); else pousser('ok', `tour hors zone public`);
+  if (P.z < 55 || P.z > 80) pousser('warn', `distance ${P.z.toFixed(0)} m hors de la plage conseillée 55–80 m`); else pousser('ok', `distance ${P.z.toFixed(0)} m dans la plage conseillée`);
   const sBord = sectionCone(p, Z.z1);
-  if (sBord.y0 < Z.hautYeux + .5) pousser('bad', `bas du faisceau à ${sBord.y0.toFixed(1)} m au bord du public : il faut monter la plateforme ou reculer`);
-  else pousser('ok', `faisceau à ${sBord.y0.toFixed(1)} m au-dessus du public au plus près`);
-  const obs = obstructions(p);
-  if (obs.length) pousser('bad', `faisceau coupé par : ${obs.join(', ')}`); else pousser('ok', `aucun obstacle dans le cône`);
-  const ox = Math.max(0, Math.min(im.x1, F.largeur/2) - Math.max(im.x0, -F.largeur/2));
-  const oy = Math.max(0, Math.min(im.y1, F.hauteur) - Math.max(im.y0, 0));
-  const part = ox*oy/(im.W*im.H);
-  if (part < .85) pousser('warn', `${((1-part)*100).toFixed(0)} % de l'image hors façade`);
-  else pousser('ok', `image couvrant la façade (${(part*100).toFixed(0)} %, débord voulu compris)`);
+  if (sBord.y0 < Z.hautYeux + .5) pousser('bad', `bas du faisceau à ${sBord.y0.toFixed(1)} m au bord du public : il faut monter la tour ou reculer`); else pousser('ok', `faisceau à ${sBord.y0.toFixed(1)} m au-dessus du public au plus près`);
+  const pb = podiumBox(), sPod = sectionCone(p, pb.tete.z1);
+  if (sPod.y0 < pb.H + 2.3) pousser('bad', `bas du faisceau à ${sPod.y0.toFixed(1)} m au-dessus du podium (${pb.H} m + une personne) : relever le cadrage ou la tour`); else pousser('ok', `faisceau à ${sPod.y0.toFixed(1)} m au-dessus du podium`);
+  const obs = obstructions(p), durs = obs.filter(o => !o.attendu).map(o => o.nom), att = obs.filter(o => o.attendu);
+  if (durs.length) pousser('bad', `faisceau coupé par : ${durs.join(', ')}`); else pousser('ok', `aucun obstacle imprévu dans le cône`);
+  if (att.length){ const om = ombreCamion(); pousser('warn', `le camion est dans le bas du cône : ombre de 0 à ${om.h.toFixed(1)} m sur ${(om.x1-om.x0).toFixed(1)} m de façade — à prévoir dans le contenu, pas de DJ sur le hayon pendant le mapping`); }
+  const ox = Math.max(0, Math.min(im.x1, F.largeur/2) - Math.max(im.x0, -F.largeur/2)), oy = Math.max(0, Math.min(im.y1, F.hauteur) - Math.max(im.y0, 0)), part = ox*oy/(im.W*im.H);
+  if (part < .85) pousser('warn', `${((1-part)*100).toFixed(0)} % de l'image hors façade`); else pousser('ok', `image couvrant la façade (${(part*100).toFixed(0)} %, débord voulu compris)`);
   const decal = Math.abs(p.cy - P.y) / im.H;
-  if (decal > .6) pousser('warn', `décalage optique ${(decal*100).toFixed(0)} % : incliner et corriger au warp`);
-  else pousser('ok', `décalage optique ${(decal*100).toFixed(0)} %`);
+  if (decal > .6) pousser('warn', `décalage optique ${(decal*100).toFixed(0)} % : incliner et corriger au warp`); else pousser('ok', `décalage optique ${(decal*100).toFixed(0)} %`);
   const f1 = v => (Math.abs(v) < .05 ? 0 : v).toFixed(1);
   res.push({niv:'info', msg:`image ${im.W.toFixed(1)} × ${im.H.toFixed(1)} m · bas ${f1(im.y0)} m · haut ${f1(im.y1)} m`});
   return {statut, res, im};
 }
 function evaluerLaser(l){
-  const F = PROJET.facade, Z = PROJET.zonePublic, res = [], L = posLaser(l);
-  let statut = 'ok';
-  const pousser = (niv, msg) => { res.push({niv, msg}); if (niv==='bad') statut='bad'; else if (niv==='warn' && statut!=='bad') statut='warn'; };
-  if (Math.abs(l.tx) <= F.largeur/2 && l.ty >= 0 && l.ty <= F.hauteur) pousser('ok', `cible sur la façade (${l.tx.toFixed(1)} ; ${l.ty.toFixed(1)} m)`);
-  else pousser('bad', `cible hors de la façade : le faisceau continue vers l'extérieur`);
-  const A = [L.x,L.y,L.z], B = [l.tx,l.ty,0], N = 300, obs = obstacles(), coupe = new Set();
-  let hMin = Infinity;
-  for (let i=0;i<=N;i++){
-    const t = i/N, x = A[0]+(B[0]-A[0])*t, y = A[1]+(B[1]-A[1])*t, z = A[2]+(B[2]-A[2])*t;
-    if (dansZonePublic(x,y,z)) hMin = Math.min(hMin, y);
-    obs.forEach(o => { if (dansBoite(o,x,y,z)) coupe.add(o.nom); });
-  }
+  const F = PROJET.facade, Z = PROJET.zonePublic, res = [], L = posLaser(l), cb = camionAABB();
+  let statut = 'ok'; const pousser = (niv, msg) => { res.push({niv, msg}); if (niv==='bad') statut='bad'; else if (niv==='warn' && statut!=='bad') statut='warn'; };
+  if (Math.abs(l.tx) <= F.largeur/2 && l.ty >= 0 && l.ty <= F.hauteur) pousser('ok', `cible sur la façade (${l.tx.toFixed(1)} ; ${l.ty.toFixed(1)} m)`); else pousser('bad', `cible hors de la façade : le faisceau continue vers l'extérieur`);
+  if (ETAT.options.camion && l.ty < 5.5) pousser('bad', `cible à ${l.ty.toFixed(1)} m : zone d'exclusion sous 5,5 m (camion, DJ sur le hayon) — balayage borné à 5,5 m dans la démo`);
+  const A = [L.x,L.y,L.z], B = [l.tx,l.ty,0], N = 300, obs = obstacles(), coupe = new Set(); let hMin = Infinity;
+  for (let i=0;i<=N;i++){ const t = i/N, x = A[0]+(B[0]-A[0])*t, y = A[1]+(B[1]-A[1])*t, z = A[2]+(B[2]-A[2])*t; if (dansZonePublic(x,y,z)) hMin = Math.min(hMin, y); obs.forEach(o => { if (dansBoite(o,x,y,z)) coupe.add(o.nom); }); }
   if (coupe.size) pousser('bad', `le faisceau traverse : ${[...coupe].join(', ')}`);
-  if (hMin === Infinity) pousser('ok', `aucun passage au-dessus du public`);
-  else if (hMin < Z.hautYeux) pousser('bad', `faisceau à ${hMin.toFixed(2)} m dans la zone public (seuil ${Z.hautYeux} m)`);
-  else pousser('ok', `au-dessus du public : hauteur minimale ${hMin.toFixed(2)} m`);
+  if (hMin === Infinity) pousser('ok', `aucun passage au-dessus du public`); else if (hMin < Z.hautYeux) pousser('bad', `faisceau à ${hMin.toFixed(2)} m dans la zone public (seuil ${Z.hautYeux} m)`); else pousser('ok', `au-dessus du public : hauteur minimale ${hMin.toFixed(2)} m`);
   const d = [B[0]-A[0], B[1]-A[1], B[2]-A[2]], n = Math.hypot(...d), r = [d[0]/n, d[1]/n, -d[2]/n];
   if (r[1] > .02) pousser('warn', `réflexion remontante : vérifier ciel et étages supérieurs`);
-  let reflexionPublic = false;
-  for (let i=1;i<=60;i++){ const q = [B[0]+r[0]*i, B[1]+r[1]*i, B[2]+r[2]*i]; if (q[1] < 0) break;
-    if (dansZonePublic(q[0],q[1],q[2]) && q[1] < Z.hautYeux){ reflexionPublic = true; break; } }
+  let reflexionPublic = false; for (let i=1;i<=60;i++){ const q = [B[0]+r[0]*i, B[1]+r[1]*i, B[2]+r[2]*i]; if (q[1] < 0) break; if (dansZonePublic(q[0],q[1],q[2]) && q[1] < Z.hautYeux){ reflexionPublic = true; break; } }
   if (reflexionPublic) pousser('warn', `si la surface réfléchit, le public est atteint — impose une surface diffuse`);
   res.push({niv:'info', msg:`distance au point d'impact ${n.toFixed(1)} m · ${l.puissance} W`});
   return {statut, res, hMin};
 }
 function evaluerSite(){
-  const res = [], Z = PROJET.zonePublic, rg = regieAABB(), pl = posPlateforme(), v = ETAT.village;
+  const res = [], Z = PROJET.zonePublic, rg = regieAABB(), pl = posPlateforme(), v = ETAT.village, pb = podiumBox(), cb = camionAABB(), J = jauges();
   const pousser = (niv,msg) => res.push({niv,msg});
-  // la zone public ne doit rien contenir du bloc
-  const dedans = [pl, rg, ...posStands()].filter(o => o.x1 > Z.x0 && o.x0 < Z.x1 && o.z1 > Z.z0 && o.z0 < Z.z1).map(o=>o.nom);
-  if (dedans.length) pousser('bad', `dans la zone public : ${dedans.join(', ')}`); else pousser('ok', `bloc central hors de la zone public`);
-  // la sono principale ne gêne pas la façade mappée
-  const F = PROJET.facade;
-  posSono().filter(s=>s.principal).forEach(s => {
-    if (Math.abs(s.x) < F.largeur/2 + .6 && s.z < 6) pousser('warn', `${s.nom} devant l'image mappée (x ${s.x} m) : décaler hors du cadre ou accepter l'ombre`);
-  });
-  // allée du village : largeur de passage
-  if (v.allee < 4) pousser('warn', `allée du village ${v.allee} m : prévoir 4 m minimum pour la circulation et les secours`);
-  else pousser('ok', `allée du village ${v.allee} m`);
-  // accès pompiers : bande de 4 m libre entre le bloc et les voisins
-  const stands = posStands(), zFin = stands.length ? Math.max(...stands.map(s=>s.z1)) : rg.z1;
-  pousser('info', `bloc central : de z = ${pl.z0.toFixed(0)} m à z = ${zFin.toFixed(0)} m (${(zFin-pl.z0).toFixed(0)} m de long), ${stands.length} stands`);
-  const voisinProche = PROJET.voisins.filter(b => b.z1 > pl.z0 && b.z0 < zFin).map(b => Math.min(Math.abs(b.x0 - rg.x1), Math.abs(b.x1 - rg.x0)));
-  if (voisinProche.length){ const dmin = Math.min(...voisinProche);
-    if (dmin < 4) pousser('bad', `moins de 4 m entre le bloc et un bâtiment (${dmin.toFixed(1)} m) : voie pompiers obstruée`);
-    else pousser('ok', `dégagement latéral ${dmin.toFixed(0)} m de part et d'autre du bloc`); }
+  const dedans = [pl, rg, ...posStands(), ...posRepos(), ...posElec(), ...(ETAT.options.camion ? [cb] : [])].filter(o => o.x1 > Z.x0 && o.x0 < Z.x1 && o.z1 > Z.z0 && o.z0 < Z.z1).map(o=>o.nom);
+  if (dedans.length) pousser('bad', `dans la zone public : ${dedans.join(', ')}`); else pousser('ok', `tour, régie, stands, repos, armoires et camion hors de la zone public (le podium y est, c'est voulu)`);
+  if (ETAT.podium.ecartRegie < 3) pousser('warn', `podium à ${ETAT.podium.ecartRegie} m de la régie : 3 m minimum pour les coulisses et l'escalier de régie`); else pousser('ok', `coulisses de ${ETAT.podium.ecartRegie} m entre le podium et la régie`);
+  if (ETAT.podium.catwalk.largeur < 2.4) pousser('warn', `catwalk de ${ETAT.podium.catwalk.largeur} m : 2,40 m minimum sans garde-corps (croisement de deux personnes)`); else pousser('ok', `catwalk ${ETAT.podium.catwalk.largeur} m de large, ${ETAT.podium.catwalk.longueur} m de long, sans garde-corps (face jouée) : à valider en commission`);
+  if (pb.H > 1.5) pousser('bad', `podium à ${pb.H} m : 1,50 m maximum`);
+  // voies pompiers : 4 m libres entre la zone public et les bâtiments
+  const voie = Math.min(...PROJET.voisins.filter(b => b.z1 > Z.z0 && b.z0 < Z.z1).map(b => b.x0 >= Z.x1 ? b.x0 - Z.x1 : Z.x0 - b.x1));
+  if (voie < 4) pousser('bad', `couloir latéral de ${voie.toFixed(1)} m entre la zone public et un bâtiment : 4 m minimum (voie pompiers)`); else pousser('ok', `couloirs latéraux de ${voie.toFixed(1)} m (voies pompiers), passages de câbles roulables`);
+  if (v.forme === 'flancs'){ if (v.ecartTour < 1.5) pousser('warn', `stands à ${v.ecartTour} m de la tour : 1,5 m minimum`); if (v.ecart < 1.0) pousser('warn', `${v.ecart} m entre tonnelles : 1 m minimum (et 1,2 m pour loger les totems)`); else pousser('ok', `stands face à la façade, ${v.ecart} m entre tonnelles, ${v.ecartTour} m avec la tour`); }
+  const totemsDansStands = posTotems().filter(t => posStands().some(s => t.x1 > s.x0 && t.x0 < s.x1 && t.z1 > s.z0 && t.z0 < s.z1)).map(t => t.nom);
+  if (totemsDansStands.length) pousser('bad', `totem dans une tonnelle : ${totemsDansStands.join(', ')}`);
+  if (ETAT.options.camion){ if (cb.z0 < 2) pousser('warn', `camion à ${cb.z0.toFixed(1)} m de la façade : garder 2 m pour les câbles et les secours`); else pousser('ok', `camion à ${cb.z0.toFixed(1)} m de la façade, passage de câbles derrière`); pousser('info', `hayon ${J.hayon.toFixed(1)} m² · charge ${ETAT.camion.chargeHayonKg} kg → 2 personnes maxi, moteur coupé, calage`); }
+  if (ETAT.sono.delais) pousser('info', `${ETAT.sono.delais} tours de délai dans le public à z = ${ETAT.sono.delaiZ} m : îlots tenus par un agent, passages de câbles 2 voies`);
+  pousser('info', `jauge : ${J.net.toLocaleString('fr-FR')} m² nets → ${J.j2.toLocaleString('fr-FR')} pers. à ${Z.densite}/m² (maxi ${J.j3.toLocaleString('fr-FR')} à ${Z.densiteMax}/m²) · plateau ${J.scene.toFixed(0)} m² (${J.jScene} en défilé) · coulisses ${J.coulisses.toFixed(0)} m² · repos ${J.repos} m² (${J.jRepos} assis)`);
+  const om = ombreCamion(); pousser('info', `ombre du camion sur la façade (VP bas) : 0 → ${om.h.toFixed(1)} m sur ${(om.x1-om.x0).toFixed(1)} m`);
   return res;
 }
 
@@ -521,29 +432,16 @@ function evaluerSite(){
    SCÈNE DYNAMIQUE
    ===================================================================== */
 function rafraichir(){
-  while (dyn.children.length){ const c = dyn.children.pop();
-    c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material){ if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); }
+  while (dyn.children.length){ const c = dyn.children.pop(); c.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material){ if (o.material.map) o.material.map.dispose(); o.material.dispose(); } }); }
   const Z = PROJET.zonePublic;
-  if (ETAT.options.zone){
-    const surf = new THREE.Mesh(new THREE.PlaneGeometry(Z.x1-Z.x0, Z.z1-Z.z0), new THREE.MeshBasicMaterial({color:0x9fd3ff, transparent:true, opacity:.20, depthWrite:false}));
-    surf.rotation.x = -Math.PI/2; surf.position.set((Z.x0+Z.x1)/2, .03, (Z.z0+Z.z1)/2); dyn.add(surf);
-    if (ETAT.options.etiquettes) dyn.add(etiquette(`ZONE PUBLIC · ${((Z.x1-Z.x0)*(Z.z1-Z.z0)).toLocaleString('fr-FR')} m²`, (Z.x0+Z.x1)/2, 1.2, (Z.z0+Z.z1)/2, 14, '#9fd3ff'));
-  }
+  if (ETAT.options.zone){ const surf = new THREE.Mesh(new THREE.PlaneGeometry(Z.x1-Z.x0, Z.z1-Z.z0), new THREE.MeshBasicMaterial({color:0x9fd3ff, transparent:true, opacity:.20, depthWrite:false})); surf.rotation.x = -Math.PI/2; surf.position.set((Z.x0+Z.x1)/2, .03, (Z.z0+Z.z1)/2); dyn.add(surf);
+    exclusions().forEach(b => { const e = new THREE.Mesh(new THREE.PlaneGeometry(b[1]-b[0], b[3]-b[2]), new THREE.MeshBasicMaterial({color:0xf85149, transparent:true, opacity:.12, depthWrite:false})); e.rotation.x = -Math.PI/2; e.position.set((b[0]+b[1])/2, .035, (b[2]+b[3])/2); dyn.add(e); });
+    if (ETAT.options.etiquettes){ const J = jauges(); dyn.add(etiquette(`ZONE PUBLIC · ${J.net.toLocaleString('fr-FR')} m² nets · ${J.j2.toLocaleString('fr-FR')} pers.`, (Z.x0+Z.x1)/2, 1.2, Z.z0 + 16, 16, '#9fd3ff')); } }
   if (ETAT.options.cables) dessinerCables(dyn);
-  dessinerPlateforme(dyn);
-  dessinerRegie(dyn);
+  dessinerTour(dyn); dessinerRegie(dyn); dessinerPodium(dyn); dessinerCamion(dyn); dessinerRepos(dyn);
   ETAT.projecteurs.forEach(p => dessinerProjecteur(dyn, p));
   ETAT.lasers.forEach(l => dessinerLaser(dyn, l, evaluerLaser(l).statut));
-  if (ETAT.options.village){
-    posStands().forEach(s => dessinerTonnelle(dyn, s));
-    // allée centrale
-    const st = posStands(); if (st.length){
-      const z0 = regieAABB().z1 + .3, z1 = Math.max(...st.map(s=>s.z1)) + 1;
-      const al = new THREE.Mesh(new THREE.PlaneGeometry(ETAT.village.allee, z1-z0), new THREE.MeshBasicMaterial({color:0xffffff, transparent:true, opacity:.10, depthWrite:false}));
-      al.rotation.x = -Math.PI/2; al.position.set(ETAT.bloc.x, .035, (z0+z1)/2); dyn.add(al);
-      if (ETAT.options.etiquettes) dyn.add(etiquette(`ALLÉE ${ETAT.village.allee} m`, ETAT.bloc.x, .8, z1 - 1.5, 6, '#9fd3ff'));
-    }
-  }
+  if (ETAT.options.village) posStands().forEach(s => dessinerTonnelle(dyn, s));
   if (ETAT.options.sono) dessinerSono(dyn);
   if (ETAT.options.lumieres) dessinerLumieres(dyn);
   if (ETAT.options.etiquettes) dyn.add(etiquette("FAÇADE MAPPÉE", 0, PROJET.facade.hauteur + 2.5, 0, 12, '#ffb454'));
@@ -555,106 +453,95 @@ function rafraichir(){
    ===================================================================== */
 const side = document.getElementById('side');
 const ic = {ok:'✅', warn:'⚠️', bad:'❌', info:'·'};
-const champ = (label, val, on, step=0.1) => `<label>${label}<input type="number" step="${step}" value="${val}" data-on="${on}"></label>`;
+const champ = (label, val, chemin, step=0.1) => `<label>${label}<input type="number" step="${step}" value="${val}" data-on="${chemin}"></label>`;
 const items = res => res.map(r => `<div class="item ${r.niv==='info'?'':r.niv}">${ic[r.niv]} ${r.msg}</div>`).join('');
 const badge = s => s==='bad' ? '❌' : s==='warn' ? '⚠️' : '✅';
-const ouvert = {};  // mémorise les <details> ouverts entre deux rendus
-function det(id, titre, corps, defaut=false, force=false){
-  // force : un point bloquant rouvre toujours le volet, sinon il passerait inaperçu
-  const o = force ? true : (ouvert[id] === undefined ? defaut : ouvert[id]);
-  return `<details data-id="${id}" ${o?'open':''}><summary>${titre}</summary>${corps}</details>`;
-}
+const ouvert = {};
+function det(id, titre, corps, defaut=false, force=false){ const o = force ? true : (ouvert[id] === undefined ? defaut : ouvert[id]); return `<details data-id="${id}" ${o?'open':''}><summary>${titre}</summary>${corps}</details>`; }
 function rendrePanneau(){
-  const b = ETAT.bloc, r = ETAT.regie, v = ETAT.village, s = ETAT.sono, Z = PROJET.zonePublic;
+  const b = ETAT.bloc, r = ETAT.regie, v = ETAT.village, s = ETAT.sono, pd = ETAT.podium, c = ETAT.camion, Z = PROJET.zonePublic;
   let h = '';
-  // --- bloc central
-  h += '<h2>Bloc central</h2>' + det('bloc', `Position et plateforme <span>— x ${b.x} · z ${b.z} · VP à ${b.hauteurVP} m</span>`, `
-     <div class="grid">${champ('x (axe)',b.x,'b.x',0.5)}${champ('z (recul)',b.z,'b.z',0.5)}${champ('hauteur VP',b.hauteurVP,'b.hauteurVP',0.5)}
-       ${champ('plateforme larg.',b.largeurPlateforme,'b.largeurPlateforme',0.5)}${champ('plateforme prof.',b.profondeurPlateforme,'b.profondeurPlateforme',0.5)}${champ('écart régie',r.ecart,'r.ecart')}</div>
-     <p class="note" style="padding:0 10px 8px;margin:0">Plateforme VP devant, régie dos à dos derrière, village à la suite. Déplacer x ou z déplace tout le bloc.</p>`, true);
-  // --- projecteurs
+  h += '<h2>Tour VP · régie</h2>' + det('bloc', `Tour Layher et régie <span>— x ${b.x} · z ${b.z} · VP à ${b.hauteurVP} m</span>`, `
+     <div class="grid">${champ('x (axe)',b.x,'bloc.x',0.5)}${champ('z (recul)',b.z,'bloc.z',0.5)}${champ('lentille VP (m)',b.hauteurVP,'bloc.hauteurVP',0.1)}
+       ${champ('travées 3,07',b.travees,'bloc.travees',1)}${champ('niveaux 2 m',b.niveaux,'bloc.niveaux',1)}${champ('plancher (m)',b.plancher,'bloc.plancher',0.1)}
+       ${champ('écart régie',r.ecart,'regie.ecart')}${champ('surélévation régie',r.surelevation,'regie.surelevation')}</div>
+     <p class="note" style="padding:0 10px 8px;margin:0">Tour Layher au fond, régie devant (vitre vers la façade), podium-catwalk 3 m devant la régie. Déplacer x ou z déplace tout le bloc. Largeur de tour = travées × 3,07 m.</p>`, true);
+  h += '<h2>Podium-catwalk</h2>' + det('podium', `Tête ${pd.tete.largeur} × ${pd.tete.profondeur} + catwalk ${pd.catwalk.largeur} × ${pd.catwalk.longueur} m <span>— ${Math.min(1.5,pd.hauteur)} m</span>`, `
+     <div class="grid">${champ('hauteur (≤ 1,5)',pd.hauteur,'podium.hauteur')}${champ('écart régie',pd.ecartRegie,'podium.ecartRegie')}${champ('tête largeur',pd.tete.largeur,'podium.tete.largeur')}
+       ${champ('tête prof.',pd.tete.profondeur,'podium.tete.profondeur')}${champ('catwalk largeur',pd.catwalk.largeur,'podium.catwalk.largeur')}${champ('catwalk longueur',pd.catwalk.longueur,'podium.catwalk.longueur',0.5)}</div>`);
+  h += '<h2>Camion 20 m³ · DJ</h2>' + det('camion', `Devant la façade, z ${c.z} m <span>— écran sur le flanc, DJ sur le hayon</span>`, `
+     <div class="grid">${champ('x',c.x,'camion.x',0.5)}${champ('z (recul)',c.z,'camion.z',0.1)}${champ('longueur',c.longueur,'camion.longueur')}
+       ${champ('hauteur caisse',c.hauteurCaisse,'camion.hauteurCaisse')}${champ('plancher',c.plancher,'camion.plancher',0.05)}${champ('hayon (m)',c.hayon,'camion.hayon')}${champ('charge hayon kg',c.chargeHayonKg,'camion.chargeHayonKg',50)}</div>`);
   h += '<h2>Vidéoprojecteurs</h2>';
   ETAT.projecteurs.forEach((p,i) => { const ev = evaluerProjecteur(p);
-    h += det('p'+i, `${p.nom} <span>— ${badge(ev.statut)}</span>`, `
-      <div class="grid">${champ('décalage x',p.dx,`p.${i}.dx`)}${champ('centre image y',p.cy,`p.${i}.cy`)}${champ('TR',p.tr,`p.${i}.tr`,0.01)}
-        ${champ('lumens',p.lumens,`p.${i}.lumens`,1000)}</div>${items(ev.res)}`, ev.statut!=='ok', ev.statut==='bad'); });
-  // --- lasers
+    h += det('p'+i, `${p.nom} <span>— ${badge(ev.statut)}</span>`, `<div class="grid">${champ('décalage x',p.dx,`projecteurs.${i}.dx`)}${champ('centre image y',p.cy,`projecteurs.${i}.cy`)}${champ('TR',p.tr,`projecteurs.${i}.tr`,0.01)}${champ('lumens',p.lumens,`projecteurs.${i}.lumens`,1000)}</div>${items(ev.res)}`, ev.statut!=='ok', ev.statut==='bad'); });
   h += '<h2>Lasers</h2>';
   ETAT.lasers.forEach((l,i) => { const ev = evaluerLaser(l);
-    h += det('l'+i, `${l.nom} <span>— ${badge(ev.statut)} ${ev.statut==='bad'?'interdit':ev.statut==='warn'?'à vérifier':'conforme (géom.)'}</span>`, `
-      <div class="grid">${champ('décalage x',l.dx,`l.${i}.dx`)}${champ('décalage y',l.dy,`l.${i}.dy`)}${champ('W',l.puissance,`l.${i}.puissance`,1)}
-        ${champ('cible x',l.tx,`l.${i}.tx`)}${champ('cible y',l.ty,`l.${i}.ty`)}</div>${items(ev.res)}`, ev.statut==='bad', ev.statut==='bad'); });
-  // --- village
-  const stands = posStands();
-  h += '<h2>Village sous tonnelles</h2>' + det('village', `${v.stands.length} stands <span>— allée ${v.allee} m · tonnelles ${v.cote} × ${v.cote} m</span>`, `
-     <div class="grid">${champ('allée',v.allee,'v.allee')}${champ('pas',v.pas,'v.pas')}${champ('côté tonnelle',v.cote,'v.cote')}</div>
-     ${v.stands.map((st,i) => `<div class="stand">
-        <input type="text" value="${st.nom.replace(/"/g,'&quot;')}" data-stand="${i}">
-        <select data-type="${i}">${Object.keys(TYPE_COULEUR).map(t=>`<option ${st.type===t?'selected':''}>${t}</option>`).join('')}</select>
-        <button data-del="${i}" title="retirer">✕</button></div>`).join('')}
-     <div class="row" style="padding:4px 10px 8px"><button data-add="1">+ stand</button>
-       <span class="note" style="margin:4px 0 0">ordre = ordre dans l'allée, en partant de la régie ; 2 par rangée, face à face</span></div>`);
-  // --- sono
-  h += '<h2>Sono</h2>' + det('sono', `PA principale ±${s.x} m <span>— ${s.delais ? s.delais+' délais' : 'sans délai'}</span>`, `
-     <div class="grid">${champ('x (±)',s.x,'s.x')}${champ('z',s.z,'s.z')}${champ('hauteur',s.hauteur,'s.hauteur')}
-       ${champ('ouverture °',s.ouverture,'s.ouverture',5)}${champ('portée m',s.portee,'s.portee',1)}${champ('visée int. °',s.visee,'s.visee',1)}
-       ${champ('subs / côté',s.subs,'s.subs',1)}${champ('délais (0/2/4)',s.delais,'s.delais',2)}${champ('délais z',s.delaiZ,'s.delaiZ',1)}</div>`);
-  // --- lumières
-  h += '<h2>Lumières</h2>' + det('lum', `${ETAT.lumieres.totems.length} totems · ${ETAT.lumieres.wash.length} wash façade`, `
-     ${ETAT.lumieres.totems.map((t,i)=>`<div class="grid">${champ(`totem ${i+1} x`,t.x,`t.${i}.x`,0.5)}${champ('z',t.z,`t.${i}.z`,0.5)}${champ('h',t.h,`t.${i}.h`,0.5)}</div>`).join('')}
-     ${ETAT.lumieres.wash.map((w,i)=>`<div class="grid g2">${champ(`wash ${i+1} x`,w.x,`w.${i}.x`,0.5)}${champ('z',w.z,`w.${i}.z`,0.5)}${champ('cible x',w.tx,`w.${i}.tx`,0.5)}${champ('cible y',w.ty,`w.${i}.ty`,0.5)}</div>`).join('')}`);
-  // --- synthèse
-  const evs = [...ETAT.projecteurs.map(evaluerProjecteur), ...ETAT.lasers.map(evaluerLaser)], site = evaluerSite();
-  const nBad = evs.filter(e=>e.statut==='bad').length + site.filter(e=>e.niv==='bad').length;
-  const nWarn = evs.filter(e=>e.statut==='warn').length + site.filter(e=>e.niv==='warn').length;
-  const aire = (Z.x1-Z.x0)*(Z.z1-Z.z0), lumens = ETAT.projecteurs.reduce((a,p)=>a+p.lumens,0);
+    h += det('l'+i, `${l.nom} <span>— ${badge(ev.statut)} ${ev.statut==='bad'?'interdit':ev.statut==='warn'?'à vérifier':'conforme (géom.)'}</span>`, `<div class="grid">${champ('décalage x',l.dx,`lasers.${i}.dx`)}${champ('décalage y',l.dy,`lasers.${i}.dy`)}${champ('W',l.puissance,`lasers.${i}.puissance`,1)}${champ('cible x',l.tx,`lasers.${i}.tx`)}${champ('cible y',l.ty,`lasers.${i}.ty`)}</div>${items(ev.res)}`, ev.statut==='bad', ev.statut==='bad'); });
+  h += '<h2>Village sur les flancs</h2>' + det('village', `${v.stands.length} stands <span>— ${Math.ceil(v.stands.length/2)} par côté, face à la façade</span>`, `
+     <div class="grid">${champ('z des stands',v.z,'village.z',0.5)}${champ('écart tour',v.ecartTour,'village.ecartTour')}${champ('entre tonnelles',v.ecart,'village.ecart')}${champ('côté tonnelle',v.cote,'village.cote')}</div>
+     ${v.stands.map((st,i) => `<div class="stand"><input type="text" value="${st.nom.replace(/"/g,'&quot;')}" data-stand="${i}"><select data-type="${i}">${Object.keys(TYPE_COULEUR).map(t=>`<option ${st.type===t?'selected':''}>${t}</option>`).join('')}</select><button data-del="${i}" title="retirer">✕</button></div>`).join('')}
+     <div class="row" style="padding:4px 10px 8px"><button data-add="1">+ stand</button><span class="note" style="margin:4px 0 0">première moitié = flanc jardin de l'intérieur vers l'extérieur, seconde = flanc cour</span></div>`);
+  h += '<h2>Sono</h2>' + det('sono', `${s.stacks.length} piles de ${s.subsParStack} × ${s.sub.modele} <span>— ${s.delais ? s.delais+' délais' : 'sans délai'}</span>`, `
+     <div class="grid">${champ('z des piles',s.z,'sono.z')}${champ('pile ext. x (±)',Math.abs(s.stacks[s.stacks.length-1]),'sono.stacksExt',0.5)}${champ('pile int. x (±)',Math.abs(s.stacks[1]||s.stacks[0]),'sono.stacksInt',0.5)}
+       ${champ('subs / pile',s.subsParStack,'sono.subsParStack',1)}${champ('têtes / pile ext.',s.tetes.parStackExterieur,'sono.tetes.parStackExterieur',1)}${champ('front-fill / pile int.',s.tetes.frontFill,'sono.tetes.frontFill',1)}
+       ${champ('ouverture °',s.ouverture,'sono.ouverture',5)}${champ('portée m',s.portee,'sono.portee',1)}${champ('visée int. °',s.visee,'sono.visee',1)}
+       ${champ('délais (0/2/4)',s.delais,'sono.delais',2)}${champ('délais x (±)',s.delaiX,'sono.delaiX',1)}${champ('délais z',s.delaiZ,'sono.delaiZ',1)}</div>`);
+  h += '<h2>Lumières</h2>' + det('lum', `${ETAT.lumieres.totems.length} totems dans le village · ${ETAT.lumieres.wash.length} wash · ${ETAT.lumieres.scene.length} projecteurs de scène`, `
+     ${ETAT.lumieres.totems.map((t,i)=>`<div class="grid">${champ(`totem ${i+1} x`,t.x,`lumieres.totems.${i}.x`,0.5)}${champ('z',t.z,`lumieres.totems.${i}.z`,0.5)}${champ('h',t.h,`lumieres.totems.${i}.h`,0.5)}</div>`).join('')}
+     ${ETAT.lumieres.wash.map((w,i)=>`<div class="grid g2">${champ(`wash ${i+1} x`,w.x,`lumieres.wash.${i}.x`,0.5)}${champ('z',w.z,`lumieres.wash.${i}.z`,0.5)}${champ('cible x',w.tx,`lumieres.wash.${i}.tx`,0.5)}${champ('cible y',w.ty,`lumieres.wash.${i}.ty`,0.5)}</div>`).join('')}`);
+  h += '<h2>Repos · électricité</h2>' + det('repos', `Repos derrière la tour, TGBT et coffrets`, `
+     <div class="grid">${champ('repos z',ETAT.repos.z,'repos.z',0.5)}${champ('stockage z',ETAT.repos.stockage.z,'repos.stockage.z',0.5)}${champ('bâche z',ETAT.repos.bache.z,'repos.bache.z',0.5)}</div>
+     ${ETAT.electricite.armoires.map((a,i)=>`<div class="grid g2"><label style="grid-column:1/3">${a.nom}</label>${champ('x',a.x,`electricite.armoires.${i}.x`,0.5)}${champ('z',a.z,`electricite.armoires.${i}.z`,0.5)}</div>`).join('')}
+     ${ETAT.electricite.groupe ? `<div class="grid g2"><label style="grid-column:1/3">${ETAT.electricite.groupe.nom}</label>${champ('x',ETAT.electricite.groupe.x,'electricite.groupe.x',0.5)}${champ('z',ETAT.electricite.groupe.z,'electricite.groupe.z',0.5)}</div>` : ''}`);
+  const evs = [...ETAT.projecteurs.map(evaluerProjecteur), ...ETAT.lasers.map(evaluerLaser)], site = evaluerSite(), J = jauges();
+  const nBad = evs.filter(e=>e.statut==='bad').length + site.filter(e=>e.niv==='bad').length, nWarn = evs.filter(e=>e.statut==='warn').length + site.filter(e=>e.niv==='warn').length;
+  const lumens = ETAT.projecteurs.reduce((a,p)=>a+p.lumens,0), kw = ETAT.electricite.bilan.reduce((a,b)=>a+b.kw,0);
   const verdict = nBad ? `<div class="item bad">❌ ${nBad} point(s) bloquant(s)</div>` : nWarn ? `<div class="item warn">⚠️ ${nWarn} point(s) à vérifier, aucun bloquant</div>` : `<div class="item ok">✅ aucun point bloquant au contrôle géométrique</div>`;
   h += `<h2>Synthèse</h2>${verdict}${items(site)}
-    <p class="note">Contrôle géométrique : cibles, hauteur des faisceaux au-dessus du public, obstacles dans les cônes, zone public, allée et dégagements. Il ne remplace ni le calcul NOHD, ni la déclaration DGAC, ni la commission de sécurité. Volumes du site indicatifs.</p>
+    <p class="note">Contrôle géométrique : cibles, hauteur des faisceaux au-dessus du public et du podium, obstacles dans les cônes, zone public, voies pompiers, espacements. Il ne remplace ni le calcul NOHD, ni la déclaration DGAC, ni la commission de sécurité, ni la note de calcul de la tour. Volumes du site indicatifs.</p>
     <h2>Inventaire</h2><table>
       <tr><td>Vidéoprojecteurs</td><td>${ETAT.projecteurs.length} · ${lumens.toLocaleString('fr-FR')} lm</td></tr>
       <tr><td>Lasers</td><td>${ETAT.lasers.length}</td></tr>
-      <tr><td>Plateforme VP (échafaudage)</td><td>${b.largeurPlateforme} × ${b.profondeurPlateforme} m · ${b.hauteurVP} m</td></tr>
-      <tr><td>Régie étanche (conteneur 20')</td><td>${r.longueur} × ${r.largeur} × ${r.hauteur} m</td></tr>
-      <tr><td>Tonnelles ${v.cote}×${v.cote}</td><td>${v.stands.length}</td></tr>
-      <tr><td>Sono</td><td>2 PA + ${2*s.subs} subs${s.delais?` + ${s.delais} délais`:''}</td></tr>
-      <tr><td>Lumières</td><td>${ETAT.lumieres.totems.length} totems · ${ETAT.lumieres.wash.length} wash</td></tr>
-      <tr><td>Zone public</td><td>${aire.toLocaleString('fr-FR')} m² · ${Math.round(aire*Z.densite).toLocaleString('fr-FR')} pers. à ${Z.densite}/m²</td></tr>
+      <tr><td>Tour Layher Allround</td><td>${b.travees} × 3,07 m · plancher ${b.plancher} m</td></tr>
+      <tr><td>Régie étanche (conteneur 20')</td><td>${r.longueur} × ${r.largeur} × ${r.hauteur} m · +${r.surelevation} m</td></tr>
+      <tr><td>Podium-catwalk</td><td>${J.scene.toFixed(0)} m² · ${Math.min(1.5,pd.hauteur)} m</td></tr>
+      <tr><td>Camion 20 m³</td><td>écran ${(c.longueur - c.cabine).toFixed(1)} × ${c.hauteurCaisse} m · hayon ${c.hayon} m</td></tr>
+      <tr><td>Tonnelles ${v.cote}×${v.cote}</td><td>${v.stands.length} + repos + stockage</td></tr>
+      <tr><td>Sono</td><td>${s.stacks.length*s.subsParStack} × ${s.sub.modele} · ${2*s.tetes.parStackExterieur + s.delais*s.delaiTetes} × ${s.tetes.modele} · ${2*s.tetes.frontFill} × ${s.tetes.modeleFrontFill}</td></tr>
+      <tr><td>Lumières</td><td>${ETAT.lumieres.totems.length} totems · ${ETAT.lumieres.wash.length} wash · ${ETAT.lumieres.scene.length} scène</td></tr>
+      <tr><td>Passages de câbles</td><td>${tracesCables().reduce((a,c)=>{ for (let i=0;i<c.pts.length-1;i++) a += Math.hypot(c.pts[i+1][0]-c.pts[i][0], c.pts[i+1][1]-c.pts[i][1]); return a; },0).toFixed(0)} m</td></tr>
+      <tr><td>Bilan électrique</td><td>${kw} kW appelés · TGBT 125 A tri</td></tr>
+      <tr><td>Zone public nette</td><td>${J.net.toLocaleString('fr-FR')} m² · ${J.j2.toLocaleString('fr-FR')} pers. à ${Z.densite}/m²</td></tr>
     </table>
     <h2>Affichage</h2>
-    ${['zone:zone public','voisins:bâtiments voisins','nef:nef','cables:câblage','echafaud:échafaudages','etiquettes:étiquettes','cones:cônes VP','sono:sono','lumieres:lumières','village:village']
+    ${['zone:zone public','voisins:bâtiments voisins','nef:nef','cables:câbles et armoires','echafaud:tour Layher','etiquettes:étiquettes','cones:cônes VP','sono:sono','lumieres:lumières','village:village','camion:camion','repos:repos et stockage']
       .map(o => { const [k,l] = o.split(':'); return `<div class="chk"><input type="checkbox" data-opt="${k}" ${ETAT.options[k]?'checked':''}> ${l}</div>`; }).join('')}
     <div class="row" style="margin-top:10px"><button id="btnJson">Exporter JSON</button><button id="btnImport">Importer JSON</button><button class="sec" id="btnReset">Réinitialiser</button></div>
-    <input type="file" id="fileJson" accept=".json" style="display:none">`;
+    <input type="file" id="fileJson" accept=".json" style="display:none">
+    <p class="note">Le JSON exporté (schéma v2, projet compris) est lu tel quel par <b>outils/demo-evenement.html</b> (bouton Charger) et par <b>unreal/generer_projet_unreal.py</b> (remplacer unreal/implantation.json).</p>`;
   return h;
+}
+function poser(chemin, v){
+  if (chemin === 'sono.stacksExt'){ const s = ETAT.sono.stacks, m = Math.max(...s.map(Math.abs)); ETAT.sono.stacks = s.map(x => Math.abs(x) === m ? Math.sign(x)*v : x); return; }
+  if (chemin === 'sono.stacksInt'){ const s = ETAT.sono.stacks, m = Math.max(...s.map(Math.abs)); ETAT.sono.stacks = s.map(x => Math.abs(x) === m ? x : Math.sign(x)*v); return; }
+  const parts = chemin.split('.'); let o = ETAT; for (let i = 0; i < parts.length-1; i++) o = o[parts[i]]; o[parts[parts.length-1]] = v;
 }
 function mettreAJourPanneau(){
   side.querySelectorAll('details[data-id]').forEach(d => ouvert[d.dataset.id] = d.open);
   const scroll = side.scrollTop;
-  side.innerHTML = `<div style="font-weight:600">${PROJET.nom}</div><div class="note" style="margin:0 0 4px">Plan d'implantation générale · mètres</div>` + rendrePanneau();
+  side.innerHTML = `<div style="font-weight:600">${PROJET.nom}</div><div class="note" style="margin:0 0 4px">Plan d'implantation générale · mètres · schéma v2</div>` + rendrePanneau();
   side.scrollTop = scroll;
   side.querySelectorAll('details[data-id]').forEach(d => d.addEventListener('toggle', () => ouvert[d.dataset.id] = d.open));
-  side.querySelectorAll('input[data-on]').forEach(inp => inp.addEventListener('change', () => {
-    const parts = inp.dataset.on.split('.'), v = parseFloat(inp.value); if (isNaN(v)) return;
-    const [k, i, key] = parts.length === 3 ? parts : [parts[0], null, parts[1]];
-    ({b:()=>ETAT.bloc[key]=v, r:()=>ETAT.regie[key]=v, v:()=>ETAT.village[key]=v, s:()=>ETAT.sono[key]=v,
-      p:()=>ETAT.projecteurs[+i][key]=v, l:()=>ETAT.lasers[+i][key]=v,
-      t:()=>ETAT.lumieres.totems[+i][key]=v, w:()=>ETAT.lumieres.wash[+i][key]=v})[k]();
-    rafraichir();
-  }));
+  side.querySelectorAll('input[data-on]').forEach(inp => inp.addEventListener('change', () => { const v = parseFloat(inp.value); if (isNaN(v)) return; poser(inp.dataset.on, v); rafraichir(); }));
   side.querySelectorAll('input[data-stand]').forEach(inp => inp.addEventListener('change', () => { ETAT.village.stands[+inp.dataset.stand].nom = inp.value; rafraichir(); }));
   side.querySelectorAll('select[data-type]').forEach(sel => sel.addEventListener('change', () => { ETAT.village.stands[+sel.dataset.type].type = sel.value; rafraichir(); }));
   side.querySelectorAll('button[data-del]').forEach(bt => bt.addEventListener('click', () => { ETAT.village.stands.splice(+bt.dataset.del, 1); rafraichir(); }));
   side.querySelectorAll('button[data-add]').forEach(bt => bt.addEventListener('click', () => { ETAT.village.stands.push({nom:`Stand ${ETAT.village.stands.length+1}`, type:'asso'}); rafraichir(); }));
-  side.querySelectorAll('input[data-opt]').forEach(inp => inp.addEventListener('change', () => {
-    ETAT.options[inp.dataset.opt] = inp.checked;
-    stat.children.forEach(c => { if (c.userData.groupe) c.visible = ETAT.options[c.userData.groupe]; });
-    rafraichir();
-  }));
-  document.getElementById('btnJson').onclick = () => telecharger('implantation.json', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(ETAT, null, 2)));
+  side.querySelectorAll('input[data-opt]').forEach(inp => inp.addEventListener('change', () => { ETAT.options[inp.dataset.opt] = inp.checked; stat.children.forEach(c => { if (c.userData.groupe) c.visible = ETAT.options[c.userData.groupe]; }); rafraichir(); }));
+  document.getElementById('btnJson').onclick = () => telecharger('implantation.json', 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(Object.assign({projet:PROJET}, ETAT), null, 1)));
   document.getElementById('btnImport').onclick = () => document.getElementById('fileJson').click();
-  document.getElementById('fileJson').onchange = e => { const f = e.target.files[0]; if (!f) return;
-    f.text().then(t => { try { ETAT = Object.assign(DEFAUT(), JSON.parse(t)); rafraichir(); } catch(err){ alert('Fichier illisible'); } }); };
+  document.getElementById('fileJson').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const j = JSON.parse(t); if (!j.camion){ alert('Ancien schéma (v1) : ce fichier ne contient pas le podium, le camion, le repos… Réinitialise puis reporte tes valeurs.'); return; } ETAT = fusionner(DEFAUT(), j); rafraichir(); } catch(err){ alert('Fichier illisible'); } }); };
   document.getElementById('btnReset').onclick = () => { if (confirm('Revenir à l\'implantation par défaut ?')){ ETAT = DEFAUT(); rafraichir(); } };
 }
 function telecharger(nom, url){ const a = document.createElement('a'); a.href = url; a.download = nom; document.body.appendChild(a); a.click(); a.remove(); }
@@ -665,22 +552,22 @@ function telecharger(nom, url){ const a = document.createElement('a'); a.href = 
 const VUES = {
   persp:   {pos:[-80, 60, 160], cible:[0, 8, 45]},
   plan:    {pos:[0, 260, 55.01], cible:[0, 0, 55], ortho:true},
-  bloc:    {pos:[-18, 14, 95], cible:[0, 3, 76]},
-  village: {pos:[26, 18, 104], cible:[0, 1, 80]},
+  bloc:    {pos:[-22, 12, 46], cible:[0, 4, 64]},
+  flancs:  {pos:[30, 10, 50], cible:[10, 2, 67]},
+  camion:  {pos:[-12, 5, 16], cible:[2, 2, 4.5]},
   cote:    {pos:[130, 16, 50], cible:[0, 14, 30]},
-  public:  {pos:[0, 1.7, 42], cible:[0, 16, 0]}
+  public:  {pos:[5, 1.7, 40], cible:[0, 16, 0]},
+  catwalk: {pos:[0, 3.2, 60.6], cible:[0, 6, 0]}
 };
 function allerVue(nom){ const v = VUES[nom]; camera.position.set(...v.pos); controls.target.set(...v.cible); controls.enableRotate = !v.ortho; controls.update(); }
 function init(){
   const vue = document.getElementById('view');
   scene = new THREE.Scene(); scene.background = new THREE.Color(0xa9c4dc); scene.fog = new THREE.Fog(0xa9c4dc, 240, 560);
   camera = new THREE.PerspectiveCamera(42, 1, .1, 1200);
-  renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true});
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true}); renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   vue.appendChild(renderer.domElement);
   scene.add(new THREE.HemisphereLight(0xdfeeff, 0x6b6250, .9));
-  const soleil = new THREE.DirectionalLight(0xfff1dc, 1.1); soleil.position.set(-80, 120, 60); soleil.castShadow = true;
-  Object.assign(soleil.shadow.camera, {left:-130, right:130, top:130, bottom:-130, far:420}); soleil.shadow.mapSize.set(2048, 2048); scene.add(soleil);
+  const soleil = new THREE.DirectionalLight(0xfff1dc, 1.1); soleil.position.set(-80, 120, 60); soleil.castShadow = true; Object.assign(soleil.shadow.camera, {left:-130, right:130, top:130, bottom:-130, far:420}); soleil.shadow.mapSize.set(2048, 2048); scene.add(soleil);
   const grille = new THREE.GridHelper(220, 22, 0x3a4450, 0x2a3138); grille.position.set(0, .01, 60); stat.add(grille);
   construireFacade(); construireSite(); scene.add(stat, dyn);
   stat.children.forEach(c => { if (c.userData.groupe) c.visible = ETAT.options[c.userData.groupe]; });
@@ -690,8 +577,7 @@ function init(){
   document.getElementById('btnPng').addEventListener('click', () => { renderer.render(scene, camera); telecharger('implantation-' + Date.now() + '.png', renderer.domElement.toDataURL('image/png')); });
   redimensionner(); window.addEventListener('resize', redimensionner); rafraichir(); boucle();
 }
-function redimensionner(){ const vue = document.getElementById('view'), w = vue.clientWidth, h = vue.clientHeight;
-  renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix(); renderer.domElement.style.width = w+'px'; renderer.domElement.style.height = h+'px'; }
+function redimensionner(){ const vue = document.getElementById('view'), w = vue.clientWidth, h = vue.clientHeight; renderer.setSize(w, h, false); camera.aspect = w/h; camera.updateProjectionMatrix(); renderer.domElement.style.width = w+'px'; renderer.domElement.style.height = h+'px'; }
 function boucle(){ requestAnimationFrame(boucle); controls.update(); renderer.render(scene, camera); }
 init();
 </script>

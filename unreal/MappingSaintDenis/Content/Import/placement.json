@@ -1,6 +1,8 @@
 {
  "unites": "cm",
  "repere": "Unreal : X avant (= recul Z du modèle), Y droite (= X modèle), Z haut (= Y modèle)",
+ "version": 2,
+ "cables_m": 277.7,
  "acteurs": [
   {
    "acteur": "Facade",
@@ -83,11 +85,11 @@
    "yaw_deg": 0.0
   },
   {
-   "acteur": "PlateformeVP",
-   "element": "SM_PlateformeVP",
+   "acteur": "TourLayher_VP",
+   "element": "SM_TourLayher",
    "location_cm": [
-    7000.0,
-    0.0,
+    7000,
+    0,
     0
    ],
    "yaw_deg": 0.0
@@ -96,7 +98,27 @@
    "acteur": "Regie_etanche",
    "element": "SM_Regie",
    "location_cm": [
-    7312.0,
+    6564.500000000001,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Podium_catwalk",
+   "element": "SM_Podium",
+   "location_cm": [
+    5942.500000000001,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Camion_20m3_DJ",
+   "element": "SM_Camion",
+   "location_cm": [
+    420.0,
     0,
     0
    ],
@@ -106,8 +128,8 @@
    "acteur": "Stand_Prévention",
    "element": "SM_Tonnelle_prevention",
    "location_cm": [
-    7734.0,
-    -350.0,
+    6750.0,
+    -810.5,
     0
    ],
    "yaw_deg": 0.0
@@ -116,38 +138,8 @@
    "acteur": "Stand_Poste_de_secours",
    "element": "SM_Tonnelle_secours",
    "location_cm": [
-    7734.0,
-    350.0,
-    0
-   ],
-   "yaw_deg": 0.0
-  },
-  {
-   "acteur": "Stand_Accueil_-_infos",
-   "element": "SM_Tonnelle_accueil",
-   "location_cm": [
-    8094.0,
-    -350.0,
-    0
-   ],
-   "yaw_deg": 0.0
-  },
-  {
-   "acteur": "Stand_Buvette",
-   "element": "SM_Tonnelle_buvette",
-   "location_cm": [
-    8094.0,
-    350.0,
-    0
-   ],
-   "yaw_deg": 0.0
-  },
-  {
-   "acteur": "Stand_Restauration",
-   "element": "SM_Tonnelle_buvette",
-   "location_cm": [
-    8454.0,
-    -350.0,
+    6750.0,
+    -1230.5,
     0
    ],
    "yaw_deg": 0.0
@@ -156,8 +148,8 @@
    "acteur": "Stand_Asso_1",
    "element": "SM_Tonnelle_asso",
    "location_cm": [
-    8454.0,
-    350.0,
+    6750.0,
+    -1650.5000000000002,
     0
    ],
    "yaw_deg": 0.0
@@ -166,8 +158,8 @@
    "acteur": "Stand_Asso_2",
    "element": "SM_Tonnelle_asso",
    "location_cm": [
-    8814.0,
-    -350.0,
+    6750.0,
+    -2070.5,
     0
    ],
    "yaw_deg": 0.0
@@ -176,31 +168,171 @@
    "acteur": "Stand_Asso_3",
    "element": "SM_Tonnelle_asso",
    "location_cm": [
-    8814.0,
-    350.0,
+    6750.0,
+    2070.5,
     0
    ],
    "yaw_deg": 0.0
   },
   {
-   "acteur": "PA_jardin",
-   "element": "SM_PA_Stack",
+   "acteur": "Stand_Accueil_-_infos",
+   "element": "SM_Tonnelle_accueil",
    "location_cm": [
-    400,
-    -1950.0,
+    6750.0,
+    810.5,
     0
    ],
-   "yaw_deg": 10.0
+   "yaw_deg": 0.0
   },
   {
-   "acteur": "PA_cour",
-   "element": "SM_PA_Stack",
+   "acteur": "Stand_Buvette",
+   "element": "SM_Tonnelle_buvette",
    "location_cm": [
-    400,
-    1950.0,
+    6750.0,
+    1230.5,
     0
    ],
-   "yaw_deg": -10.0
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stand_Restauration",
+   "element": "SM_Tonnelle_buvette",
+   "location_cm": [
+    6750.0,
+    1650.5000000000002,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Repos_equipe",
+   "element": "SM_Repos",
+   "location_cm": [
+    7550.0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Stockage",
+   "element": "SM_Stockage",
+   "location_cm": [
+    7920.0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Bache_opaque_repos",
+   "element": "SM_BacheRepos",
+   "location_cm": [
+    7280.0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Subs_jardin_ext",
+   "element": "SM_SubStack",
+   "location_cm": [
+    400,
+    -2100,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Subs_jardin_int",
+   "element": "SM_SubStack",
+   "location_cm": [
+    400,
+    -1720.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Subs_cour_int",
+   "element": "SM_SubStack",
+   "location_cm": [
+    400,
+    1720.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Subs_cour_ext",
+   "element": "SM_SubStack",
+   "location_cm": [
+    400,
+    2100,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "PA_tetes_jardin_ext",
+   "element": "SM_TetesPA",
+   "location_cm": [
+    400,
+    -2100,
+    280.0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "PA_tetes_cour_ext",
+   "element": "SM_TetesPA",
+   "location_cm": [
+    400,
+    2100,
+    280.0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FrontFill_jardin_int",
+   "element": "SM_FrontFill",
+   "location_cm": [
+    400,
+    -1720.0,
+    280.0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FrontFill_cour_int",
+   "element": "SM_FrontFill",
+   "location_cm": [
+    400,
+    1720.0,
+    280.0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Delai_jardin",
+   "element": "SM_DelaiTour",
+   "location_cm": [
+    3800,
+    -1300,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Delai_cour",
+   "element": "SM_DelaiTour",
+   "location_cm": [
+    3800,
+    1300,
+    0
+   ],
+   "yaw_deg": 0.0
   },
   {
    "acteur": "Sono_Couverture",
@@ -216,8 +348,8 @@
    "acteur": "Totem_1",
    "element": "SM_Totem",
    "location_cm": [
-    1000,
-    -3100,
+    6750.0,
+    -1019.9999999999999,
     0
    ],
    "yaw_deg": 0.0
@@ -226,8 +358,8 @@
    "acteur": "Totem_2",
    "element": "SM_Totem",
    "location_cm": [
-    1000,
-    3100,
+    6750.0,
+    1019.9999999999999,
     0
    ],
    "yaw_deg": 0.0
@@ -236,8 +368,8 @@
    "acteur": "Totem_3",
    "element": "SM_Totem",
    "location_cm": [
-    5600,
-    -3100,
+    6750.0,
+    -1860.0000000000002,
     0
    ],
    "yaw_deg": 0.0
@@ -246,8 +378,8 @@
    "acteur": "Totem_4",
    "element": "SM_Totem",
    "location_cm": [
-    5600,
-    3100,
+    6750.0,
+    1860.0000000000002,
     0
    ],
    "yaw_deg": 0.0
@@ -256,7 +388,7 @@
    "acteur": "Wash_1",
    "element": "SM_WashFacade",
    "location_cm": [
-    900,
+    550.0,
     -1300,
     0
    ],
@@ -266,8 +398,88 @@
    "acteur": "Wash_2",
    "element": "SM_WashFacade",
    "location_cm": [
-    900,
+    550.0,
     1300,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "ProjScene_1",
+   "element": "SM_ProjScene",
+   "location_cm": [
+    5842.500000000001,
+    -459.99999999999994,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "ProjScene_2",
+   "element": "SM_ProjScene",
+   "location_cm": [
+    5842.500000000001,
+    459.99999999999994,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Armoire_TGBT_1",
+   "element": "SM_Armoire_1",
+   "location_cm": [
+    7200,
+    -650.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Armoire_Coffret_2",
+   "element": "SM_Armoire_2",
+   "location_cm": [
+    160.0,
+    -2500,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Armoire_Coffret_3",
+   "element": "SM_Armoire_3",
+   "location_cm": [
+    160.0,
+    2500,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Armoire_Coffret_4",
+   "element": "SM_Armoire_4",
+   "location_cm": [
+    7200,
+    650.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "GE_100kVA_option",
+   "element": "SM_GroupeElectrogene",
+   "location_cm": [
+    7800,
+    -1250.0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "Cables_passages",
+   "element": "SM_Cables",
+   "location_cm": [
+    0,
+    0,
     0
    ],
    "yaw_deg": 0.0
@@ -278,7 +490,7 @@
    "location_cm": [
     7000,
     -130.0,
-    1000
+    1080.0
    ],
    "yaw_deg": 358.94
   },
@@ -298,7 +510,7 @@
    "location_cm": [
     7000,
     130.0,
-    1000
+    1080.0
    ],
    "yaw_deg": 1.06
   },
@@ -318,7 +530,7 @@
    "location_cm": [
     7000,
     -360.0,
-    900.0
+    1140.0
    ],
    "yaw_deg": 0.0
   },
@@ -338,7 +550,7 @@
    "location_cm": [
     7000,
     360.0,
-    900.0
+    1140.0
    ],
    "yaw_deg": 0.0
   },
@@ -411,6 +623,26 @@
     0
    ],
    "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauScene_1",
+   "element": "SM_FaisceauScene_1",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
+  },
+  {
+   "acteur": "FaisceauScene_2",
+   "element": "SM_FaisceauScene_2",
+   "location_cm": [
+    0,
+    0,
+    0
+   ],
+   "yaw_deg": 0.0
   }
  ],
  "lumieres": [
@@ -419,7 +651,7 @@
    "location_cm": [
     7000,
     -130.0,
-    1000
+    1080.0
    ],
    "cible_cm": [
     0,
@@ -434,7 +666,7 @@
    "location_cm": [
     7000,
     130.0,
-    1000
+    1080.0
    ],
    "cible_cm": [
     0,
@@ -447,12 +679,12 @@
   {
    "nom": "Light_Totem_1",
    "location_cm": [
-    1000,
-    -3100,
+    6750.0,
+    -1019.9999999999999,
     550.0
    ],
    "cible_cm": [
-    3300.0,
+    3400.0,
     0.0,
     0
    ],
@@ -462,12 +694,12 @@
   {
    "nom": "Light_Totem_2",
    "location_cm": [
-    1000,
-    3100,
+    6750.0,
+    1019.9999999999999,
     550.0
    ],
    "cible_cm": [
-    3300.0,
+    3400.0,
     0.0,
     0
    ],
@@ -477,12 +709,12 @@
   {
    "nom": "Light_Totem_3",
    "location_cm": [
-    5600,
-    -3100,
+    6750.0,
+    -1860.0000000000002,
     550.0
    ],
    "cible_cm": [
-    3300.0,
+    3400.0,
     0.0,
     0
    ],
@@ -492,12 +724,12 @@
   {
    "nom": "Light_Totem_4",
    "location_cm": [
-    5600,
-    3100,
+    6750.0,
+    1860.0000000000002,
     550.0
    ],
    "cible_cm": [
-    3300.0,
+    3400.0,
     0.0,
     0
    ],
@@ -507,7 +739,7 @@
   {
    "nom": "Light_Wash_1",
    "location_cm": [
-    900,
+    550.0,
     -1300,
     50.0
    ],
@@ -522,7 +754,7 @@
   {
    "nom": "Light_Wash_2",
    "location_cm": [
-    900,
+    550.0,
     1300,
     50.0
    ],
@@ -533,6 +765,36 @@
    ],
    "lumens": 15000,
    "cone_deg": 30.0
+  },
+  {
+   "nom": "Light_Scene_1",
+   "location_cm": [
+    5842.500000000001,
+    -459.99999999999994,
+    360.0
+   ],
+   "cible_cm": [
+    5542.500000000001,
+    0,
+    270.0
+   ],
+   "lumens": 8000,
+   "cone_deg": 50.0
+  },
+  {
+   "nom": "Light_Scene_2",
+   "location_cm": [
+    5842.500000000001,
+    459.99999999999994,
+    360.0
+   ],
+   "cible_cm": [
+    5542.500000000001,
+    0,
+    270.0
+   ],
+   "lumens": 8000,
+   "cone_deg": 50.0
   }
  ]
 }

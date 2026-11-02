@@ -33,9 +33,13 @@ NIVEAU = "/Game/Maps/Implantation"
 
 DOSSIERS = {  # préfixe d'acteur -> dossier Outliner
     "Facade": "01_Facade", "Nef": "01_Facade", "Sol": "00_Site", "Voisin": "00_Site", "ZonePublic": "00_Site",
-    "PlateformeVP": "02_Bloc_central", "Regie": "02_Bloc_central", "VP_": "02_Bloc_central", "Laser": "02_Bloc_central",
-    "Stand": "03_Village", "PA_": "04_Sono", "Delai": "04_Sono", "Sono": "04_Sono",
+    "TourLayher": "02_Bloc_central", "PlateformeVP": "02_Bloc_central", "Regie": "02_Bloc_central", "VP_": "02_Bloc_central", "Laser": "02_Bloc_central",
+    "Podium": "08_Scene_catwalk", "ProjScene": "08_Scene_catwalk", "FaisceauScene": "06_Faisceaux",
+    "Camion": "09_Camion_DJ",
+    "Stand": "03_Village", "Repos": "11_Repos_stockage", "Stockage": "11_Repos_stockage", "Bache": "11_Repos_stockage",
+    "Subs_": "04_Sono", "PA_": "04_Sono", "FrontFill": "04_Sono", "Delai": "04_Sono", "Sono": "04_Sono",
     "Totem": "05_Lumieres", "Wash": "05_Lumieres", "Cone": "06_Faisceaux", "Faisceau": "06_Faisceaux", "Light": "05_Lumieres",
+    "Armoire": "10_Electricite_cables", "GE_": "10_Electricite_cables", "Cables": "10_Electricite_cables",
 }
 def dossier(nom):
     for k, v in DOSSIERS.items():
@@ -98,7 +102,7 @@ def placer(importes):
         act.static_mesh_component.set_static_mesh(sm)
         act.set_folder_path(dossier(a["acteur"]))
         act.tags = ["implantation"]
-        if a["element"].startswith(("SM_Cone", "SM_Faisceau", "SM_Sono_Couverture", "SM_ZonePublic")):
+        if a["element"].startswith(("SM_Cone", "SM_Faisceau", "SM_Sono_Couverture", "SM_ZonePublic", "SM_Cables")):
             act.static_mesh_component.set_cast_shadow(False)   # volumes d'étude, pas d'ombre
         n += 1
     unreal.log(f"[implantation] {n} acteurs placés")

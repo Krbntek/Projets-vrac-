@@ -109,6 +109,8 @@ def etape_materiaux():
     # affectation par préfixe d'acteur
     affect = {"Facade": "M_Pierre", "Nef": "M_Pierre", "Sol": "M_Pave", "Voisin": "M_Voisin", "Regie": "M_Regie",
               "PlateformeVP": "M_Echafaud", "PA_": "M_Sono", "Delai": "M_Sono", "Totem": "M_Sono", "VP_": "M_Sono", "Laser_": "M_Sono",
+              "TourLayher": "M_Echafaud", "Podium": "M_Deck", "ProjScene": "M_Sono", "Camion": "M_Regie", "Subs_": "M_Sono", "FrontFill": "M_Sono",
+              "Repos": "M_Tente", "Stockage": "M_Tente", "Bache": "M_Sono", "Armoire": "M_Regie", "GE_": "M_Sono", "Cables": "M_Sono", "FaisceauScene": "M_Faisceau",
               "Cone": "M_ConeVP", "FaisceauTotem": "M_Faisceau", "FaisceauWash": "M_Faisceau", "FaisceauLaser": "M_Laser"}
     n = 0
     for a in EAS.get_all_level_actors():
