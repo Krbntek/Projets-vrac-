@@ -100,13 +100,14 @@ const P = () => E.projet;
    ===================================================================== */
 const PHASES = [
   {t:16.0, nom:"Montage",              sous:"Plateforme, régie et village en place. Parvis fermé au public, accès pompiers libres.",             public:0.00, ep:true,  vil:false, son:false, lum:false, map:false, las:false},
-  {t:18.0, nom:"Ouverture du village", sous:"Les stands ouvrent — prévention et poste de secours en tête d'allée, à côté de la régie.",             public:0.15, ep:true,  vil:true,  son:false, lum:false, map:false, las:false},
-  {t:19.5, nom:"Le parvis se remplit", sous:"Sono en fond, lumières d'ambiance. Le public reste dans la zone délimitée, loin des faisceaux.",      public:0.55, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false},
-  {t:21.0, nom:"Crépuscule",           sous:"Dernières lueurs. Éclairage public encore allumé.",                                                     public:0.85, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false},
+  {t:18.0, nom:"Ouverture du village", sous:"Les stands ouvrent — prévention et poste de secours en tête d'allée, à côté de la régie.",             public:0.15, ep:true,  vil:true,  son:false, lum:false, map:false, las:false, scn:false},
+  {t:18.6, nom:"Scène ouverte",        sous:"Micro ouvert au bout de l'allée : chant, slam, prises de parole des assos. On s'inscrit à l'accueil, juste à côté. Tout le monde est invité à monter.", public:0.35, ep:true, vil:true, son:false, lum:false, map:false, las:false, scn:true},
+  {t:19.5, nom:"Le parvis se remplit", sous:"Sono en fond, lumières d'ambiance. La scène ouverte tourne, le public reste dans la zone délimitée.", public:0.55, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false, scn:true},
+  {t:21.0, nom:"Crépuscule",           sous:"Dernières lueurs. Éclairage public encore allumé, dernier passage sur la scène ouverte avant le show.", public:0.85, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false, scn:true},
   {t:22.0, nom:"Extinction",           sous:"La Ville éteint l'éclairage public du parvis : c'est la condition du rendu.",                           public:1.00, ep:false, vil:true,  son:true,  lum:true,  map:false, las:false},
   {t:22.1, nom:"Le mapping",           sous:"Deux zones empilées sur le corps de façade, la tour en wash. Les faisceaux passent à plus de 9 m au-dessus des têtes.",   public:1.00, ep:false, vil:true,  son:true,  lum:false, map:true,  las:false},
   {t:22.6, nom:"Les lasers",           sous:"Tracés sur la façade uniquement, jamais vers le public ni vers le ciel. Opérateur certifié en régie.",  public:1.00, ep:false, vil:true,  son:true,  lum:false, map:true,  las:true},
-  {t:23.3, nom:"Fin du show",          sous:"Rallumage progressif. Le village reste ouvert pour la sortie, les totems guident vers les accès.",     public:0.80, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false},
+  {t:23.3, nom:"Fin du show",          sous:"Rallumage progressif. La scène ouverte reprend pour un second set, le village reste ouvert pour la sortie.", public:0.80, ep:true,  vil:true,  son:true,  lum:true,  map:false, las:false, scn:true},
   {t:24.3, nom:"Sortie du public",     sous:"Flux vers le métro et le tram. Poste de secours et accueil restent ouverts.",                          public:0.25, ep:true,  vil:true,  son:false, lum:true,  map:false, las:false},
   {t:25.3, nom:"Démontage",            sous:"Parvis rendu propre avant 2 h.",                                                                       public:0.00, ep:true,  vil:false, son:false, lum:false, map:false, las:false},
   {t:26.0, nom:"Fin",                  sous:"",                                                                                                      public:0.00, ep:true,  vil:false, son:false, lum:false, map:false, las:false}
@@ -116,7 +117,7 @@ function etatA(t){
   const a = PHASES[i], b = PHASES[i+1], u = Math.min(1, Math.max(0, (t-a.t)/Math.max(.01, b.t-a.t)));
   const s = u*u*(3-2*u);
   const bl = (k) => (a[k] ? 1 : 0) * (1-s) + (b[k] ? 1 : 0) * s;
-  return {phase:a, public:a.public*(1-s)+b.public*s, ep:bl('ep'), vil:bl('vil'), son:bl('son'), lum:bl('lum'), map:bl('map'), las:bl('las')};
+  return {phase:a, public:a.public*(1-s)+b.public*s, ep:bl('ep'), vil:bl('vil'), son:bl('son'), lum:bl('lum'), map:bl('map'), las:bl('las'), scn:bl('scn')};
 }
 // soleil : élévation et azimut approchés pour Saint-Denis fin d'été (coucher ~20h45, nuit noire ~22h15)
 function soleil(t){
@@ -165,32 +166,91 @@ const texTente = tex(128, 128, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0
 // le CONTENU du mapping : une toile animée, redessinée chaque frame pendant le show
 const mapC = document.createElement('canvas'); mapC.width = 512; mapC.height = 600;
 const texMapping = new THREE.CanvasTexture(mapC); texMapping.minFilter = THREE.LinearFilter;
+// géométrie de l'architecture en px de toile, pour que les illustrations "accrochent" la pierre
+function archi(g, w, h){
+  const F = P().facade, sx = w/F.largeur, sy = h/F.hauteur, X = x => w/2 + x*sx, Y = y => h - y*sy;
+  const arc = (x0,x1,y0,yn) => { const r = (x1-x0)/2*sx; g.beginPath(); g.moveTo(X(x0),Y(y0)); g.lineTo(X(x0),Y(yn)); g.arc(X((x0+x1)/2), Y(yn), r, Math.PI, 0); g.lineTo(X(x1),Y(y0)); };
+  return {F, sx, sy, X, Y, arc,
+    portails:[[-2.6,2.6,0,5.4],[-12.3,-6.9,0,4.9],[6.9,12.3,0,4.9]], archivoltes:[[-5.35,5.35,0,5.4],[-13.35,-5.85,0,4.9],[5.85,13.35,0,4.9]],
+    lancettes:[[-11.25,-7.95,12.2,21.85],[-7.95,-4.65,12.2,21.85],[7.95,11.25,12.2,21.85],[11.25,14.55,12.2,21.85]], baie:[-2.95,2.95,10.95,13.6],
+    corniches:[1.4,10.6,12.2,18.8,23.1,25.9,28.4], contreforts:[-15.3,-5.65,5.65,15.3], rose:F.rosace, pignon:[[-5.9,29.2],[0,37.3],[5.9,29.2]]};
+}
+let toits = null;   // silhouette de ville, tirée une fois
 function dessinerMapping(t, s){
-  const g = mapC.getContext('2d'), w = mapC.width, h = mapC.height;
-  const F = P().facade, sx = w / F.largeur, sy = h / F.hauteur;        // 1 m -> px
-  g.fillStyle = '#000'; g.fillRect(0,0,w,h);
-  const tt = t*60;   // secondes de show "lentes"
-  // 1 — nappes de couleur qui montent le long des travées
-  const cols = [['#0b2a5e','#1b6fd1'],['#5e0b3a','#d11b7a'],['#5e3a0b','#f0a01b']];
-  for (let k = 0; k < 3; k++){
-    const x0 = w/3*k, ph = (tt*.08 + k*.33) % 1;
-    const gr = g.createLinearGradient(0, h, 0, 0); gr.addColorStop(0, cols[k][0]); gr.addColorStop(ph, cols[k][1]); gr.addColorStop(1, cols[k][0]);
-    g.fillStyle = gr; g.globalAlpha = .9; g.fillRect(x0, 0, w/3, h);
+  const g = mapC.getContext('2d'), w = mapC.width, h = mapC.height, A = archi(g, w, h), {X, Y, sx, sy} = A;
+  const u = clamp((t - 22.1) / 1.2, 0, 1), tt = t*60;          // u : avancement du show 0→1
+  g.globalAlpha = 1; g.fillStyle = '#050a18'; g.fillRect(0,0,w,h);
+  const fondu = (a,b) => clamp(Math.min((u-a)/.06, (b-u)/.06), 0, 1);   // chapitre actif avec fondu de 6 %
+
+  // ---- chapitre 1 · « Vitrail » : la façade devient une verrière, cellule par cellule
+  let k = fondu(0, .32);
+  if (k > 0){ g.globalAlpha = k;
+    const pal = ['#1b4fa8','#d9262c','#f2b134','#2e8b57','#7b2fbf','#e86f1e','#1fa3c9'];
+    const cell = 18, reveal = clamp(u/.22, 0, 1) * (h + 60);
+    for (let y = h; y > -cell; y -= cell) for (let x = (Math.floor(y/cell)%2)*cell/2 - cell; x < w; x += cell){
+      if (h - y > reveal) continue;
+      const idx = Math.abs(Math.floor(x/cell)*7 + Math.floor(y/cell)*3) % pal.length;
+      const hue = (idx*51 + tt*4) % 360; g.fillStyle = `hsl(${hue},70%,${42 + 10*Math.sin(tt*.6 + x*.02 + y*.03)}%)`;
+      g.beginPath(); g.moveTo(x+cell/2, y-cell); g.lineTo(x+cell, y-cell/2); g.lineTo(x+cell/2, y); g.lineTo(x, y-cell/2); g.closePath(); g.fill(); }
+    // plombs : les lignes de l'architecture, bien noires
+    g.strokeStyle = 'rgba(10,8,20,.9)'; g.lineWidth = 5;
+    A.corniches.forEach(y => { g.beginPath(); g.moveTo(0,Y(y)); g.lineTo(w,Y(y)); g.stroke(); });
+    A.contreforts.forEach(x => { g.beginPath(); g.moveTo(X(x),h); g.lineTo(X(x),Y(29.2)); g.stroke(); });
+    [...A.archivoltes, ...A.lancettes, A.baie].forEach(o => { A.arc(...o); g.stroke(); });
+    g.beginPath(); g.arc(X(A.rose.x), Y(A.rose.y), A.rose.r*sx, 0, 7); g.stroke();
+    for (let i = 0; i < 12; i++){ const a = i/12*Math.PI*2; g.beginPath(); g.moveTo(X(A.rose.x)+Math.cos(a)*A.rose.r*.3*sx, Y(A.rose.y)+Math.sin(a)*A.rose.r*.3*sx); g.lineTo(X(A.rose.x)+Math.cos(a)*A.rose.r*sx, Y(A.rose.y)+Math.sin(a)*A.rose.r*sx); g.stroke(); }
   }
-  g.globalAlpha = 1;
-  // 2 — les lignes de l'architecture : corniches, contreforts, portails (sobre, lisible)
-  g.strokeStyle = 'rgba(255,240,200,.75)'; g.lineWidth = 2;
-  [[1.4],[10.6],[12.2],[18.8],[23.1],[25.9],[28.4]].forEach(([y]) => { g.beginPath(); g.moveTo(0, h - y*sy); g.lineTo(w, h - y*sy); g.stroke(); });
-  [-5.65, 5.65].forEach(x => { g.beginPath(); g.moveTo(w/2 + x*sx, h); g.lineTo(w/2 + x*sx, h - 29.2*sy); g.stroke(); });
-  // 3 — la rosace qui pulse
-  const r = F.rosace, rp = (r.r + .4*Math.sin(tt*.9)) * sx;
-  const rg = g.createRadialGradient(w/2 + r.x*sx, h - r.y*sy, rp*.2, w/2 + r.x*sx, h - r.y*sy, rp);
-  rg.addColorStop(0, 'rgba(255,230,160,.95)'); rg.addColorStop(1, 'rgba(255,200,80,0)');
-  g.fillStyle = rg; g.beginPath(); g.arc(w/2 + r.x*sx, h - r.y*sy, rp, 0, 7); g.fill();
-  // 4 — particules qui montent
-  g.fillStyle = 'rgba(255,255,255,.8)';
-  for (let i = 0; i < 90; i++){ const x = (i*97 % w), y = h - ((tt*20 + i*53) % h); g.fillRect(x, y, 2, 2 + (i%3)); }
-  texMapping.needsUpdate = true;
+  // ---- chapitre 2 · « Envol » : ciel du soir, oiseaux qui traversent, la rosace en soleil
+  k = fondu(.28, .60);
+  if (k > 0){ g.globalAlpha = k * .85;   // l'image est projetée en additif : on reste sombre, sinon la façade blanchit
+    const gr = g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#04091c'); gr.addColorStop(.6,'#22163f'); gr.addColorStop(1,'#7a3418'); g.fillStyle = gr; g.fillRect(0,0,w,h);
+    const rg = g.createRadialGradient(X(A.rose.x),Y(A.rose.y),A.rose.r*sx*.2, X(A.rose.x),Y(A.rose.y),A.rose.r*sx*1.9);
+    rg.addColorStop(0,'rgba(255,225,150,.75)'); rg.addColorStop(.35,'rgba(255,170,80,.28)'); rg.addColorStop(1,'rgba(255,140,60,0)'); g.fillStyle = rg; g.fillRect(0,0,w,h);
+    g.strokeStyle = 'rgba(20,12,30,.95)'; g.lineWidth = 2.2; g.lineCap = 'round';
+    for (let i = 0; i < 26; i++){ const sp = .55 + (i%5)*.12, x = ((tt*sp*22 + i*173) % (w+120)) - 60, y = 40 + (i*97 % (h*.7)) + Math.sin(tt*1.3 + i)*14, f = Math.sin(tt*7 + i*1.7), sc = 6 + (i%4)*3;
+      g.beginPath(); g.moveTo(x-sc, y + f*sc*.7); g.quadraticCurveTo(x-sc*.4, y - sc*.3, x, y); g.quadraticCurveTo(x+sc*.4, y - sc*.3, x+sc, y + f*sc*.7); g.stroke(); }
+    // ouvertures en silhouettes lumineuses : les baies deviennent des lanternes
+    g.fillStyle = 'rgba(255,210,140,.16)'; [...A.lancettes, A.baie, ...A.portails].forEach(o => { A.arc(...o); g.fill(); });
+  }
+  // ---- chapitre 3 · « La ville » : les toits de Saint-Denis dessinés au trait, et le nom
+  k = fondu(.56, .86);
+  if (k > 0){ g.globalAlpha = k;
+    g.fillStyle = '#0a1230'; g.fillRect(0,0,w,h);
+    if (!toits){ toits = []; let x = 0; while (x < w){ const lw = 20 + rnd()*40, ht = 60 + rnd()*110, type = rnd(); toits.push({x, lw, ht, type}); x += lw; } }
+    const trace = clamp((u-.56)/.14, 0, 1) * toits.length;
+    g.strokeStyle = '#ffe9b0'; g.lineWidth = 2.4; g.lineJoin = 'round'; g.beginPath(); g.moveTo(0, h);
+    toits.slice(0, Math.ceil(trace)).forEach((r,i) => { const y0 = h - r.ht; g.lineTo(r.x, y0); if (r.type < .5){ g.lineTo(r.x + r.lw/2, y0 - r.lw*.5); } g.lineTo(r.x + r.lw, y0); });
+    g.stroke();
+    g.fillStyle = 'rgba(255,233,176,.85)';
+    toits.slice(0, Math.floor(trace)).forEach((r,i) => { for (let yy = h - r.ht + 14; yy < h - 8; yy += 14) for (let xx = r.x + 5; xx < r.x + r.lw - 6; xx += 10) if (((i*13 + xx + yy) % 7) < 3 && Math.sin(tt*2 + xx + yy) > -.6) g.fillRect(xx, yy, 4, 6); });
+    // le nom, en lettres hautes dans la travée centrale, sous la rosace
+    g.font = `700 ${Math.round(sy*4.2)}px Georgia, "Times New Roman", serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(255,241,208,.96)'; g.shadowColor = 'rgba(255,200,120,.9)'; g.shadowBlur = 18;
+    const mot = 'SAINT-DENIS', part = clamp((u-.6)/.12, 0, 1); g.fillText(mot.slice(0, Math.ceil(part*mot.length)), X(0), Y(16.5)); g.shadowBlur = 0;
+    g.font = `${Math.round(sy*1.6)}px Georgia, serif`; g.fillStyle = 'rgba(255,241,208,.8)'; g.fillText('parvis de la basilique · été 2026', X(0), Y(13.8));
+    // la rosace en horloge : les douze repères et deux aiguilles
+    g.strokeStyle = '#ffe9b0'; g.lineWidth = 3; g.beginPath(); g.arc(X(A.rose.x), Y(A.rose.y), A.rose.r*sx*.9, 0, 7); g.stroke();
+    for (let i = 0; i < 12; i++){ const a = i/6*Math.PI; g.beginPath(); g.moveTo(X(A.rose.x)+Math.cos(a)*A.rose.r*sx*.78, Y(A.rose.y)+Math.sin(a)*A.rose.r*sx*.78); g.lineTo(X(A.rose.x)+Math.cos(a)*A.rose.r*sx*.9, Y(A.rose.y)+Math.sin(a)*A.rose.r*sx*.9); g.stroke(); }
+    const hh = (t%12)/12*Math.PI*2 - Math.PI/2, mm = (t%1)*Math.PI*2 - Math.PI/2; g.lineWidth = 4;
+    g.beginPath(); g.moveTo(X(A.rose.x), Y(A.rose.y)); g.lineTo(X(A.rose.x)+Math.cos(hh)*A.rose.r*sx*.5, Y(A.rose.y)+Math.sin(hh)*A.rose.r*sx*.5); g.stroke();
+    g.beginPath(); g.moveTo(X(A.rose.x), Y(A.rose.y)); g.lineTo(X(A.rose.x)+Math.cos(mm)*A.rose.r*sx*.72, Y(A.rose.y)+Math.sin(mm)*A.rose.r*sx*.72); g.stroke();
+  }
+  // ---- chapitre 4 · « Finale » : ondes d'or depuis la rosace, gerbes et confettis
+  k = fondu(.82, 1.01);
+  if (k > 0){ g.globalAlpha = k;
+    g.fillStyle = '#120a1e'; g.fillRect(0,0,w,h);
+    for (let i = 0; i < 6; i++){ const r = ((tt*40 + i*90) % 620); g.strokeStyle = `rgba(255,205,90,${clamp(1 - r/620, 0, 1)*.9})`; g.lineWidth = 6; g.beginPath(); g.arc(X(A.rose.x), Y(A.rose.y), r, 0, 7); g.stroke(); }
+    for (let b = 0; b < 4; b++){ const ph = (tt*.5 + b*.25) % 1, cx = w*(.2 + .6*((b*37)%100)/100), cy = h*.45 - b*60, R = ph*140;
+      g.strokeStyle = `rgba(${b%2?255:120},${b%2?170:220},${b%2?60:255},${(1-ph)*.9})`; g.lineWidth = 2.5;
+      for (let i = 0; i < 18; i++){ const a = i/18*Math.PI*2; g.beginPath(); g.moveTo(cx+Math.cos(a)*R*.6, cy+Math.sin(a)*R*.6 + ph*ph*40); g.lineTo(cx+Math.cos(a)*R, cy+Math.sin(a)*R + ph*ph*60); g.stroke(); } }
+    for (let i = 0; i < 160; i++){ const x = (i*137 % w), y = ((tt*35 + i*61) % (h+20)) - 20; g.fillStyle = `hsl(${(i*23)%360},90%,65%)`; g.fillRect(x, y, 4, 7); }
+    g.fillStyle = 'rgba(255,241,208,.95)'; g.font = `700 ${Math.round(sy*3)}px Georgia, serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MERCI', X(0), Y(16.5));
+  }
+  // ---- toujours : les arêtes de l'architecture, fines et claires, pour que l'image "tienne" la façade
+  g.globalAlpha = .55; g.strokeStyle = 'rgba(255,245,220,.9)'; g.lineWidth = 1.2;
+  [...A.archivoltes, ...A.portails, ...A.lancettes, A.baie].forEach(o => { A.arc(...o); g.stroke(); });
+  g.beginPath(); A.pignon.forEach(([x,y],i) => i ? g.lineTo(X(x),Y(y)) : g.moveTo(X(x),Y(y))); g.stroke();
+  g.globalAlpha = 1; texMapping.needsUpdate = true;
 }
 
 /* =====================================================================
@@ -211,6 +271,66 @@ function cyl(a,b,r,m,seg=8){ const A = new THREE.Vector3(...a), B = new THREE.Ve
 function coneMesh(sommet, base, rayon, mat){ const A = new THREE.Vector3(...sommet), B = new THREE.Vector3(...base), d = B.clone().sub(A), L = d.length();
   const g = new THREE.ConeGeometry(rayon, L, 28, 1, true); g.translate(0,-L/2,0); g.rotateX(Math.PI);
   const o = new THREE.Mesh(g, mat); o.position.copy(A); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
+
+function creerFoule(pts, opt){
+  // pts : [x,z] par personne. Une personne = un corps (capsule) + une tête (sphère) ;
+  // les couleurs passent par des groupes d'InstancedMesh (pas de couleur par instance avec three r128).
+  const VET = [0x1f2a44,0x3a3f48,0x151515,0xa3262b,0xe7e2d8,0x2f6b4f,0xcdb996,0x3b5998], PEAU = [0xf1c9a5,0xc68e6a,0x7a4a2e];
+  const gCorps = THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.2,.95,2,8) : new THREE.CylinderGeometry(.19,.22,1.25,8);
+  const gTete = new THREE.SphereGeometry(.13,8,6), gBras = new THREE.BoxGeometry(.07,.55,.07), gTel = new THREE.PlaneGeometry(.1,.16);
+  const pers = pts.map((p,i) => ({x:p[0], z:p[1], s:.88 + rnd()*.24, ph:rnd()*6.28, vet:Math.floor(rnd()*VET.length), peau:Math.floor(rnd()*PEAU.length), rot:rnd()*6.28, bras:rnd() < (opt.bras||0), tel:rnd() < (opt.tel||0)}));
+  const corps = VET.map(c => new THREE.InstancedMesh(gCorps, std({color:c, roughness:.95}), pers.length));
+  const tetes = PEAU.map(c => new THREE.InstancedMesh(gTete, std({color:c, roughness:.8}), pers.length));
+  const bras = new THREE.InstancedMesh(gBras, std({color:0x3a3f48, roughness:.95}), pers.length);
+  const tels = new THREE.InstancedMesh(gTel, new THREE.MeshBasicMaterial({color:0xcfe8ff}), pers.length);
+  [...corps, ...tetes, bras, tels].forEach(m => { m.castShadow = false; m.count = 0; m.frustumCulled = false; scene.add(m); });
+  const dm = new THREE.Object3D();
+  return { pers, n:0, dansShow:false, y0:(opt.y0||0),
+    maj(frac, t, show){            // frac : part des personnes présentes ; show : bras levés et téléphones
+      const n = Math.round(clamp(frac,0,1) * pers.length), cnt = corps.map(()=>0), cnt2 = tetes.map(()=>0); let nb = 0, nt = 0;
+      for (let i = 0; i < n; i++){ const q = pers[i], bob = Math.sin(t*60*1.7 + q.ph)*.04*(show ? 2.2 : 1), tw = Math.sin(t*60*.9 + q.ph)*.12;
+        dm.position.set(q.x, this.y0 + .62*q.s + bob, q.z); dm.rotation.set(0, q.rot + tw, 0); dm.scale.set(1, q.s, 1); dm.updateMatrix();
+        corps[q.vet].setMatrixAt(cnt[q.vet]++, dm.matrix);
+        dm.position.set(q.x, this.y0 + 1.36*q.s + bob, q.z); dm.scale.set(1,1,1); dm.updateMatrix(); tetes[q.peau].setMatrixAt(cnt2[q.peau]++, dm.matrix);
+        if (show && q.bras){ const sw = Math.sin(t*60*2.3 + q.ph)*.25; dm.position.set(q.x + Math.cos(q.rot)*.24, this.y0 + 1.5*q.s + bob, q.z - Math.sin(q.rot)*.24); dm.rotation.set(sw, q.rot, .15); dm.updateMatrix(); bras.setMatrixAt(nb++, dm.matrix); }
+        if (show && q.tel){ dm.position.set(q.x - Math.cos(q.rot)*.2, this.y0 + 1.42*q.s + bob, q.z + Math.sin(q.rot)*.2); dm.rotation.set(0, q.rot, 0); dm.updateMatrix(); tels.setMatrixAt(nt++, dm.matrix); } }
+      corps.forEach((m,k) => { m.count = cnt[k]; m.instanceMatrix.needsUpdate = true; }); tetes.forEach((m,k) => { m.count = cnt2[k]; m.instanceMatrix.needsUpdate = true; });
+      bras.count = nb; bras.instanceMatrix.needsUpdate = true; tels.count = nt; tels.instanceMatrix.needsUpdate = true; this.n = n;
+    } };
+}
+function construireScene(){
+  // SCÈNE OUVERTE : au bout de l'allée du village, face au village. Petite, basse, accueillante.
+  const st = posStands(), b = E.bloc, zFin = (st.length ? Math.max(...st.map(q=>q.z)) : regieBox().z1) + E.village.pas/2 + 1.5;
+  const cx = b.x, cz = zFin + 2.2, L = 6, Pf = 4, H = .6; G.scene = {cx, cz};
+  scene.add(boite(cx-L/2, cx+L/2, 0, H, cz-Pf/2, cz+Pf/2, std({color:0x2a2d33, roughness:.7})));                       // praticable
+  scene.add(boite(cx-L/2-.05, cx+L/2+.05, H-.03, H+.02, cz-Pf/2-.05, cz-Pf/2+.03, std({color:0xffffff, emissive:0xffb454, emissiveIntensity:0}))); G.sceneLed = scene.children[scene.children.length-1];
+  // fond de scène : bâche imprimée « SCÈNE OUVERTE »
+  const tc = document.createElement('canvas'); tc.width = 768; tc.height = 320; const g = tc.getContext('2d');
+  const gr = g.createLinearGradient(0,0,768,0); gr.addColorStop(0,'#ff8a3d'); gr.addColorStop(1,'#ffb454'); g.fillStyle = gr; g.fillRect(0,0,768,320);
+  g.fillStyle = '#1a1200'; g.font = '700 86px Georgia, serif'; g.textAlign = 'center'; g.fillText('SCÈNE OUVERTE', 384, 120);
+  g.font = '600 44px -apple-system, Segoe UI, sans-serif'; g.fillText('à vous ! chant · slam · parole libre', 384, 200);
+  g.font = '34px -apple-system, Segoe UI, sans-serif'; g.fillText('inscriptions au stand Accueil ➜', 384, 262);
+  const fond = new THREE.Mesh(new THREE.PlaneGeometry(L, 2.5), std({map:new THREE.CanvasTexture(tc), roughness:.8, emissive:0xffffff, emissiveMap:new THREE.CanvasTexture(tc), emissiveIntensity:0}));
+  fond.position.set(cx, H+1.3, cz+Pf/2-.1); fond.rotation.y = Math.PI; scene.add(fond); G.sceneFond = fond;
+  [cx-L/2+.2, cx+L/2-.2].forEach(x => scene.add(cyl([x,0,cz+Pf/2],[x,H+2.7,cz+Pf/2],.04, std({color:0x8c9096, metalness:.5}))));
+  // micro, retours, deux projecteurs sur pieds
+  scene.add(cyl([cx,H,cz-.8],[cx,H+1.5,cz-.8],.015, std({color:0x222})));
+  scene.add(boite(cx-.06,cx+.06,H+1.45,H+1.62,cz-.86,cz-.74, std({color:0x111, metalness:.6})));
+  [-1.6,1.6].forEach(dx => scene.add(boite(cx+dx-.3, cx+dx+.3, H, H+.35, cz-Pf/2+.1, cz-Pf/2+.5, std({color:0x1c1f24}))));
+  G.sceneLum = [];
+  [[cx-L/2-1.2, 0x2fb8ff],[cx+L/2+1.2, 0xff5a8a]].forEach(([x, col]) => { scene.add(cyl([x,0,cz-Pf/2-1.2],[x,3.4,cz-Pf/2-1.2],.04, std({color:0x2b2f36, metalness:.5})));
+    scene.add(boite(x-.15,x+.15,3.2,3.5,cz-Pf/2-1.35,cz-Pf/2-1.05, std({color:0x111418})));
+    const l = new THREE.SpotLight(col, 0, 18, .7, .5, 1.2); l.position.set(x,3.4,cz-Pf/2-1.2); l.target.position.set(cx,H+1,cz); scene.add(l, l.target);
+    const f = coneMesh([x,3.3,cz-Pf/2-1.2],[cx,H+.6,cz], 2.2, new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending})); scene.add(f);
+    G.sceneLum.push({l, f}); });
+  // qui est là : deux sur scène, une file sur le côté, un demi-cercle devant, dans l'allée
+  const surScene = [[cx-.6, cz-.3],[cx+.7, cz+.2]];
+  const file = []; for (let i = 0; i < 7; i++) file.push([cx+L/2+.8 + (rnd()-.5)*.3, cz - 1 + i*.7]);
+  const devant = []; for (let i = 0; i < 70; i++){ const a = Math.PI + (rnd()-.5)*1.9, r = 2.6 + rnd()*5.5; devant.push([cx + Math.cos(a)*r*.9, cz - Pf/2 + Math.sin(a)*r - 1.2]); }
+  G.fouleScene = creerFoule(surScene, {y0:H, bras:1, tel:0});
+  G.fouleFile = creerFoule(file, {});
+  G.fouleDevant = creerFoule(devant, {bras:.35, tel:.25});
+}
 
 function construire(){
   const F = P().facade, Z = P().zonePublic;
@@ -294,17 +414,15 @@ function construire(){
     const m = new THREE.MeshBasicMaterial({color:i ? 0x3fb950 : 0x4fa3ff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false});
     const beam = cyl([x,y,z],[l.tx,l.ty,0],.06,m); scene.add(beam);
     const pt = new THREE.Mesh(new THREE.SphereGeometry(.35,10,8), m.clone()); pt.position.set(l.tx,l.ty,.1); scene.add(pt); G.lasers.push({beam, pt, src:[x,y,z], l}); });
-  // public : instances
-  const capa = Math.round((Z.x1-Z.x0)*(Z.z1-Z.z0)*Z.densite*.35);   // on dessine 35 % de la jauge, ça suffit à lire la foule
-  const gp = THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.22,.9,2,6) : new THREE.CylinderGeometry(.22,.22,1.3,6);  // CapsuleGeometry n'existe qu'à partir de r130
-  // pas de couleur par instance : avec three r128 elle assombrit tout le maillage instancié
-  G.foule = new THREE.InstancedMesh(gp, std({color:0x8a93a0, roughness:.9}), capa); G.foule.castShadow = false; G.foule.count = 0;
-  G.foulePos = []; const dm = new THREE.Object3D();
-  for (let i = 0; i < capa; i++){ // plus dense vers la façade, en laissant 6 m
-    const u = rnd(), x = Z.x0 + rnd()*(Z.x1-Z.x0), z = Z.z0 + Math.pow(u, .7)*(Z.z1-Z.z0), s = .85 + rnd()*.3;
-    dm.position.set(x, .65*s, z); dm.scale.set(1,s,1); dm.updateMatrix(); G.foule.setMatrixAt(i, dm.matrix); G.foulePos.push([x,z]);
-  }
-  G.foule.instanceMatrix.needsUpdate = true; scene.add(G.foule);
+  // public : silhouettes humaines (corps + tête, 8 teintes de vêtements, 3 carnations), animées
+  const capa = Math.round((Z.x1-Z.x0)*(Z.z1-Z.z0)*Z.densite*.35);   // 35 % de la jauge dessinés : suffit à lire la foule
+  const pts = [];
+  for (let i = 0; i < capa; i++){ // grappes : on tire des centres puis on les peuple, plus dense vers la façade
+    const u = rnd(), x = Z.x0 + 1 + rnd()*(Z.x1-Z.x0-2), z = Z.z0 + 1 + Math.pow(u, .65)*(Z.z1-Z.z0-2);
+    pts.push([x + (rnd()-.5)*1.2, z + (rnd()-.5)*1.2]); }
+  G.foule = creerFoule(pts, {bras:.22, tel:.18});
+  // scène ouverte au bout de l'allée du village
+  construireScene();
   // barrières de la zone public (lisibles pour la mairie)
   const mb = std({color:0xcfd4da, metalness:.5, roughness:.4});
   for (let x = Z.x0; x <= Z.x1; x += 2.5){ scene.add(boite(x-1.2,x+1.2,.2,1.1,Z.z1-.05,Z.z1+.05,mb)); scene.add(boite(x-1.2,x+1.2,.2,1.1,Z.z0-.05,Z.z0+.05,mb)); }
@@ -346,8 +464,12 @@ function appliquer(t, dt){
     const A = new THREE.Vector3(...o.src), B = new THREE.Vector3(tx,ty,0), d = B.clone().sub(A), L = d.length();
     o.beam.scale.set(1, L / o.beam.geometry.parameters.height, 1); o.beam.position.copy(A).add(B).multiplyScalar(.5); o.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize());
     o.pt.position.set(tx,ty,.1); o.beam.material.opacity = s.las * .9; o.pt.material.opacity = s.las; });
-  // foule
-  G.foule.count = Math.round(s.public * G.foule.instanceMatrix.count);
+  // foules : public dans la zone, et autour de la scène ouverte
+  G.foule.maj(s.public, t, s.map > .5 || s.las > .5);
+  G.fouleScene.maj(s.scn, t, true); G.fouleFile.maj(s.scn, t, false); G.fouleDevant.maj(s.scn * (.5 + .5*s.public), t, s.scn > .5);
+  const pulse = .75 + .25*Math.sin(t*60*2.6);
+  G.sceneLum.forEach(o => { o.l.intensity = s.scn * nuit * 2.4 * pulse; o.f.material.opacity = s.scn * nuit * .16 * pulse; });
+  G.sceneLed.material.emissiveIntensity = s.scn * 1.5 * pulse; G.sceneFond.material.emissiveIntensity = s.scn * (nuit * .8 + .15);
   // exposition : la nuit, on laisse les lumières artificielles faire le travail
   renderer.toneMappingExposure = lerp(1.05, .85, jour);
   // HUD
@@ -364,6 +486,7 @@ function appliquer(t, dt){
     <div><span class="et ${s.son>.5?'on':''}"></span>Sono ${s.son>.5?'en service':'coupée'}</div>
     <div><span class="et ${s.map>.5?'on':''}"></span>Mapping ${s.map>.5?`<b>${Math.round(lux)} lux</b> · ${(lmTot/1000)}k lm`:'éteint'}</div>
     <div><span class="et ${s.las>.5?'on':''}"></span>Lasers ${s.las>.5?'sur façade seule':'éteints'}</div>
+    <div><span class="et ${s.scn>.5?'on':''}"></span>Scène ouverte ${s.scn>.5?'micro ouvert':'fermée'}</div>
     <div class="note" style="margin-top:4px">Soleil ${so.el.toFixed(0)}° · ${so.el < -6 ? 'nuit' : so.el < 0 ? 'crépuscule' : 'jour'}</div>`;
   document.querySelectorAll('#phases .ph').forEach((el,i) => el.classList.toggle('on', PHASES[i].t <= t));
 }
@@ -375,6 +498,8 @@ function appliquer(t, dt){
 const CLES = [
   {t:16.0, p:[-90,45,150], c:[0,10,50]},   // vue d'ensemble, montage
   {t:18.0, p:[-30,12,110], c:[0,2,80]},    // le village
+  {t:18.6, p:[11,3.2,104],  c:[0,1.6,96]},   // la scène ouverte, à hauteur d'homme
+  {t:19.0, p:[-9,4,101],   c:[0,1.5,95]},   // on tourne autour
   {t:19.5, p:[22,6,98],    c:[0,3,74]},    // la régie dos à dos
   {t:21.0, p:[0,2.2,52],   c:[0,14,0]},    // dans le public, face à la façade
   {t:22.0, p:[-40,20,90],  c:[0,15,10]},   // extinction : on voit la place s'éteindre
