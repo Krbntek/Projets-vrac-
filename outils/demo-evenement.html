@@ -115,8 +115,10 @@ const PHASES = [
 function etatA(t){
   let i = 0; while (i < PHASES.length-2 && PHASES[i+1].t <= t) i++;
   const a = PHASES[i], b = PHASES[i+1], u = Math.min(1, Math.max(0, (t-a.t)/Math.max(.01, b.t-a.t)));
-  const s = u*u*(3-2*u);
-  const bl = (k) => (a[k] ? 1 : 0) * (1-s) + (b[k] ? 1 : 0) * s;
+  const s = u*u*(3-2*u);                                   // le public arrive et repart progressivement sur toute la phase
+  // les équipements, eux, basculent dans les 6 dernières minutes de la phase : un show ne s'éteint pas en 40 min de fondu
+  const D = Math.min(.1, b.t - a.t), v = Math.min(1, Math.max(0, (t - (b.t - D)) / D)), sv = v*v*(3-2*v);
+  const bl = (k) => (a[k] ? 1 : 0) * (1-sv) + (b[k] ? 1 : 0) * sv;
   return {phase:a, public:a.public*(1-s)+b.public*s, ep:bl('ep'), vil:bl('vil'), son:bl('son'), lum:bl('lum'), map:bl('map'), las:bl('las'), scn:bl('scn')};
 }
 // soleil : élévation et azimut approchés pour Saint-Denis fin d'été (coucher ~20h45, nuit noire ~22h15)
@@ -351,7 +353,8 @@ function construire(){
   // limitée au corps de façade (le pignon compris) : la tour est traitée en wash, pas en mapping
   const fi = new THREE.Shape(); [[-16.25,0],[-16.25,29.2],[-5.9,29.2],[0,37.3],[5.9,29.2],[16.25,29.2],[16.25,0]].forEach(([x,y],i) => i ? fi.lineTo(x,y) : fi.moveTo(x,y));
   const gi = new THREE.ShapeGeometry(fi); { const uv = gi.attributes.uv, po = gi.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, (po.getX(i)+F.largeur/2)/F.largeur, po.getY(i)/F.hauteur); }
-  G.image = new THREE.Mesh(gi, new THREE.MeshBasicMaterial({map:texMapping, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false}));
+  // fusion normale, pas additive : une projection sur pierre sombre se comporte ainsi, et l'additif blanchissait les tons pâles
+  G.image = new THREE.Mesh(gi, new THREE.MeshBasicMaterial({map:texMapping, transparent:true, opacity:0, blending:THREE.NormalBlending, depthWrite:false}));
   G.image.position.set(0, 0, .08); scene.add(G.image);
   // nef, voisins avec fenêtres (émission la nuit)
   const n = P().nef; scene.add(boite(n.x0,n.x1,0,n.h,n.z0,n.z1, std({map:texPierre}))); scene.add(boite(n.x0-.5,n.x1+.5,n.h,n.h+1.5,n.z0,n.z1, std({color:0x4a463e})));
@@ -457,7 +460,7 @@ function appliquer(t, dt){
   G.wash.forEach(o => { o.l.intensity = s.lum * nuit * 2.5; o.f.material.opacity = s.lum * nuit * .12; o.l.color.copy(teinte); o.f.material.color.copy(teinte); });
   // mapping
   G.vps.forEach(v => { v.cone.material.opacity = s.map * .07; v.l.intensity = s.map * .35; });
-  G.image.material.opacity = s.map * .95;
+  G.image.material.opacity = s.map * .93;
   if (s.map > 0.01) dessinerMapping(t, s);
   // lasers : balayage lent, cibles maintenues sur la façade
   G.lasers.forEach((o,i) => { const a = t*2.1 + i*2, tx = clamp(o.l.tx + Math.sin(a)*5.5, -F.largeur/2+1, F.largeur/2-1), ty = clamp(o.l.ty + Math.cos(a*.7)*6, 2, F.hauteur-1);
