@@ -9,7 +9,9 @@
   v4.1 barre d'outils unique collante (configuration, dispositions, prereglages du parc, menus
   Exporter et Affichage), titres de sections, etat actif de la disposition -
   v4.2 bloc CONFIG des parametres principaux en tete du code, catalogues standardises avec
-  gabarits et sources par entree, ajout Epson EB-L1500UH (devis) et ELPLU04/ELPLM15 associees.
+  gabarits et sources par entree, ajout Epson EB-L1500UH (devis) et ELPLU04/ELPLM15 associees -
+  v4.3 proprietaires retrouves (WLTP, Bargraph, Novelty a confirmer), pastille proprio et badge
+  de puissance, classe de focale sur les cartes, suggestions automatiques de machine par surface.
 -->
 <html lang="fr">
 <head>
@@ -39,7 +41,7 @@
   .custom.on{display:flex}
   .custom label{font-size:calc(12px*var(--fscale,1));color:var(--dim);display:flex;flex-direction:column;gap:3px}
   .custom input{width:90px}
-  svg{width:100%;height:auto;display:block;background:#0a0e14;border-radius:10px;border:1px solid var(--line)}
+  svg#diag,#scaleLux>svg{width:100%;height:auto;display:block;background:#0a0e14;border-radius:10px;border:1px solid var(--line)}
   h3{margin:18px 0 6px;font-size:calc(14px*var(--fscale,1));letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0}
   .env{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -158,7 +160,8 @@
   .unitCard{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:94px;padding:6px;flex-shrink:0}
   .unitCard b{font-size:.78em;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .unitCard small{font-size:.7em;color:var(--dim)}
-  .unitCard em{font-style:normal;font-size:.75em;font-weight:700;color:var(--a)}
+  .unitCard em{font-style:normal;font-size:.72em;font-weight:700}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:baseline;border:1px solid #fff5}
   .unitCard.on{border-width:2px;padding:5px}
   .A .unitCard.on{border-color:var(--a)} .B .unitCard.on{border-color:var(--b)}
   #surf{display:none} .card .unit{display:none}
@@ -260,6 +263,9 @@
   <div class="chips" id="chips"></div>
 
   <div class="panel" id="harmo"></div>
+
+  <h3>Suggestions — quelle machine pour cette surface ?</h3>
+  <div class="panel parcWrap" id="sugg"></div>
 
   <h3>Projecteurs</h3>
   <div class="projs" id="projs">
@@ -377,7 +383,7 @@
 const $ = id => document.getElementById(id);
 const F = (v,d=1) => (isFinite(v)? v.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d}) : '–');
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-const VERSION='4.2';
+const VERSION='4.3';
 
 /* ======================================================================
    =============  PARAMÈTRES PRINCIPAUX — À MODIFIER ICI  ===============
@@ -518,10 +524,10 @@ const PARC = [
   // tag = repère libre pour distinguer deux machines identiques (numéro, autocollant…)
   {id:'cpx-1', model:'x10000', owner:'WLTP', tag:'nº1', lens:'sd'},
   {id:'cpx-2', model:'x10000', owner:'WLTP', tag:'nº2', lens:'sl'},
-  {id:'hdt-1', model:'hdt1000',owner:'', lens:'ah32021'},
-  {id:'pu-1',  model:'pu2220b',owner:'', lens:'lu04'},
-  {id:'l15-1', model:'l1500uh',owner:'', lens:'lu04'},
-  {id:'l17-1', model:'l1755u', owner:'', lens:'lu03'}
+  {id:'hdt-1', model:'hdt1000',owner:'', lens:'ah32021'},            // propriétaire inconnu — à renseigner
+  {id:'pu-1',  model:'pu2220b',owner:'Novelty ?', lens:'lu04'},      // référence repérée au catalogue Novelty — à confirmer
+  {id:'l15-1', model:'l1500uh',owner:'Bargraph', lens:'lu04'},       // devis Bargraph
+  {id:'l17-1', model:'l1755u', owner:'Bargraph', lens:'lu03'}        // conduite « soir J », prestataire Bargraph
 ];
 const STORE = 'mapping-parc-v2';
 try{
@@ -723,7 +729,7 @@ function renderParc(){
     const m=MODELS[u.model];
     const used=['A','B'].filter(k=>P[k].unit===u.id && (nb===2 || k==='A')).join(' + ')||'—';
     return `<tr>
-      <td>${vpIcon(u.model,44)}</td>
+      <td style="text-align:center">${vpIcon(u.model,44)}<br><i class="dot" style="background:${ownColor(u)}"></i>${lmBadge(unitLm(u))}</td>
       <td><input type="text" data-own="${u.id}" value="${esc(u.owner)}" placeholder="Propriétaire à renseigner"></td>
       <td><input type="text" data-tag="${u.id}" value="${esc(u.tag||'')}" placeholder="nº, repère…" style="min-width:70px;width:80px"></td>
       <td>${m.court}</td>
@@ -937,6 +943,7 @@ function calc(){
   cascade(G,LM,ACT);
   renderHarmo(G,E,Lm);
   renderEq(EQD,{Ea,rho:rhoEff,EA:E.A,EB:nb===2?E.B:null,C:Cc.A,L:Lm.A,Wtot,Amp});
+  renderSugg(Ea,mode,wear,eta);
 }
 
 /* ---------- Schéma : couleur = qualité de rendu, échelle en mètres ---------- */
@@ -1181,11 +1188,25 @@ function vpIcon(model,w){
   </svg>`;
 }
 const ownShort=u=>((u.owner||'').trim().split(/\s+/)[0])||'proprio ?';
+const OWNCOLS=['#ffb454','#4cc9f0','#3ddc84','#b18cff','#ff5e7a','#ffd60a','#6fcf97'];
+function ownColor(u){
+  const n=(u.owner||'').trim(); if(!n) return '#5a6676';
+  let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))>>>0;
+  return OWNCOLS[h%OWNCOLS.length];
+}
+const lmColor=lm=> lm<8000?'#7ea4c8': lm<12000?'#ffd60a': lm<16000?'#ff9500':'#ff5e7a';
+function focClass(L){
+  const t=(L.trMin+L.trMax)/2;
+  return t<0.8?'très courte': t<1.6?'courte': t<3?'standard':'longue';
+}
+const lmBadge=lm=>{const c=lmColor(lm);
+  return `<em style="background:${c}22;border:1px solid ${c};color:${c};border-radius:4px;padding:0 5px">${F(lm/1000,1)}k lm</em>`;};
 function renderUnitRow(k){
   const el=$(`${k}_units`); if(!el) return;
   el.innerHTML=sortedUnits().map(u=>{const m=MODELS[u.model];
     return `<button class="unitCard${P[k].unit===u.id?' on':''}" data-u="${u.id}" title="${esc(unitLabel(u))}">
-      ${vpIcon(u.model,58)}<b>${esc(ownShort(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''}</b><small>${m.court}</small><em>${F(unitLm(u)/1000,1)}k lm</em></button>`;}).join('');
+      ${vpIcon(u.model,58)}<b><i class="dot" style="background:${ownColor(u)}"></i>${esc(ownShort(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''}</b><small>${m.court}</small>
+      ${lmBadge(unitLm(u))}<small>${focClass(LENSES[u.lens])} ${F(LENSES[u.lens].trMin,2)}${LENSES[u.lens].trMax>LENSES[u.lens].trMin?'–'+F(LENSES[u.lens].trMax,2):''}:1</small></button>`;}).join('');
 }
 function coneSVG(L,color){
   const w=92,h=36,cy=h/2,len=w-14;
@@ -1291,6 +1312,62 @@ function renderEq(d,t){
   el.innerHTML=rows.map(([n,x])=>`<div class="eq"><span class="f">${n}</span> — ${x}</div>`).join('');
 }
 
+/* ---------- Suggestions automatiques (v4.3) ----------
+   Pour chaque machine du parc, chaque optique compatible et chaque orientation,
+   on cherche la config mono-projecteur qui couvre la surface en entier dans la
+   fenêtre de recul, au recul le plus court possible (= lux maximum) ; sinon la
+   plus grande image possible. Mêmes formules que le reste de l'outil. */
+function bestMono(u, lensId, orient, env){
+  const m=MODELS[u.model], L=LENSES[lensId], ar=m.w/m.h;
+  const dmin=S.reculMin||1, dmax=S.recul;
+  // largeur "paysage" requise pour couvrir toute la surface dans cette orientation
+  const needW = orient==='P' ? Math.max(S.w*ar, S.h) : Math.max(S.w, S.h*ar);
+  const wMin=dmin/L.trMax, wMax=dmax/L.trMin;
+  let w0, full;
+  if(needW<=wMax){ w0=Math.max(needW,wMin); full=w0>=needW; }
+  else { w0=wMax; full=false; }
+  let d=Math.min(dmax,Math.max(dmin, w0*L.trMin));
+  const tr=Math.min(L.trMax,Math.max(L.trMin, d/w0));
+  w0=d/tr;
+  const wi=orient==='P'?w0/ar:w0, hi=orient==='P'?w0:w0/ar;
+  const loss=m.lamp?env.wear:LASER_DERATE;
+  const E=unitLm(u)*env.mode*(1-loss)*env.eta/(wi*hi);
+  const C=contrast(E,env.Ea,m.N), lvl=levelOf(C);
+  const cov=(Math.min(wi,S.w)*Math.min(hi,S.h))/(S.w*S.h);
+  const zoom=L.trMax===L.trMin?0:(tr-L.trMin)/(L.trMax-L.trMin)*100;
+  return {u,lensId,orient,d,tr,zoom,wi,hi,E,C,lvl,cov:Math.min(1,cov),full};
+}
+let SUGG=[];
+function renderSugg(Ea,mode,wear,eta){
+  const el=$('sugg'); if(!el) return;
+  const env={Ea,mode,wear,eta};
+  const all=[];
+  for(const u of PARC)
+    for(const lensId of lensesFor(u.model))
+      for(const o of ['L','P'])
+        all.push(bestMono(u,lensId,o,env));
+  // par machine+optique, garder la meilleure orientation ; trier couverture puis lux
+  const best={};
+  for(const r of all){ const k=r.u.id+'|'+r.lensId;
+    if(!best[k] || r.cov>best[k].cov+1e-9 || (Math.abs(r.cov-best[k].cov)<1e-9 && r.E>best[k].E)) best[k]=r; }
+  SUGG=Object.values(best).sort((a,b)=> b.cov-a.cov || b.E-a.E).slice(0,8);
+  el.innerHTML=`<table>
+    <thead><tr><th>Machine</th><th>Optique</th><th>Orient.</th><th>Recul</th><th>Image</th><th>Lux</th><th>Rendu</th><th>Couverture</th><th></th></tr></thead>
+    <tbody>${SUGG.map((r,i)=>{const m=MODELS[r.u.model], L=LENSES[r.lensId];
+      return `<tr>
+        <td><i class="dot" style="background:${ownColor(r.u)}"></i>${esc(ownShort(r.u))}${tagTxt(r.u)?' · '+esc(tagTxt(r.u)):''} <span style="color:var(--dim)">${m.court}</span> ${lmBadge(unitLm(r.u))}</td>
+        <td>${L.nom.split(' ')[0]} <span style="color:var(--dim)">${focClass(L)}</span></td>
+        <td>${r.orient==='P'?'portrait':'paysage'}</td>
+        <td><b>${F(r.d,1)} m</b></td>
+        <td>${F(r.wi,1)} × ${F(r.hi,1)} m</td>
+        <td><b style="color:${r.lvl.col}">${F(r.E,0)}</b></td>
+        <td><b style="color:${r.lvl.col}">${r.lvl.nom}</b></td>
+        <td>${r.full?'<b style="color:#3ddc84">100 %</b>':`<b style="color:${r.cov<0.8?'#ff3b30':'#ff9500'}">${F(r.cov*100,0)} %</b>`}</td>
+        <td><button data-apply="${i}">Appliquer</button></td></tr>`;}).join('')}</tbody></table>
+  <div class="note">Meilleure configuration à une machine par couple machine + optique, dans la fenêtre de recul de la surface
+  (couverture d'abord, puis éclairement). Pour deux machines : choisis un préréglage dans la barre d'outils puis « Harmoniser ».</div>`;
+}
+
 /* ---------- Branchements interface v4 ---------- */
 function initUIControls(){
   document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{UI.theme=b.dataset.th;applyUI();});
@@ -1323,6 +1400,16 @@ function initUIControls(){
   });
   document.addEventListener('click',e=>{
     document.querySelectorAll('details.menu[open]').forEach(d=>{ if(!d.contains(e.target)) d.open=false; });
+  });
+  $('sugg').addEventListener('click',e=>{
+    const b=e.target.closest('[data-apply]'); if(!b) return;
+    const r=SUGG[+b.dataset.apply]; if(!r) return;
+    applyNb(1);
+    P.A.unit=r.u.id; P.A.lens=r.lensId; P.A.orient=r.orient;
+    P.A.dist=Math.round(r.d*100)/100; P.A.zoom=r.zoom;
+    P.A.x=0; P.A.y=S.h/2; P.A.ph=0; P.A.px=0;
+    syncSelects(); renderParc(); calc();
+    document.getElementById('diag').scrollIntoView({behavior:'smooth',block:'start'});
   });
   $('menuExport').querySelectorAll('button').forEach(b=>
     b.addEventListener('click',()=>{ $('menuExport').open=false; }));
