@@ -1,14 +1,17 @@
 {
   "FileVersion": 3,
-  "EngineAssociation": "5.4",
+  "EngineAssociation": "5.0",
   "Category": "Événementiel",
   "Description": "Plan d'implantation 3D — mapping de la façade occidentale de la basilique Saint-Denis : façade, parvis, plateforme VP, régie, village sous tonnelles, sono, lumières. Généré depuis implantation.json par generer_projet_unreal.py.",
   "Modules": [],
   "Plugins": [
-    { "Name": "PythonScriptPlugin", "Enabled": true },
-    { "Name": "EditorScriptingUtilities", "Enabled": true },
-    { "Name": "Interchange", "Enabled": true },
-    { "Name": "InterchangeEditor", "Enabled": true },
-    { "Name": "GLTFExporter", "Enabled": true }
+    {
+      "Name": "PythonScriptPlugin",
+      "Enabled": true
+    },
+    {
+      "Name": "EditorScriptingUtilities",
+      "Enabled": true
+    }
   ]
 }

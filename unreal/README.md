@@ -9,7 +9,7 @@ unreal/
 ├── implantation.json              ← LA SOURCE (schéma v2, export de la démo ou du visualiseur)
 ├── generer_projet_unreal.py       ← fabrique tous les fichiers ci-dessous
 └── MappingSaintDenis/
-    ├── MappingSaintDenis.uproject ← à ouvrir avec Unreal 5.3+ (5.4 conseillé)
+    ├── MappingSaintDenis.uproject ← compatible Unreal 5.0 à 5.5 (conversion proposée à l'ouverture)
     ├── Config/
     └── Content/
         ├── Import/
