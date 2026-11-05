@@ -1,0 +1,373 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Dossier technique — soirée mapping sur le parvis de la basilique</title><style>
+:root{--txt:#1d2228;--dim:#5b6470;--line:#d5dae0;--acc:#b8690f;--fond:#f6f1e8}
+*{box-sizing:border-box} html{font-size:15px} body{margin:0;color:var(--txt);font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;background:#fff}
+.page{max-width:860px;margin:0 auto;padding:28px 32px 60px}
+header.doc{border-bottom:3px solid var(--acc);padding-bottom:12px;margin-bottom:20px}
+header.doc h1{font-size:30px;margin:0 0 4px;letter-spacing:-.01em} header.doc .sous{color:var(--dim);font-size:15px} header.doc .meta{font-size:12.5px;color:var(--dim);margin-top:8px}
+nav.toc{background:var(--fond);border-radius:10px;padding:12px 18px;margin:0 0 24px;font-size:13.5px} nav.toc h2{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--acc)} nav.toc ol{margin:0;padding-left:20px} nav.toc li{margin:2px 0}
+section.sec{margin:0 0 30px} section.sec>h1{font-size:22px;border-left:5px solid var(--acc);padding-left:12px;margin:28px 0 12px}
+h2{font-size:17px;margin:20px 0 8px} h3{font-size:14.5px;margin:16px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em} h4{font-size:14px;margin:12px 0 4px}
+p{margin:6px 0 10px} ul,ol{margin:4px 0 10px;padding-left:22px} li{margin:2px 0}
+table{border-collapse:collapse;width:100%;font-size:12.5px;margin:6px 0 14px} th,td{border:1px solid var(--line);padding:5px 7px;vertical-align:top;text-align:left} th{background:var(--fond);font-weight:600} tr:nth-child(even) td{background:#fafafa}
+table.syno td.lien{color:var(--dim);font-style:italic;white-space:nowrap}
+code{background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:.92em} pre{background:#f4f4f4;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:11.5px;overflow:auto;white-space:pre-wrap}
+details.code summary{font-size:12px;color:var(--dim);cursor:pointer}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 16px} figure{margin:0;break-inside:avoid} figure img{width:100%;border-radius:6px;border:1px solid var(--line)} figcaption{font-size:12px;color:var(--dim);margin-top:3px} figure.manque div{border:1px dashed var(--line);padding:30px;text-align:center;color:var(--dim);font-size:12px}
+.encart{background:var(--fond);border-left:4px solid var(--acc);padding:8px 12px;border-radius:0 6px 6px 0;margin:10px 0} .a-completer{background:#fff3c4;padding:0 4px;border-radius:3px}
+footer.doc{margin-top:40px;border-top:1px solid var(--line);padding-top:10px;font-size:12px;color:var(--dim)}
+@media print{html{font-size:11.5pt} .page{max-width:none;padding:0} section.sec{break-before:page} section.sec:first-of-type{break-before:auto} nav.toc{break-after:page} h1,h2,h3{break-after:avoid} figure{break-inside:avoid} tr{break-inside:avoid} thead{display:table-header-group} details.code{display:none} a{color:inherit;text-decoration:none}}
+</style></head>
+<body><div class="page"><header class="doc"><h1>Dossier technique — soirée mapping sur le parvis de la basilique</h1><div class="sous">Implantation générale, sécurité, son, lumière, vidéo, électricité</div><div class="meta">[Organisateur — à compléter] · version v5 du 2 novembre 2026 · 2026-11-02 · [contact — à compléter]</div></header>
+<nav class="toc"><h2>Sommaire</h2><ol><li><a href="#s1">Présentation et principe d&#x27;implantation</a></li><li><a href="#s2">Implantation cotée</a></li><li><a href="#s3">La maquette, heure par heure</a></li><li><a href="#s4">Dispositif de sécurité et de prévention</a></li><li><a href="#s5">Puissance et jauges — résumé</a></li><li><a href="#s6">Bilan de puissance détaillé</a></li><li><a href="#s7">Synoptique électrique</a></li><li><a href="#s8">Synoptique son</a></li><li><a href="#s9">Synoptique lumière</a></li><li><a href="#s10">Synoptique vidéo (mapping, écran camion, lasers)</a></li><li><a href="#s11">Synoptique captation</a></li><li><a href="#s12">Passages de câbles</a></li><li><a href="#s13">Tour Layher Allround — nomenclature</a></li><li><a href="#s14">Les 14 points à vérifier avant de s&#x27;engager</a></li><li><a href="#s15">Inventaire du matériel</a></li><li><a href="#s16">Ce qui reste à faire valider</a></li><li><a href="#s17">Annexes, sources et mise à jour</a></li></ol></nav>
+<section class="sec" id="s1"><h1>1. Présentation et principe d&#x27;implantation</h1><p><b>L'idée</b> : un seul lieu de vie, au centre du parvis, dans l'axe de la façade. En 2017, place de la République, plusieurs scènes dispersées avaient dilué l'énergie ; ici tout le monde est au même endroit : le public au milieu, la scène qui entre dans le public, les stands qui regardent le show, la technique derrière, la façade comme écran.</p>
+<p><b>Le parvis, d'avant en arrière</b> (z = distance à la façade) :</p>
+<ul><li><b>z = 3 à 5 m — le camion 20 m³</b> garé en long devant la façade : son flanc est un écran (programme, vumètre, sobre pendant le mapping), son hayon déployé est le plateau du DJ d'ouverture et de clôture. De part et d'autre, les <b>4 piles de 4 subs</b> et les têtes, les deux wash de façade, les coffrets son.</li><li><b>z = 7 à 61 m — la zone public</b>, 52 × 54 m, <b>sans barrières</b> : marquage au sol, agents, couloirs latéraux de 4 m libres pour les secours. Deux tours de délai à 38 m, en îlots.</li><li><b>z = 45 à 61 m — le podium-catwalk</b> à 1,50 m : une passerelle de 12 m qui part de la tête de scène et entre dans le public. Les collectifs y défilent, les intervenant·es y sont vu·es de tout le parvis ; la scène ouverte, le concert et le rap s'y jouent.</li><li><b>z = 64 à 72 m — la régie et la tour</b> : conteneur régie surélevé de 1,20 m (il voit la façade par-dessus le podium), puis la tour Layher Allround (plancher à 10,3 m) qui porte les deux vidéoprojecteurs et les deux lasers. Trois mètres de coulisses entre le podium et la régie.</li><li><b>z = 66 à 69 m — le village</b>, en ligne sur les flancs de la tour et de la régie, quatre tonnelles par côté, comptoirs tournés vers la façade : <b>les stands voient le show</b>. Prévention et accueil au plus près de l'axe, poste de secours à côté. Les totems lumière sont dans les intervalles.</li><li><b>z = 73 à 81 m — repos et stockage</b>, derrière la tour, hors vue (bâche opaque) : tonnelle repos 6 × 3, tonnelle stockage 3 × 3, TGBT, groupe électrogène en option.</li></ul>
+<p><b>Le déroulé</b> (la démo animée le joue heure par heure) :</p>
+<table>
+<tr><th>Heure</th><th>Phase</th><th>Ce qui se passe</th></tr>
+<tr><td>16 h</td><td>Montage</td><td>parvis fermé au public, voies pompiers libres</td></tr>
+<tr><td>18 h</td><td>Ouverture du village</td><td>stands ouverts, écran du camion : programme</td></tr>
+<tr><td>18 h 30</td><td>Scène ouverte</td><td>micro ouvert sur la tête de scène, inscriptions au stand Accueil</td></tr>
+<tr><td>19 h 30</td><td>DJ sur le hayon</td><td>sono en service, lumières d'ambiance</td></tr>
+<tr><td>20 h 30</td><td>Défilé des luttes</td><td>les collectifs défilent sur le catwalk, banderoles en tête</td></tr>
+<tr><td>21 h 15</td><td>Concert</td><td>groupe sur la tête de scène, le chanteur au bout du catwalk</td></tr>
+<tr><td>22 h</td><td>Extinction</td><td>la Ville éteint l'éclairage public du parvis ; le hayon se libère</td></tr>
+<tr><td>22 h 05</td><td>Mapping</td><td>deux zones empilées sur le corps de façade, tour en wash</td></tr>
+<tr><td>22 h 35</td><td>Lasers</td><td>tracés sur la façade seule, au-dessus de 5,5 m</td></tr>
+<tr><td>23 h 20</td><td>Rap, second set</td><td>rappeur et hype sur le catwalk, DJ de scène</td></tr>
+<tr><td>0 h 05</td><td>DJ de clôture</td><td>dernier set depuis le hayon</td></tr>
+<tr><td>0 h 40</td><td>Sortie</td><td>flux vers métro et tram par les couloirs latéraux</td></tr>
+<tr><td>1 h 20</td><td>Démontage</td><td>parvis rendu propre avant 2 h</td></tr>
+</table>
+<p>Les horaires sont ceux de la maquette : ils se calent sur l'arrêté de la Ville (extinction de l'éclairage public, fin de la sonorisation).</p></section><section class="sec" id="s2"><h1>2. Implantation cotée</h1><p>Repère : X = axe de la façade (0 au centre, positif côté cour / est), Z = distance au plan de la façade. Toutes les cotes en mètres, issues de <code>unreal/implantation.json</code> (version 2), la source commune de la démo, du visualiseur et du projet Unreal. Chaque ensemble se déplace dans <code>outils/implantation-3d.html</code> (glisser-déposer) ; les contrôles géométriques se recalculent et le JSON exporté alimente tout le reste.</p>
+<table>
+<tr><th>Ensemble</th><th>Position</th><th>Emprise</th><th>Notes</th></tr>
+<tr><td>Façade mappée</td><td>z = 0</td><td>32,5 m de large, corps à 29,2 m, pignon 37,3 m, tour 60,1 m</td><td>relevé photogrammétrique ± 3 à 5 %</td></tr>
+<tr><td>Camion 20 m³</td><td>x = 0, z = 4,2</td><td>7,3 m (+ 1,6 m de hayon) × 2,2 m, 3,15 m de haut</td><td>cabine côté jardin, hayon côté cour, écran 4,3 × 2,2 m côté public</td></tr>
+<tr><td>Piles de subs (4)</td><td>x = ±17,2 et ±21, z = 4</td><td>0,6 × 0,75 m, 2,8 m de subs + têtes</td><td>hors du cône du VP 1 ; têtes TP-980 sur les piles extérieures, T24N sur les intérieures</td></tr>
+<tr><td>Wash de façade (2)</td><td>x = ±13, z = 5,5</td><td>au sol, 0,5 m</td><td>cibles (−10 ; 26) et (10,5 ; 44)</td></tr>
+<tr><td>Coffrets son (2)</td><td>x = ±25, z = 1,6</td><td>0,8 × 0,4 × 1,2 m</td><td>pieds de façade</td></tr>
+<tr><td>Zone public</td><td>x = −26 à 26, z = 7 à 61</td><td>2 808 m² bruts, 2 712 m² nets</td><td>sans barrières, couloirs de 4 m de chaque côté</td></tr>
+<tr><td>Tours de délai (2)</td><td>x = ±13, z = 38</td><td>1,4 × 1,4 m, 5 m de haut</td><td>îlots tenus par un agent, 2 × TP-980 chacune</td></tr>
+<tr><td>Catwalk</td><td>x = −1,2 à 1,2, z = 45,4 à 57,4</td><td>2,4 × 12 m, 1,50 m</td><td>sans garde-corps (face jouée), bandes LED</td></tr>
+<tr><td>Tête de scène</td><td>x = −3 à 3, z = 57,4 à 61,4</td><td>6 × 4 m, 1,50 m</td><td>garde-corps au fond et sur les côtés, 2 escaliers latéraux, backline</td></tr>
+<tr><td>Coulisses</td><td>z = 61,4 à 64,4</td><td>3 m × 10 m</td><td>hors public, câble régie → podium</td></tr>
+<tr><td>Régie étanche</td><td>x = −3,03 à 3,03, z = 64,4 à 66,9</td><td>conteneur 20' 6,06 × 2,44 × 2,59 m, surélevé de 1,20 m</td><td>vitre vers la façade, porte et escalier côté tour</td></tr>
+<tr><td>Tour VP Layher</td><td>x = −4,6 à 4,6, z = 68,5 à 71,5</td><td>3 travées × 3,07 m, plancher à 10,3 m, 12,9 m hors tout</td><td>VP à 10,8 m (lentille), lasers à 11,4 m, 8 lests</td></tr>
+<tr><td>Stands (8)</td><td>x = ±8,1, ±12,3, ±16,5, ±20,7 ; z = 67,5</td><td>tonnelles 3 × 3 m</td><td>1,2 m entre tonnelles, 2 m avec la tour, comptoirs côté façade</td></tr>
+<tr><td>Totems lumière (4)</td><td>x = ±10,2 et ±18,6, z = 67,5</td><td>5,5 m</td><td>dans les intervalles de tonnelles</td></tr>
+<tr><td>Projecteurs de scène (2)</td><td>x = ±4,6, z = 58,4</td><td>pieds 3,6 m</td><td>angles de la tête de scène</td></tr>
+<tr><td>TGBT</td><td>x = −6,5, z = 72</td><td>1,2 × 0,6 × 1,8 m</td><td>derrière la tour, côté jardin</td></tr>
+<tr><td>Coffret lumière · stands</td><td>x = 6,5, z = 72</td><td>0,8 × 0,4 × 1,2 m</td><td>derrière la tour, côté cour</td></tr>
+<tr><td>Bâche opaque</td><td>x = −7 à 7, z = 72,8</td><td>2,2 m de haut</td><td>cache le repos</td></tr>
+<tr><td>Tonnelle repos</td><td>x = 0, z = 75,5</td><td>6 × 3 m</td><td>bancs, table eau, 9 assis</td></tr>
+<tr><td>Tonnelle stockage</td><td>x = 0, z = 79,2</td><td>3 × 3 m</td><td>6 flight-cases</td></tr>
+<tr><td>Groupe électrogène (option)</td><td>x = −12,5, z = 78</td><td>3,2 × 1,5 × 2,2 m</td><td>100 kVA insonorisé, zone d'exclusion 2 m</td></tr>
+</table>
+<p><b>Vidéoprojecteurs</b> : 2 machines classe 40 000 lm à 70 m, rapport 2,02 → deux images de 34,7 × 19,5 m empilées (centres à 9,7 m et 27,6 m), 41 lux sur la façade ; 4 machines donneraient 83 lux. Le VP 2 travaille en shift maximal (inclinaison + warp). Le camion ombre le bas de la façade de 0 à 2,5 m sur 9,6 m de large : zone noire dans le contenu.</p>
+<p><b>Lasers</b> : 2 × 10 W sur la tour, cibles sur la façade entre 5,5 m et le pignon, jamais vers le ciel ni le public ; le bas du faisceau passe à plus de 9 m au-dessus de la zone public.</p></section><section class="sec" id="s3"><h1>3. La maquette, heure par heure</h1><p>Images extraites de la démo animée <code>outils/demo-evenement.html</code> (maquette de travail : les bâtiments voisins sont des volumes indicatifs). La vidéo complète est jointe : <code>exports/demo-soiree.mp4</code>.</p><div class="photos">
+<figure><img src="photos/15-plan-de-dessus-jour.jpg" alt="15-plan-de-dessus-jour"><figcaption>Plan de dessus de jour, échelle : la zone public fait 52 × 54 m</figcaption></figure>
+<figure><img src="photos/01-vue-d-ensemble-montage.jpg" alt="01-vue-d-ensemble-montage"><figcaption>Vue d&#x27;ensemble du parvis en fin de montage (16 h) : tour Layher, régie, podium-catwalk, camion devant la façade, stands sur les flancs</figcaption></figure>
+<figure><img src="photos/10-vue-de-dessus-nuit.jpg" alt="10-vue-de-dessus-nuit"><figcaption>Vue de dessus de nuit : zone public, podium, flancs, tour, repos</figcaption></figure>
+<figure><img src="photos/02-village-flancs.jpg" alt="02-village-flancs"><figcaption>Le village sur les flancs de la tour et de la régie, comptoirs tournés vers la façade (18 h)</figcaption></figure>
+<figure><img src="photos/03-scene-ouverte-catwalk.jpg" alt="03-scene-ouverte-catwalk"><figcaption>Scène ouverte sur la tête de scène, le catwalk entre dans le public (18 h 30)</figcaption></figure>
+<figure><img src="photos/04-dj-hayon-camion.jpg" alt="04-dj-hayon-camion"><figcaption>Le camion 20 m³ garé en long : écran sur le flanc, DJ sur le hayon (19 h 30)</figcaption></figure>
+<figure><img src="photos/05-defile-des-luttes.jpg" alt="05-defile-des-luttes"><figcaption>Défilé des collectifs sur le catwalk, banderoles en tête (20 h 30)</figcaption></figure>
+<figure><img src="photos/06-concert.jpg" alt="06-concert"><figcaption>Concert : le chanteur au bout du catwalk, le public tout autour (21 h 15)</figcaption></figure>
+<figure><img src="photos/07-mapping.jpg" alt="07-mapping"><figcaption>Le mapping sur le corps de façade, tour en wash ; l&#x27;ombre du camion est intégrée au contenu (22 h)</figcaption></figure>
+<figure><img src="photos/08-lasers.jpg" alt="08-lasers"><figcaption>Les lasers, cibles sur la façade au-dessus de 5,5 m (22 h 30)</figcaption></figure>
+<figure><img src="photos/09-rap-second-set.jpg" alt="09-rap-second-set"><figcaption>Second set : rappeur et hype sur le catwalk, DJ de scène au fond (23 h 20)</figcaption></figure>
+<figure><img src="photos/11-tour-layher.jpg" alt="11-tour-layher"><figcaption>La tour Layher Allround 3 × 3,07 m, plancher à 10,3 m, lests, échelles, tronc de câbles</figcaption></figure>
+<figure><img src="photos/12-regie-podium.jpg" alt="12-regie-podium"><figcaption>La régie surélevée devant la tour et les coulisses derrière le podium</figcaption></figure>
+<figure><img src="photos/13-passages-de-cables.jpg" alt="13-passages-de-cables"><figcaption>Passages de câbles dans le couloir latéral (voie pompiers) et derrière la zone public</figcaption></figure>
+<figure><img src="photos/14-legende-technique.jpg" alt="14-legende-technique"><figcaption>Repères numérotés de la légende technique sur la maquette</figcaption></figure>
+</div></section><section class="sec" id="s4"><h1>4. Dispositif de sécurité et de prévention</h1><p><b>Public et circulation</b></p>
+<ul><li>zone public de 2 712 m² nets, <b>sans barrières</b> : marquage au sol, agents aux angles, tours de délai en îlots tenus ; jauge de référence <b>5 424 personnes</b> à 2 pers/m², maximum réglementaire 8 136 à 3 pers/m² — la jauge déclarée est celle retenue avec la Ville ;</li><li><b>couloirs latéraux de 4 m</b> libres de part et d'autre (voies pompiers), passages de câbles roulables, sorties vers le métro et le tram ;</li><li>plan de prévention préfecture, SSIAP et secouristes dimensionnés sur la jauge, poste de secours dans le village (côté jardin, visible dès l'axe), prévention et accueil à côté.</li></ul>
+<p><b>Podium-catwalk</b></p>
+<ul><li>1,50 m de haut, 500 kg/m², platelage antidérapant, jupe fermée, nez de scène éclairés ;</li><li>garde-corps 1,10 m au fond et sur les côtés de la tête ; <b>catwalk sans garde-corps</b> (face jouée) : largeur 2,40 m, agents aux angles, lisses basses amovibles possibles — point à valider en commission de sécurité ;</li><li>deux escaliers latéraux 1,20 m, marches 19 cm, mains courantes doubles, nez contrastés, éclairés ; un régisseur de plateau pendant le micro ouvert et le défilé ; jauge plateau 35 personnes en défilé ; accès PMR à trancher (plateforme élévatrice ou prise de parole au pied).</li></ul>
+<p><b>Camion et hayon</b></p>
+<ul><li>moteur coupé, calage, extincteur, zone technique avant de 1,7 m tenue par des agents ;</li><li>hayon déployé : charge lue sur la plaque du véhicule (≈ 750 kg) → <b>2 personnes maximum</b>, béquilles, garde-corps amovible côté arrière ;</li><li>pas de DJ sur le hayon pendant le mapping (dans le cône du VP 1).</li></ul>
+<p><b>Tour et structures</b></p>
+<ul><li>tour Layher Allround montée par une entreprise qualifiée : note de calcul au vent, lestage (≈ 8 t à confirmer), PV de montage, contrôle avant mise en service, bâche de toit démontée au-delà de 50 km/h ; accès par planchers à trappe et échelles ;</li><li>tonnelles lestées 4 × 20 kg, toits démontés si vent fort ; régie surélevée sur praticables (charge au sol à vérifier).</li></ul>
+<p><b>Son, lumière, lasers, électricité</b></p>
+<ul><li>niveaux <b>102 dB(A) et 118 dB(C) sur 15 minutes</b> (décret 2017-1244), afficheur et enregistrement en régie, information des riverains, horaires de l'arrêté ;</li><li>wash de façade et totems hors du cône des VP, aucun faisceau vers les fenêtres riveraines ;</li><li>lasers : classe et puissance déclarées, calcul NOHD du prestataire, zone d'exclusion sous 5,5 m sur la façade, <b>déclaration DGAC</b>, opérateur certifié sur la tour, arrêt d'urgence en régie ;</li><li>installation électrique temporaire : un point de terre, différentiels 30 mA par départ, arrêt d'urgence général en régie et au TGBT, vérification par organisme agréé si demandée ;</li><li>monument : accord écrit CMN / DRAC pour la projection, <b>aucune fixation</b> sur la basilique, emprise du chantier de la tour nord respectée.</li></ul>
+<p><b>Météo</b> : seuils d'annulation ou de repli à fixer (vent : bâche de tour et toits de tonnelles ; pluie : régie étanche, machines sous toit bâché, lasers et VP protégés).</p></section><section class="sec" id="s5"><h1>5. Puissance et jauges — résumé</h1><table>
+<tr><th>Poste</th><th>Appelé</th><th>Départ TGBT</th><th>Où</th></tr>
+<tr><td>Son</td><td>14 kW</td><td>63 A tri</td><td>coffrets son jardin et cour, pieds de façade</td></tr>
+<tr><td>Lumière</td><td>4,5 kW</td><td>32 A tri</td><td>coffret lumière · stands, derrière la tour côté cour</td></tr>
+<tr><td>Vidéo (VP, serveur, écran camion, lasers)</td><td>12,5 kW</td><td>32 A tri</td><td>régie, tour, camion</td></tr>
+<tr><td>Captation</td><td>1,5 kW</td><td>16 A mono</td><td>régie</td></tr>
+<tr><td>Régie (clim, éclairage, onduleur)</td><td>3 kW</td><td>16 A tri</td><td>régie</td></tr>
+<tr><td>Stands (8 × 2 kW)</td><td>16 kW</td><td>63 A tri</td><td>coffret lumière · stands</td></tr>
+<tr><td>Repos, stockage, balisage, secours</td><td>2 kW</td><td>16 A mono</td><td>derrière la tour</td></tr>
+<tr><td><b>Total appelé</b></td><td><b>53,5 kW</b></td><td><b>TGBT 125 A tri (86 kVA)</b></td><td>derrière la tour côté jardin</td></tr>
+</table>
+<p>Source : <b>coffret forain de la Ville</b> s'il délivre 125 A tri, sinon <b>groupe électrogène 100 kVA insonorisé</b> (80 kW, charge prévue 67 %, ≈ 16 L/h, 160 L pour la soirée + réserve), placé derrière les stands côté jardin, hors vue, avec une zone d'exclusion de 2 m.</p>
+<p>Jauges (calcul de la démo, grille au mètre) :</p>
+<table>
+<tr><th>Espace</th><th>Surface</th><th>Jauge</th></tr>
+<tr><td>Zone public nette (52 × 54 m moins podium + marges et îlots de délai)</td><td>2 712 m²</td><td><b>5 424</b> à 2 pers/m² · 8 136 maxi à 3 pers/m² (ERP PA debout)</td></tr>
+<tr><td>Flancs devant les stands (files, circulation)</td><td>161 m²</td><td>161 à 1 pers/m²</td></tr>
+<tr><td>Plateau : tête 6 × 4 + catwalk 2,4 × 12</td><td>52,8 m²</td><td>35 en défilé (1,5 m²/pers), structure 500 kg/m²</td></tr>
+<tr><td>Coulisses (entre podium et régie)</td><td>30 m²</td><td>30 artistes et régisseurs</td></tr>
+<tr><td>Repos équipe</td><td>18 m²</td><td>9 assis</td></tr>
+<tr><td>Hayon (plateau DJ)</td><td>3,5 m²</td><td><b>2 personnes</b> (charge hayon ≈ 750 kg, à lire sur le véhicule)</td></tr>
+</table>
+<p>La jauge de référence à déclarer est celle à 2 pers/m² ; la Ville et la préfecture peuvent imposer moins. Les couloirs latéraux (x = ±26 à ±30 m) restent libres sur 4 m pour les secours.</p></section><section class="sec" id="s6"><h1>6. Bilan de puissance détaillé</h1><h4>1.1 Son — 14 kW</h4>
+<table>
+<tr><th>Équipement</th><th>Qté</th><th>Appel unitaire</th><th>Total</th><th>Note</th></tr>
+<tr><td>Sanway D20K (4 × 5 000 W) — subs</td><td>2</td><td>3 000 W</td><td>6 000 W</td><td>16 SACH118, 2 par canal (4 Ω)</td></tr>
+<tr><td>Powersoft K10 — têtes TP-980 (2 mains + 1 délais)</td><td>3</td><td>1 800 W</td><td>5 400 W</td><td>2 têtes par canal</td></tr>
+<tr><td>D4×3000 — in-fill et retours</td><td>1</td><td>1 500 W</td><td>1 500 W</td><td>4 × T24N in-fill + 2 × T24N retours</td></tr>
+<tr><td>X32, T-Rack 408 + 306, 2 × DDJ-1000, EPM-8, périphériques</td><td>—</td><td>—</td><td>400 W</td><td>régie et rack délais</td></tr>
+<tr><td>Marge câblage / cos φ</td><td>—</td><td>—</td><td>700 W</td><td></td></tr>
+</table>
+<p>Crête réelle très supérieure à la moyenne : <b>un départ 32 A tri par coffret son</b> (jardin et cour), sur un départ 63 A tri du TGBT. Les racks d'amplis sont aux pieds de façade, à côté des piles, pour garder les câbles HP courts (&lt; 15 m) ; les délais ont leur rack au pied de chaque tour (K10 + T-Rack 306), alimentés par le tronc latéral.</p>
+<h4>1.2 Lumière — 4,5 kW</h4>
+<table>
+<tr><th>Équipement</th><th>Qté</th><th>Unitaire</th><th>Total</th></tr>
+<tr><td>Starway Mode B 150 W (4 totems × 2 + 2 wash × 2)</td><td>12</td><td>150 W</td><td>1 800 W</td></tr>
+<tr><td>PAR 64 LED (4 totems × 2 + 4 scène)</td><td>12</td><td>100 W</td><td>1 200 W</td></tr>
+<tr><td>Projecteurs de scène sur pieds (angles de la tête)</td><td>2</td><td>300 W</td><td>600 W</td></tr>
+<tr><td>Bandes LED de nez de scène + alimentations + décodeur DMX</td><td>—</td><td>—</td><td>500 W</td></tr>
+<tr><td>GrandMA3 Command Wing + PC + nodes Art-Net</td><td>—</td><td>—</td><td>200 W</td></tr>
+<tr><td>Éclairage de service et de secours (coulisses, escaliers, repos)</td><td>—</td><td>—</td><td>200 W</td></tr>
+</table>
+<h4>1.3 Vidéo — 12,5 kW</h4>
+<table>
+<tr><th>Équipement</th><th>Qté</th><th>Unitaire</th><th>Total</th><th>Note</th></tr>
+<tr><td>Vidéoprojecteur classe 40 000 lm (laser)</td><td>2</td><td>4 200 W</td><td>8 400 W</td><td>sur la tour, 2 × 16 A mono dédiés tirés du départ vidéo</td></tr>
+<tr><td>Serveur Resolume + moniteurs + switch fibre</td><td>1</td><td>800 W</td><td>800 W</td><td>régie</td></tr>
+<tr><td>Écran LED camion 4,3 × 2,2 m (≈ 9,5 m²)</td><td>1</td><td>2 500 W moyen / 5 700 W crête</td><td>2 500 W</td><td>processeur dans le camion, alimenté par le tronc jardin</td></tr>
+<tr><td>Laser RGB 10 W</td><td>2</td><td>300 W</td><td>600 W</td><td>sur la tour</td></tr>
+<tr><td>Réserve</td><td>—</td><td>—</td><td>200 W</td><td></td></tr>
+</table>
+<p>Mapping : 2 × 40 000 lm sur 2 zones empilées de 34,7 × 19,5 m → <b>41 lux</b> sur la façade ; 4 × 40 000 lm → 83 lux (voir <code>mapping-basilique-saint-denis/CALCULS-MAPPING.md</code>). Le camion est dans le bas du cône du VP 1 : <b>ombre de 0 à 2,5 m de haut sur 9,6 m de large</b> au pied de la façade — le contenu doit prévoir cette zone noire (ou on y mappe le flanc du camion).</p>
+<h4>1.4 Captation — 1,5 kW</h4>
+<p>3 caméras (épaule catwalk, fixe sur la tour en plan large, PTZ sur le camion), mélangeur en régie, enregistreur, encodeur de streaming (4G agrégée ou fibre Ville), moniteurs.</p>
+<h4>1.5 Régie, stands, repos — 21 kW</h4>
+<p>Régie : clim 2 kW, éclairage, onduleur 3 kVA pour le serveur Resolume, la X32 et la GrandMA (autonomie 15 min, le temps de basculer sur le groupe). Stands : 8 × 16 A mono (frigos, machines à café, plaques) soit 2 kW chacun en moyenne, 63 A tri au total. Repos / stockage / balisage / BAES : 2 kW.</p></section><section class="sec" id="s7"><h1>7. Synoptique électrique</h1><table class="syno"><tr><th>De</th><th>Liaison</th><th>Vers</th></tr>
+<tr><td>Source : coffret forain Ville ≥ 125 A tri · ou GE 100 kVA insonorisé (x = −12,5, z = 78)</td><td class="lien">5G35 mm², ≈ 12 m</td><td>TGBT 125 A tri · 86 kVA · x = −6,5, z = 72 (derrière la tour, jardin) · différentiel général 300 mA, 30 mA par départ, terre commune</td></tr>
+<tr><td>TGBT 125 A tri · 86 kVA · x = −6,5, z = 72 (derrière la tour, jardin) · différentiel général 300 mA, 30 mA par départ, terre commune</td><td class="lien">63 A tri</td><td>Départ son</td></tr>
+<tr><td>Départ son</td><td class="lien">32 A tri · tronc jardin ≈ 110 m</td><td>Coffret son jardin 63 A · x = −25, z = 1,6 · D20K · K10 · D4×3000</td></tr>
+<tr><td>Départ son</td><td class="lien">32 A tri · tronc cour ≈ 110 m</td><td>Coffret son cour 63 A · x = +25, z = 1,6 · D20K · K10</td></tr>
+<tr><td>Coffret son jardin 63 A · x = −25, z = 1,6 · D20K · K10 · D4×3000</td><td class="lien">16 A</td><td>Rack délai jardin · K10 + T-Rack 306</td></tr>
+<tr><td>Coffret son cour 63 A · x = +25, z = 1,6 · D20K · K10</td><td class="lien">16 A</td><td>Rack délai cour</td></tr>
+<tr><td>TGBT 125 A tri · 86 kVA · x = −6,5, z = 72 (derrière la tour, jardin) · différentiel général 300 mA, 30 mA par départ, terre commune</td><td class="lien">32 A tri · ≈ 12 m</td><td>Départ vidéo → régie</td></tr>
+<tr><td>Départ vidéo → régie</td><td class="lien">2 × 16 A mono · montant arrière</td><td>Tour : VP1, VP2, 2 lasers</td></tr>
+<tr><td>Départ vidéo → régie</td><td class="lien">16 A · tronc jardin</td><td>Camion : processeur écran LED, DJ hayon</td></tr>
+<tr><td>TGBT 125 A tri · 86 kVA · x = −6,5, z = 72 (derrière la tour, jardin) · différentiel général 300 mA, 30 mA par départ, terre commune</td><td class="lien">32 A tri</td><td>Coffret lumière · stands 63 A · x = +6,5, z = 72</td></tr>
+<tr><td>Coffret lumière · stands 63 A · x = +6,5, z = 72</td><td class="lien">4 × 16 A</td><td>4 totems (Mode B + PAR)</td></tr>
+<tr><td>Coffret lumière · stands 63 A · x = +6,5, z = 72</td><td class="lien">16 A · tronc</td><td>2 wash de façade + 2 projecteurs de scène + bandes LED</td></tr>
+<tr><td>TGBT 125 A tri · 86 kVA · x = −6,5, z = 72 (derrière la tour, jardin) · différentiel général 300 mA, 30 mA par départ, terre commune</td><td class="lien">63 A tri</td><td>Coffret lumière · stands 63 A · x = +6,5, z = 72</td></tr>
+<tr><td>Coffret lumière · stands 63 A · x = +6,5, z = 72</td><td class="lien">8 × 16 A mono</td><td>8 tonnelles (flancs jardin et cour)</td></tr>
+<tr><td>TGBT 125 A tri · 86 kVA · x = −6,5, z = 72 (derrière la tour, jardin) · différentiel général 300 mA, 30 mA par départ, terre commune</td><td class="lien">16 A tri</td><td>Régie : clim, éclairage, onduleur 3 kVA</td></tr>
+<tr><td>Régie : clim, éclairage, onduleur 3 kVA</td><td class="lien"></td><td>Onduleur → Resolume, X32, GrandMA3, mélangeur vidéo</td></tr>
+<tr><td>TGBT 125 A tri · 86 kVA · x = −6,5, z = 72 (derrière la tour, jardin) · différentiel général 300 mA, 30 mA par départ, terre commune</td><td class="lien">16 A mono</td><td>Captation</td></tr>
+<tr><td>TGBT 125 A tri · 86 kVA · x = −6,5, z = 72 (derrière la tour, jardin) · différentiel général 300 mA, 30 mA par départ, terre commune</td><td class="lien">16 A mono</td><td>Repos, stockage, balisage, BAES</td></tr>
+</table>
+<details class="code"><summary>code Mermaid (pour reprendre le schéma)</summary><pre>flowchart TB
+  SRC[&quot;Source : coffret forain Ville ≥ 125 A tri&lt;br/&gt;ou GE 100 kVA insonorisé (x = −12,5, z = 78)&quot;]
+  TGBT[&quot;TGBT 125 A tri · 86 kVA&lt;br/&gt;x = −6,5, z = 72 (derrière la tour, jardin)&lt;br/&gt;différentiel général 300 mA, 30 mA par départ, terre commune&quot;]
+  SRC --&gt;|&quot;5G35 mm², ≈ 12 m&quot;| TGBT
+  TGBT --&gt;|&quot;63 A tri&quot;| SON[&quot;Départ son&quot;]
+  SON --&gt;|&quot;32 A tri · tronc jardin ≈ 110 m&quot;| CSJ[&quot;Coffret son jardin 63 A&lt;br/&gt;x = −25, z = 1,6&lt;br/&gt;D20K · K10 · D4×3000&quot;]
+  SON --&gt;|&quot;32 A tri · tronc cour ≈ 110 m&quot;| CSC[&quot;Coffret son cour 63 A&lt;br/&gt;x = +25, z = 1,6&lt;br/&gt;D20K · K10&quot;]
+  CSJ --&gt;|&quot;16 A&quot;| DJ_[&quot;Rack délai jardin&lt;br/&gt;K10 + T-Rack 306&quot;]
+  CSC --&gt;|&quot;16 A&quot;| DC_[&quot;Rack délai cour&quot;]
+  TGBT --&gt;|&quot;32 A tri · ≈ 12 m&quot;| VID[&quot;Départ vidéo → régie&quot;]
+  VID --&gt;|&quot;2 × 16 A mono · montant arrière&quot;| VP[&quot;Tour : VP1, VP2, 2 lasers&quot;]
+  VID --&gt;|&quot;16 A · tronc jardin&quot;| LED[&quot;Camion : processeur écran LED, DJ hayon&quot;]
+  TGBT --&gt;|&quot;32 A tri&quot;| LUM[&quot;Coffret lumière · stands 63 A&lt;br/&gt;x = +6,5, z = 72&quot;]
+  LUM --&gt;|&quot;4 × 16 A&quot;| TOT[&quot;4 totems (Mode B + PAR)&quot;]
+  LUM --&gt;|&quot;16 A · tronc&quot;| WASH[&quot;2 wash de façade + 2 projecteurs de scène + bandes LED&quot;]
+  TGBT --&gt;|&quot;63 A tri&quot;| LUM
+  LUM --&gt;|&quot;8 × 16 A mono&quot;| STANDS[&quot;8 tonnelles (flancs jardin et cour)&quot;]
+  TGBT --&gt;|&quot;16 A tri&quot;| REG[&quot;Régie : clim, éclairage, onduleur 3 kVA&quot;]
+  REG --&gt; OND[&quot;Onduleur → Resolume, X32, GrandMA3, mélangeur vidéo&quot;]
+  TGBT --&gt;|&quot;16 A mono&quot;| CAPT[&quot;Captation&quot;]
+  TGBT --&gt;|&quot;16 A mono&quot;| REP[&quot;Repos, stockage, balisage, BAES&quot;]</pre></details>
+<p>Règles : un seul point de terre, pas de prolongateur sur enrouleur en charge, passages de câbles roulables dans les couloirs pompiers, PV de vérification de l'installation temporaire (Consuel ou organisme agréé selon la demande de la commission), arrêt d'urgence général en régie et au TGBT.</p></section><section class="sec" id="s8"><h1>8. Synoptique son</h1><table class="syno"><tr><th>De</th><th>Liaison</th><th>Vers</th></tr>
+<tr><td>SRC</td><td class="lien">multipaire / stagebox vers la régie, 3 à 65 m</td><td>X32 · régie</td></tr>
+<tr><td>X32 · régie</td><td class="lien">L / R</td><td>T-Rack 408 · régie</td></tr>
+<tr><td>T-Rack 408 · régie</td><td class="lien">subs jardin / cour</td><td>2 × Sanway D20K · coffrets son</td></tr>
+<tr><td>2 × Sanway D20K · coffrets son</td><td class="lien"></td><td>16 × SACH118 · 4 piles de 4 : x = ±17,2 et ±21, z = 4 (hors cône VP 1) · 1 sub inversé par pile (cardioïde)</td></tr>
+<tr><td>T-Rack 408 · régie</td><td class="lien">têtes jardin / cour</td><td>2 × Powersoft K10</td></tr>
+<tr><td>2 × Powersoft K10</td><td class="lien"></td><td>8 × KAMA TP-980 · 2 stacks de 4 sur les piles extérieures</td></tr>
+<tr><td>T-Rack 408 · régie</td><td class="lien">front-fill</td><td>D4×3000</td></tr>
+<tr><td>D4×3000</td><td class="lien"></td><td>4 × T24N in-fill · sur les piles intérieures (±17,2 m)</td></tr>
+<tr><td>D4×3000</td><td class="lien"></td><td>2 × T24N retours · nez de la tête de scène</td></tr>
+<tr><td>T-Rack 408 · régie</td><td class="lien">délais (AES ou analogique, tronc latéral)</td><td>T-Rack 306 · rack délais</td></tr>
+<tr><td>T-Rack 306 · rack délais</td><td class="lien"></td><td>K10 délais</td></tr>
+<tr><td>K10 délais</td><td class="lien"></td><td>4 × TP-980 · 2 tours à z = 38 m, x = ±13 m, 5 m</td></tr>
+<tr><td>X32 · régie</td><td class="lien">aux</td><td>2 × EPM-8 · retours DJ hayon</td></tr>
+<tr><td>X32 · régie</td><td class="lien">stéréo</td><td>Mélangeur captation · enregistrement</td></tr>
+</table>
+<details class="code"><summary>code Mermaid (pour reprendre le schéma)</summary><pre>flowchart LR
+  subgraph SRC[&quot;Sources&quot;]
+    DJH[&quot;DJ hayon · DDJ-1000&lt;br/&gt;(19 h 30 et minuit)&quot;]
+    DJS[&quot;DJ de scène · DDJ-1000&lt;br/&gt;(set rap)&quot;]
+    MIC[&quot;4 × SM58 (HF souhaités)&lt;br/&gt;catwalk, scène ouverte, défilé&quot;]
+    LIVE[&quot;Groupe live · 8 DI / micros&quot;]
+    REG[&quot;Micro régisseur · PC ambiance&quot;]
+  end
+  SRC --&gt;|&quot;multipaire / stagebox vers la régie, 3 à 65 m&quot;| X32[&quot;X32 · régie&quot;]
+  X32 --&gt;|&quot;L / R&quot;| DSP408[&quot;T-Rack 408&lt;br/&gt;régie&quot;]
+  DSP408 --&gt;|&quot;subs jardin / cour&quot;| D20K[&quot;2 × Sanway D20K&lt;br/&gt;coffrets son&quot;]
+  D20K --&gt; SUBS[&quot;16 × SACH118&lt;br/&gt;4 piles de 4 : x = ±17,2 et ±21, z = 4 (hors cône VP 1)&lt;br/&gt;1 sub inversé par pile (cardioïde)&quot;]
+  DSP408 --&gt;|&quot;têtes jardin / cour&quot;| K10[&quot;2 × Powersoft K10&quot;]
+  K10 --&gt; TOPS[&quot;8 × KAMA TP-980&lt;br/&gt;2 stacks de 4 sur les piles extérieures&quot;]
+  DSP408 --&gt;|&quot;front-fill&quot;| D4[&quot;D4×3000&quot;]
+  D4 --&gt; FF[&quot;4 × T24N in-fill&lt;br/&gt;sur les piles intérieures (±17,2 m)&quot;]
+  D4 --&gt; RET[&quot;2 × T24N retours&lt;br/&gt;nez de la tête de scène&quot;]
+  DSP408 --&gt;|&quot;délais (AES ou analogique, tronc latéral)&quot;| DSP306[&quot;T-Rack 306&lt;br/&gt;rack délais&quot;]
+  DSP306 --&gt; K10D[&quot;K10 délais&quot;] --&gt; DEL[&quot;4 × TP-980&lt;br/&gt;2 tours à z = 38 m, x = ±13 m, 5 m&quot;]
+  X32 --&gt;|&quot;aux&quot;| EPM[&quot;2 × EPM-8&lt;br/&gt;retours DJ hayon&quot;]
+  X32 --&gt;|&quot;stéréo&quot;| CAPT[&quot;Mélangeur captation · enregistrement&quot;]
+  X32 -.-&gt;|&quot;timecode / MIDI&quot;| SYNC[&quot;Resolume · GrandMA3&quot;]</pre></details>
+<p>Points de calage : les 4 piles forment 2 groupes L/R (3,8 m entre piles d'un même côté, 34 m entre jardin et cour) : allées de puissance au centre inévitables ; on cale chaque groupe (délai, polarité) sur la position de régie et on contrôle au sonomètre sur l'axe et à ±10 m. Les piles sont <b>hors du cône du VP 1</b> : une pile à ±8,5 m aurait ombré les portails latéraux sur 3 m de haut (contrôle du visualiseur). Les délais à 38 m sont calés sur les mains (≈ 100 ms) avec un bruit rose et un analyseur. Niveaux : <b>102 dB(A) et 118 dB(C) sur 15 min</b> (décret 2017-1244), afficheur en régie, enregistrement des niveaux, information des riverains et horaires de la Ville.</p></section><section class="sec" id="s9"><h1>9. Synoptique lumière</h1><table class="syno"><tr><th>De</th><th>Liaison</th><th>Vers</th></tr>
+<tr><td>GrandMA3 Command Wing + onPC · régie</td><td class="lien">Art-Net / sACN sur le switch régie</td><td>Node 2 univers · régie</td></tr>
+<tr><td>Node 2 univers · régie</td><td class="lien">U1 · DMX 5 pts, tronc latéral jardin puis cour</td><td>Totem jardin int. : 2 × Mode B (32 ch) + 2 × PAR (16 ch)</td></tr>
+<tr><td>Totem jardin int. : 2 × Mode B (32 ch) + 2 × PAR (16 ch)</td><td class="lien"></td><td>Totem jardin ext.</td></tr>
+<tr><td>Totem jardin ext.</td><td class="lien"></td><td>Totem cour int.</td></tr>
+<tr><td>Totem cour int.</td><td class="lien"></td><td>Totem cour ext.</td></tr>
+<tr><td>Node 2 univers · régie</td><td class="lien">U2 · DMX, coulisses puis tronc</td><td>2 projecteurs de scène (angles de la tête) · 4 × PAR sur pieds</td></tr>
+<tr><td>2 projecteurs de scène (angles de la tête) · 4 × PAR sur pieds</td><td class="lien"></td><td>Décodeur DMX → bandes LED de nez de scène · (catwalk et tête)</td></tr>
+<tr><td>2 projecteurs de scène (angles de la tête) · 4 × PAR sur pieds</td><td class="lien">tronc jardin / cour jusqu&#x27;au pied de façade</td><td>2 wash de façade : 2 × Mode B chacun · x = ±13, z = 5,5 → façade (hors cône VP)</td></tr>
+</table>
+<details class="code"><summary>code Mermaid (pour reprendre le schéma)</summary><pre>flowchart LR
+  MA[&quot;GrandMA3 Command Wing + onPC&lt;br/&gt;régie&quot;] --&gt;|&quot;Art-Net / sACN sur le switch régie&quot;| NODE[&quot;Node 2 univers&lt;br/&gt;régie&quot;]
+  NODE --&gt;|&quot;U1 · DMX 5 pts, tronc latéral jardin puis cour&quot;| T1[&quot;Totem jardin int. : 2 × Mode B (32 ch) + 2 × PAR (16 ch)&quot;]
+  T1 --&gt; T2[&quot;Totem jardin ext.&quot;] --&gt; T3[&quot;Totem cour int.&quot;] --&gt; T4[&quot;Totem cour ext.&quot;]
+  NODE --&gt;|&quot;U2 · DMX, coulisses puis tronc&quot;| SC[&quot;2 projecteurs de scène (angles de la tête)&lt;br/&gt;4 × PAR sur pieds&quot;]
+  SC --&gt; LEDN[&quot;Décodeur DMX → bandes LED de nez de scène&lt;br/&gt;(catwalk et tête)&quot;]
+  SC --&gt;|&quot;tronc jardin / cour jusqu&#x27;au pied de façade&quot;| WASH[&quot;2 wash de façade : 2 × Mode B chacun&lt;br/&gt;x = ±13, z = 5,5 → façade (hors cône VP)&quot;]
+  MA -.-&gt;|&quot;timecode depuis la régie son&quot;| CUE[&quot;Cues : ambiance 19 h 30 → 22 h, noir à 22 h, rallumage 23 h 20&quot;]</pre></details>
+<p>Patch : U1 = 4 × (2 × 16 + 2 × 8) = 192 canaux ; U2 = scène + wash + décodeur LED ≈ 120 canaux (mode des PAR et des projecteurs de scène à relever — skill <code>patch-lumiere</code>). Les wash de façade restent <b>hors du cône des VP</b> et ne visent aucune fenêtre riveraine ; ils s'éteignent à 22 h avec l'éclairage public.</p></section><section class="sec" id="s10"><h1>10. Synoptique vidéo (mapping, écran camion, lasers)</h1><table class="syno"><tr><th>De</th><th>Liaison</th><th>Vers</th></tr>
+<tr><td>Serveur Resolume Arena · régie · composition 2 zones empilées 34,7 × 19,5 m · + 3e sortie écran camion</td><td class="lien">sortie 1 · HDMI/SDI sur fibre ≈ 25 m, montant arrière</td><td>VP1 bas · 40 000 lm · cible y = 9,7 m, TR 2,02</td></tr>
+<tr><td>Serveur Resolume Arena · régie · composition 2 zones empilées 34,7 × 19,5 m · + 3e sortie écran camion</td><td class="lien">sortie 2 · fibre</td><td>VP2 haut · 40 000 lm · cible y = 27,6 m, shift ≈ 100 % + warp</td></tr>
+<tr><td>Serveur Resolume Arena · régie · composition 2 zones empilées 34,7 × 19,5 m · + 3e sortie écran camion</td><td class="lien">sortie 3 · fibre, tronc jardin ≈ 110 m</td><td>Processeur écran LED · camion (flanc côté public)</td></tr>
+<tr><td>Processeur écran LED · camion (flanc côté public)</td><td class="lien"></td><td>Écran 4,3 × 2,2 m · programme, vumètre, sobre pendant le show</td></tr>
+<tr><td>MadMapper / Beyond · régie · tracés sur l&#x27;élévation SVG</td><td class="lien">ILDA, 2 lignes ≈ 25 m</td><td>Laser 1 · tour, 11,4 m</td></tr>
+<tr><td>MadMapper / Beyond · régie · tracés sur l&#x27;élévation SVG</td><td class="lien"></td><td>Laser 2 · tour, 11,4 m</td></tr>
+<tr><td>Laser 1 · tour, 11,4 m</td><td class="lien">zone d&#x27;exclusion : rien sous 5,5 m, jamais vers le ciel</td><td>Façade (corps, pignon)</td></tr>
+<tr><td>Laser 2 · tour, 11,4 m</td><td class="lien">zone d&#x27;exclusion : rien sous 5,5 m, jamais vers le ciel</td><td>Façade (corps, pignon)</td></tr>
+<tr><td>Serveur Resolume Arena · régie · composition 2 zones empilées 34,7 × 19,5 m · + 3e sortie écran camion</td><td class="lien">retour</td><td>Moniteur de contrôle régie + retour caméra tour</td></tr>
+</table>
+<details class="code"><summary>code Mermaid (pour reprendre le schéma)</summary><pre>flowchart LR
+  RES[&quot;Serveur Resolume Arena · régie&lt;br/&gt;composition 2 zones empilées 34,7 × 19,5 m&lt;br/&gt;+ 3e sortie écran camion&quot;]
+  RES --&gt;|&quot;sortie 1 · HDMI/SDI sur fibre ≈ 25 m, montant arrière&quot;| VP1[&quot;VP1 bas · 40 000 lm&lt;br/&gt;cible y = 9,7 m, TR 2,02&quot;]
+  RES --&gt;|&quot;sortie 2 · fibre&quot;| VP2[&quot;VP2 haut · 40 000 lm&lt;br/&gt;cible y = 27,6 m, shift ≈ 100 % + warp&quot;]
+  RES --&gt;|&quot;sortie 3 · fibre, tronc jardin ≈ 110 m&quot;| LEDP[&quot;Processeur écran LED&lt;br/&gt;camion (flanc côté public)&quot;]
+  LEDP --&gt; ECR[&quot;Écran 4,3 × 2,2 m&lt;br/&gt;programme, vumètre, sobre pendant le show&quot;]
+  CAPT[&quot;Mélangeur captation (PGM)&quot;] -.-&gt;|&quot;source alternative&quot;| LEDP
+  MM[&quot;MadMapper / Beyond · régie&lt;br/&gt;tracés sur l&#x27;élévation SVG&quot;] --&gt;|&quot;ILDA, 2 lignes ≈ 25 m&quot;| L1[&quot;Laser 1 · tour, 11,4 m&quot;]
+  MM --&gt; L2[&quot;Laser 2 · tour, 11,4 m&quot;]
+  L1 &amp; L2 --&gt;|&quot;zone d&#x27;exclusion : rien sous 5,5 m, jamais vers le ciel&quot;| FAC[&quot;Façade (corps, pignon)&quot;]
+  SON[&quot;Lecteur / X32&quot;] -.-&gt;|&quot;LTC timecode&quot;| RES
+  SON -.-&gt; MM
+  RES --&gt;|&quot;retour&quot;| MON[&quot;Moniteur de contrôle régie + retour caméra tour&quot;]</pre></details>
+<p>Masques Resolume : corps de façade jusqu'au pignon (tour exclue, traitée en wash), zone noire pour l'ombre du camion (0 → 2,5 m). Le VP 2 travaille en shift maximal : prévoir l'inclinaison de la machine + warp. La régie surélevée de 1,2 m voit la façade par-dessus le podium ; si la vitre reste trop basse, le retour caméra de la tour sert de contrôle.</p></section><section class="sec" id="s11"><h1>11. Synoptique captation</h1><table class="syno"><tr><th>De</th><th>Liaison</th><th>Vers</th></tr>
+<tr><td>Cam 1 · épaule, catwalk et public · SDI HF ou câble dans les coulisses</td><td class="lien"></td><td>Mélangeur (ATEM) · régie</td></tr>
+<tr><td>Cam 2 · fixe sur la tour, plan large façade + parvis · SDI ≈ 25 m par le montant arrière</td><td class="lien"></td><td>Mélangeur (ATEM) · régie</td></tr>
+<tr><td>Cam 3 · PTZ sur le camion, DJ et premiers rangs · SDI par le tronc jardin</td><td class="lien"></td><td>Mélangeur (ATEM) · régie</td></tr>
+<tr><td>X32 · stéréo programme</td><td class="lien"></td><td>Mélangeur (ATEM) · régie</td></tr>
+<tr><td>Mélangeur (ATEM) · régie</td><td class="lien"></td><td>Enregistreur (ISO + PGM)</td></tr>
+<tr><td>Mélangeur (ATEM) · régie</td><td class="lien"></td><td>Encodeur streaming · 4G agrégée ou fibre Ville</td></tr>
+<tr><td>Mélangeur (ATEM) · régie</td><td class="lien">PGM</td><td>Écran camion (source alternative)</td></tr>
+<tr><td>Mélangeur (ATEM) · régie</td><td class="lien">PGM</td><td>Moniteur régie · retour pour la Ville</td></tr>
+</table>
+<details class="code"><summary>code Mermaid (pour reprendre le schéma)</summary><pre>flowchart LR
+  C1[&quot;Cam 1 · épaule, catwalk et public&lt;br/&gt;SDI HF ou câble dans les coulisses&quot;] --&gt; MEL[&quot;Mélangeur (ATEM) · régie&quot;]
+  C2[&quot;Cam 2 · fixe sur la tour, plan large façade + parvis&lt;br/&gt;SDI ≈ 25 m par le montant arrière&quot;] --&gt; MEL
+  C3[&quot;Cam 3 · PTZ sur le camion, DJ et premiers rangs&lt;br/&gt;SDI par le tronc jardin&quot;] --&gt; MEL
+  X32[&quot;X32 · stéréo programme&quot;] --&gt; MEL
+  MEL --&gt; REC[&quot;Enregistreur (ISO + PGM)&quot;]
+  MEL --&gt; ENC[&quot;Encodeur streaming&lt;br/&gt;4G agrégée ou fibre Ville&quot;]
+  MEL --&gt;|&quot;PGM&quot;| LEDP[&quot;Écran camion (source alternative)&quot;]
+  MEL --&gt;|&quot;PGM&quot;| MONR[&quot;Moniteur régie · retour pour la Ville&quot;]</pre></details>
+<p>Droit à l'image : annonce à l'entrée et sur l'écran camion, pas de gros plan sur les mineurs sans accord, et la règle de la skill <code>flux-evenement</code> reste : aucune identification de personnes à partir des visages dans le registre.</p></section><section class="sec" id="s12"><h1>12. Passages de câbles</h1><p>≈ 280 m de passages au sol (calcul de la démo) :</p>
+<table>
+<tr><th>Tronçon</th><th>Longueur</th><th>Type</th></tr>
+<tr><td>Troncs jardin et cour : régie → derrière la zone public (z ≈ 63 m) → couloirs latéraux (x = ±27,5 m) → ligne de façade (z = 1,6 m)</td><td>2 × ≈ 110 m</td><td>3 voies ; <b>5 voies roulables</b> sur les ≈ 2 × 62 m des couloirs pompiers</td></tr>
+<tr><td>Traversées du public vers les tours de délai (z = 38 m)</td><td>2 × 14,5 m</td><td>2 voies piétons jaune / noir, un agent par îlot</td></tr>
+<tr><td>Régie → podium (coulisses, hors public)</td><td>3 m</td><td>2 voies</td></tr>
+<tr><td>TGBT → régie, TGBT → tour, GE → TGBT</td><td>≈ 32 m</td><td>3 voies, hors public</td></tr>
+</table>
+<p>Contenu des troncs : puissance (son 32 A tri par côté, lumière, camion), audio (AES ou analogique vers les délais et les racks), DMX, fibre vidéo (écran camion), SDI (cam 3). Les câbles HP restent courts (racks aux pieds de façade).</p></section><section class="sec" id="s13"><h1>13. Tour Layher Allround — nomenclature</h1><p>Géométrie : 3 travées de 3,07 m × 1 travée de 3,07 m, embase à 0,30 m, 5 niveaux de 2,00 m, plancher à 10,30 m, garde-corps à 0,50 et 1,00 m, plinthes, toit bâché à 12,90 m, VP à 10,80 m (lentille), lasers à 11,40 m sur trépieds.</p>
+<table>
+<tr><th>Pièce</th><th>Réf. Layher</th><th>Qté</th><th>Statut de la référence</th></tr>
+<tr><td>Montant Allround 2,00 m</td><td>2603.200</td><td>44</td><td>famille 2603.xxx citée (DOC0345) ; longueur à confirmer</td></tr>
+<tr><td>Montant Allround 1,00 m</td><td>2603.100</td><td>8</td><td>idem</td></tr>
+<tr><td>Embase (collier de départ)</td><td>2602.000</td><td>8</td><td>citée (DOC0345)</td></tr>
+<tr><td>Vérin de pied 0,60 m</td><td>4001.060</td><td>8</td><td>citée (DOC0345)</td></tr>
+<tr><td>Moise O 3,07 m</td><td>2607.307</td><td>70</td><td>citée (brochure Allround NL) ; LW : 2601.307</td></tr>
+<tr><td>Moise U 3,07 m (support planchers)</td><td>2611.307</td><td>6</td><td>à confirmer</td></tr>
+<tr><td>Diagonale 3,07 × 2,00 m</td><td>2620.307</td><td>40</td><td>famille 2620.xxx citée (DOC0345)</td></tr>
+<tr><td>Plancher acier LW 3,07 × 0,32 m</td><td>3883.307</td><td>27</td><td>série 3883 citée (FIS 64, 19,3 kg)</td></tr>
+<tr><td>Plancher acier 3,07 × 0,19 m</td><td>—</td><td>3</td><td>à confirmer</td></tr>
+<tr><td>Plancher à trappe + échelle alu 3,07 × 0,61 m</td><td>—</td><td>5</td><td>à confirmer</td></tr>
+<tr><td>Plinthe 3,07 m</td><td>—</td><td>8</td><td>Allround à confirmer (Blitz : 1757.307)</td></tr>
+<tr><td>Lest béton ≈ 1 t, sanglé</td><td>hors Layher</td><td>8</td><td>note de calcul au vent</td></tr>
+<tr><td>Bâche de toit + filet + fixations</td><td>hors Layher</td><td>1</td><td>démontage au-delà de 50 km/h</td></tr>
+</table>
+<p>Sources consultées : notice Layher étaiement Allround DOC0345 (socles 4001.060, embases 2602.000, montants 2603.xxx, diagonales 2620.xxx) — <a href="https://www.layher.nl/-/media/layher/documentatie/06-ondersteuning/french/fr-traditionele-kopspindel-badding-ondersteuningen-ar-doc0345-0621.pdf">https://www.layher.nl/-/media/layher/documentatie/06-ondersteuning/french/fr-traditionele-kopspindel-badding-ondersteuningen-ar-doc0345-0621.pdf</a> ; fiche Layher France FIS 64 plancher acier LW (série 3883) — <a href="https://www.layher.fr/permadoc/FIS_64_Plancher_acier_LW.pdf">https://www.layher.fr/permadoc/FIS_64_Plancher_acier_LW.pdf</a> ; brochure Layher Allround (moise 2607.307) — <a href="https://steigerhuur.nl/wp-content/uploads/2017/01/brochure_schoorsteensteigers.pdf">https://steigerhuur.nl/wp-content/uploads/2017/01/brochure_schoorsteensteigers.pdf</a> ; fiche garde-corps Layher (moise LW 2601/xxx, plinthe 1757/xxx) — <a href="https://www.layher.nl/-/media/layher/documentatie/04-systeemvrij-accessoires/french/fr-leuningklem-dakrandbeveiliging-doc0016.pdf">https://www.layher.nl/-/media/layher/documentatie/04-systeemvrij-accessoires/french/fr-leuningklem-dakrandbeveiliging-doc0016.pdf</a> ; catalogue « Layher Éléments » (juin 2021) à consulter pour trancher — <a href="https://www.layher.fr/wp-content/uploads/2024/05/layher_elements_juin_2021.pdf">https://www.layher.fr/wp-content/uploads/2024/05/layher_elements_juin_2021.pdf</a>. Les sites Layher n'étaient pas joignables depuis l'environnement de travail : les références non confirmées suivent la numérotation Layher (famille.longueur en cm) et doivent être validées par le loueur avant commande.</p></section><section class="sec" id="s14"><h1>14. Les 14 points à vérifier avant de s&#x27;engager</h1><p>Chaque repère est posé sur la maquette (bouton « Légende technique » de la démo). Chaque ligne est une question à poser au loueur, au monteur, au prestataire ou à la Ville.</p>
+<ol><li><b>Façade mappée</b> — accord écrit CMN / DRAC, aucune fixation, emprise du chantier de la tour nord, image limitée au corps de façade, ombre du camion dans le contenu.</li><li><b>Tour VP Layher</b> — nomenclature et références (section Tour Layher), charge, note de calcul au vent, lestage, PV de montage, accès.</li><li><b>Régie étanche surélevée</b> — praticables et charge au sol, 63 A tri dédié, terre, onduleur, étanchéité, clim, vitre vers la façade, porte et escalier côté tour.</li><li><b>Podium-catwalk</b> — charge 500 kg/m², garde-corps de la tête, catwalk sans garde-corps à valider, escaliers, PMR, régisseur de plateau, jauge 35.</li><li><b>Village sur les flancs</b> — 8 tonnelles face à la façade, lestage, espacements (1,2 m entre tonnelles, 2 m avec la tour), extincteurs, électricité des stands.</li><li><b>Sono</b> — 16 SACH118 en 4 piles hors cône VP, têtes TP-980 et T24N, délais, niveaux, prédiction acoustique à faire.</li><li><b>Lumières</b> — 4 totems dans le village (2 Mode B + 2 PAR chacun), 2 wash de façade hors cône, 2 projecteurs de scène, GrandMA3 en régie.</li><li><b>Éclairage public</b> — extinction par la Ville de 22 h à 23 h 20, qui tient l'interrupteur, contact pendant le show.</li><li><b>Zone public</b> — jauge, marquage au sol, agents, couloirs de 4 m, îlots de délai, plan de prévention.</li><li><b>Lasers</b> — classe, NOHD, exclusion sous 5,5 m, DGAC, opérateur, arrêt d'urgence.</li><li><b>Camion 20 m³</b> — écran sur le flanc, hayon (charge, 2 personnes, garde-corps), moteur coupé, pas de DJ pendant le mapping, zone technique avant.</li><li><b>Passages de câbles</b> — 278 m, roulables dans les couloirs pompiers, 2 voies dans le public, régie → podium dans les coulisses, régie → tour par le montant arrière.</li><li><b>Repos et stockage</b> — derrière la tour, bâche opaque, 9 assis, flight-cases.</li><li><b>Électricité</b> — TGBT 125 A tri (86 kVA) ou GE 100 kVA, 7 départs, différentiels, terre, 53,5 kW appelés.</li></ol></section><section class="sec" id="s15"><h1>15. Inventaire du matériel</h1><p>Extrait du registre <code>evenement/registre.json</code> (42 objets actifs). Les quantités, poids et puissances marqués « à confirmer » sont des estimations ou des valeurs de classe de matériel.</p>
+<h3>Matériel (22)</h3><table><tr><th>Désignation</th><th>Qté</th><th>Dimensions (m)</th><th>kg</th><th>W</th><th>Fournisseur</th><th>Statut</th></tr>
+<tr><td>Sanway D20K — ampli 4 canaux, 20 000 W (subs)</td><td>2</td><td>0.48 × 0.09 × 0.5</td><td>14</td><td>3000</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>Powersoft K10 — ampli 2 canaux (têtes TP-980)</td><td>3</td><td>0.48 × 0.09 × 0.45</td><td>12</td><td>1800</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>D4×3000 — ampli 4 × 3 000 W (front-fill, retours)</td><td>1</td><td>0.48 × 0.09 × 0.45</td><td>12</td><td>1500</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>Armoires : TGBT 125 A tri + coffrets son jardin / cour 63 A + coffret lumière · stands 63 A</td><td>4</td><td>1.2 × 1.8 × 0.6</td><td>80</td><td>0</td><td></td><td>a confirmer</td></tr>
+<tr><td>Passages de câbles au sol — ≈ 280 m (dont ≈ 125 m roulables 5 voies dans les couloirs pompiers, ≈ 30 m 2 voies piétons dans le public)</td><td>280</td><td>1.0 × 0.07 × 0.5</td><td>12</td><td>0</td><td></td><td>a confirmer</td></tr>
+<tr><td>GrandMA3 Command Wing — console lumière (onPC)</td><td>1</td><td>0.6 × 0.1 × 0.4</td><td>8</td><td>100</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>Pioneer DDJ-1000 — contrôleur DJ (hayon et scène)</td><td>2</td><td>0.7 × 0.07 × 0.36</td><td>6</td><td>30</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>T-Rack DSP 408 — 4 entrées / 8 sorties (système principal)</td><td>1</td><td>0.48 × 0.045 × 0.25</td><td>3</td><td>30</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>T-Rack DSP 306 — 3 entrées / 6 sorties (délais, calage)</td><td>1</td><td>0.48 × 0.045 × 0.25</td><td>3</td><td>30</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>Groupe électrogène 100 kVA insonorisé (option, si le coffret forain de la Ville est insuffisant)</td><td>1</td><td>3.2 × 2.2 × 1.5</td><td>2500</td><td>0</td><td></td><td>a confirmer</td></tr>
+<tr><td>Laser RGB 10 W</td><td>2</td><td>0.4 × 0.24 × 0.4</td><td>?</td><td>600</td><td></td><td>a confirmer</td></tr>
+<tr><td>Starway Mode B — barre LED 150 W, 16 canaux DMX</td><td>12</td><td>1.0 × 0.1 × 0.1</td><td>4</td><td>150</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>PAR 64 LED</td><td>12</td><td>0.25 × 0.35 × 0.25</td><td>3</td><td>100</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>Shure SM58 (+ pieds, câbles XLR)</td><td>8</td><td>0.05 × 0.16 × 0.05</td><td>0.3</td><td>0</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>Behringer X32 — console numérique 32 entrées</td><td>1</td><td>0.9 × 0.2 × 0.53</td><td>21</td><td>120</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>EPM-8 — retour DJ (hayon)</td><td>2</td><td>0.4 × 0.35 × 0.3</td><td>12</td><td>0</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>KAMA TP-980 — élément line array (têtes principales et délais)</td><td>12</td><td>0.9 × 0.3 × 0.55</td><td>38</td><td>0</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>T24N — tête 2 × 12&quot; + 3&quot;, 1 400 W AES (front-fill et retours catwalk)</td><td>6</td><td>0.75 × 0.45 × 0.5</td><td>38</td><td>0</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>Soundboks — enceinte autonome (coulisses / repos)</td><td>1</td><td>0.43 × 0.66 × 0.32</td><td>15</td><td>0</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>SACH118 — sub 1 × 18&quot;, 1 700 W AES, 141 dB (fabrication maison Sound Agency / NoName)</td><td>16</td><td>0.6 × 0.7 × 0.75</td><td>60</td><td>0</td><td>NoName Prestation</td><td>a confirmer</td></tr>
+<tr><td>Totem lumière 5,5 m (mât + embase lestée) — porte 2 × Mode B + 2 × PAR 64 LED</td><td>4</td><td>1 × 5.5 × 1</td><td>45</td><td>0</td><td></td><td>a confirmer</td></tr>
+<tr><td>Tri-DLP laser 40 000 lm 4K (classe)</td><td>2</td><td>0.62 × 0.42 × 0.7</td><td>?</td><td>4200</td><td>Novelty (à confirmer)</td><td>a confirmer</td></tr>
+</table>
+<h3>Structures (6)</h3><table><tr><th>Désignation</th><th>Qté</th><th>Dimensions (m)</th><th>kg</th><th>W</th><th>Fournisseur</th><th>Statut</th></tr>
+<tr><td>Camion 20 m³ avec hayon — garé en long devant la façade : flanc = écran, hayon déployé = plateau DJ</td><td>1</td><td>7.3 × 3.15 × 2.2</td><td>3500</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Régie étanche — conteneur 20&#x27; aménagé (vitre, clim), surélevé de 1,20 m sur praticables</td><td>1</td><td>6.06 × 2.59 × 2.44</td><td>2300</td><td>3000</td><td></td><td>a confirmer</td></tr>
+<tr><td>Tour VP Layher Allround — 3 travées × 3,07 m, 1 × 3,07 m de profondeur, 5 niveaux de 2 m, plancher à 10,3 m, garde-corps, bâche de toit</td><td>1</td><td>9.21 × 12.9 × 3.07</td><td>2600</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Podium-catwalk 1,50 m — tête 6 × 4 m + passerelle 2,4 × 12 m (praticables), 2 escaliers latéraux, garde-corps, jupes imprimées, bandes LED</td><td>1</td><td>6 × 2.6 × 16</td><td>1800</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Tonnelle 3 × 3 m</td><td>8</td><td>3 × 3 × 3</td><td>25</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Tonnelles repos (6 × 3) et stockage (3 × 3) derrière la tour + bâche opaque 14 m</td><td>2</td><td>6 × 2.5 × 3</td><td>40</td><td>?</td><td></td><td>a confirmer</td></tr>
+</table>
+<h3>Stands (8)</h3><table><tr><th>Désignation</th><th>Qté</th><th>Dimensions (m)</th><th>kg</th><th>W</th><th>Fournisseur</th><th>Statut</th></tr>
+<tr><td>Prévention</td><td>1</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Poste de secours</td><td>1</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Accueil · infos</td><td>1</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Buvette</td><td>1</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Restauration</td><td>1</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Asso 1</td><td>1</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Asso 2</td><td>1</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Asso 3</td><td>1</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+</table>
+<h3>Personnes (rôles) (2)</h3><table><tr><th>Désignation</th><th>Qté</th><th>Dimensions (m)</th><th>kg</th><th>W</th><th>Fournisseur</th><th>Statut</th></tr>
+<tr><td>Régie vidéo / mapping</td><td>2</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Opérateur laser certifié</td><td>1</td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+</table>
+<h3>Contraintes (2)</h3><table><tr><th>Désignation</th><th>Qté</th><th>Dimensions (m)</th><th>kg</th><th>W</th><th>Fournisseur</th><th>Statut</th></tr>
+<tr><td>Chantier tour nord (mars 2025 → ~2030), échafaudage &gt; 90 m côté nord</td><td></td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+<tr><td>Extinction de l&#x27;éclairage public pendant le show</td><td></td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+</table>
+<h3>Documents (1)</h3><table><tr><th>Désignation</th><th>Qté</th><th>Dimensions (m)</th><th>kg</th><th>W</th><th>Fournisseur</th><th>Statut</th></tr>
+<tr><td>Book NoName Prestation — parc son, lumière, DJ (25 p.)</td><td></td><td></td><td>?</td><td>?</td><td></td><td>a confirmer</td></tr>
+</table></section><section class="sec" id="s16"><h1>16. Ce qui reste à faire valider</h1><ul><li>commission de sécurité : catwalk sans garde-corps (face jouée), jauge, voies pompiers, tours de délai dans le public, camion moteur coupé devant un monument ;</li><li>CMN / DRAC : projection, aucune fixation, emprise du chantier de la tour nord ;</li><li>DGAC : déclaration lasers, cibles sur façade seule, opérateur certifié ;</li><li>monteur Layher : note de calcul au vent, lestage, PV de montage ;</li><li>prestataire son : prédiction acoustique (nombre de têtes, calage des 4 piles), niveaux ;</li><li>Ville : extinction de l'éclairage public 22 h → 23 h 20, puissance du coffret forain, horaires, information des riverains.</li></ul></section><section class="sec" id="s17"><h1>17. Annexes, sources et mise à jour</h1><p><b>Pièces du dossier</b></p>
+<ul><li><code>exports/dossier-technique.pdf</code> — ce document ;</li><li><code>exports/fiche-declaration.pdf</code> — résumé pour les services (à compléter) ;</li><li><code>exports/plan-implantation.pdf</code> — cotes et vues ;</li><li><code>exports/inventaire-materiel.pdf</code> — matériel et structures ;</li><li><code>exports/demo-soiree.mp4</code> — la démo animée (16 h → 2 h en 60 s) ; <code>exports/photos/</code> ;</li><li><code>outils/demo-evenement.html</code> — la démo interactive (navigateur), <code>outils/implantation-3d.html</code> — le plan 3D où l'on déplace les ensembles, <code>unreal/</code> — le projet Unreal Engine 5 ;</li><li><code>mapping-basilique-saint-denis/</code> — élévation SVG de la façade et calculs de projection.</li></ul>
+<p><b>Sources des références Layher</b> : notice étaiement Allround DOC0345 (<a href="https://www.layher.nl/-/media/layher/documentatie/06-ondersteuning/french/fr-traditionele-kopspindel-badding-ondersteuningen-ar-doc0345-0621.pdf">https://www.layher.nl/-/media/layher/documentatie/06-ondersteuning/french/fr-traditionele-kopspindel-badding-ondersteuningen-ar-doc0345-0621.pdf</a>), fiche FIS 64 plancher acier LW (<a href="https://www.layher.fr/permadoc/FIS_64_Plancher_acier_LW.pdf">https://www.layher.fr/permadoc/FIS_64_Plancher_acier_LW.pdf</a>), brochure Allround (<a href="https://steigerhuur.nl/wp-content/uploads/2017/01/brochure_schoorsteensteigers.pdf">https://steigerhuur.nl/wp-content/uploads/2017/01/brochure_schoorsteensteigers.pdf</a>), catalogue « Layher Éléments » à consulter pour les références non confirmées (<a href="https://www.layher.fr/wp-content/uploads/2024/05/layher_elements_juin_2021.pdf">https://www.layher.fr/wp-content/uploads/2024/05/layher_elements_juin_2021.pdf</a>).</p>
+<p><b>Ce qui est estimé</b> : dimensions, poids et nombre de têtes de la sono (fiches NoName et prédiction acoustique à venir), appels électriques des amplis (1/8 de la puissance nominale), charge du hayon (plaque du véhicule), lestage de la tour (note de calcul), volumes des bâtiments voisins (cadastre à intégrer).</p>
+<p><b>Mettre à jour ce dossier</b> : modifier l'implantation dans <code>outils/implantation-3d.html</code> (glisser-déposer, variantes), exporter le JSON vers <code>unreal/implantation.json</code>, puis <code>python3 exports/generer_exports.py</code>. Le contenu des sections est dans <code>exports/dossier/sections/*.md</code> et l'ordre dans <code>exports/dossier/plan.json</code>.</p></section>
+<footer class="doc">Document de travail généré depuis le dépôt du projet (exports/generer_exports.py). Les mentions « à compléter » et « à confirmer » sont à traiter avant envoi. Les volumes des bâtiments voisins sont indicatifs ; la maquette vérifie la géométrie, elle ne remplace ni la commission de sécurité, ni les notes de calcul, ni les déclarations.</footer></div></body></html>

@@ -1,0 +1,19 @@
+# Unreal : artefacts générés par l'éditeur, jamais versionnés
+unreal/MappingSaintDenis/Binaries/
+unreal/MappingSaintDenis/Intermediate/
+unreal/MappingSaintDenis/Saved/
+unreal/MappingSaintDenis/DerivedDataCache/
+unreal/MappingSaintDenis/.vs/
+*.sln
+# Python
+__pycache__/
+*.pyc
+# entrées brutes des flux (lourdes) : on versionne le registre, pas les médias
+evenement/entrees/**/*.jpg
+evenement/entrees/**/*.jpeg
+evenement/entrees/**/*.png
+evenement/entrees/**/*.mp4
+evenement/entrees/**/*.mov
+evenement/entrees/**/*.pdf
+evenement/entrees/**/*.pptx
+livrables-*.zip

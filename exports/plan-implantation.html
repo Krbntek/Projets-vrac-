@@ -1,0 +1,68 @@
+<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Plan d&#x27;implantation générale</title><style>
+:root{--txt:#1d2228;--dim:#5b6470;--line:#d5dae0;--acc:#b8690f;--fond:#f6f1e8}
+*{box-sizing:border-box} html{font-size:15px} body{margin:0;color:var(--txt);font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;background:#fff}
+.page{max-width:860px;margin:0 auto;padding:28px 32px 60px}
+header.doc{border-bottom:3px solid var(--acc);padding-bottom:12px;margin-bottom:20px}
+header.doc h1{font-size:30px;margin:0 0 4px;letter-spacing:-.01em} header.doc .sous{color:var(--dim);font-size:15px} header.doc .meta{font-size:12.5px;color:var(--dim);margin-top:8px}
+nav.toc{background:var(--fond);border-radius:10px;padding:12px 18px;margin:0 0 24px;font-size:13.5px} nav.toc h2{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--acc)} nav.toc ol{margin:0;padding-left:20px} nav.toc li{margin:2px 0}
+section.sec{margin:0 0 30px} section.sec>h1{font-size:22px;border-left:5px solid var(--acc);padding-left:12px;margin:28px 0 12px}
+h2{font-size:17px;margin:20px 0 8px} h3{font-size:14.5px;margin:16px 0 6px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em} h4{font-size:14px;margin:12px 0 4px}
+p{margin:6px 0 10px} ul,ol{margin:4px 0 10px;padding-left:22px} li{margin:2px 0}
+table{border-collapse:collapse;width:100%;font-size:12.5px;margin:6px 0 14px} th,td{border:1px solid var(--line);padding:5px 7px;vertical-align:top;text-align:left} th{background:var(--fond);font-weight:600} tr:nth-child(even) td{background:#fafafa}
+table.syno td.lien{color:var(--dim);font-style:italic;white-space:nowrap}
+code{background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:.92em} pre{background:#f4f4f4;border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:11.5px;overflow:auto;white-space:pre-wrap}
+details.code summary{font-size:12px;color:var(--dim);cursor:pointer}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0 16px} figure{margin:0;break-inside:avoid} figure img{width:100%;border-radius:6px;border:1px solid var(--line)} figcaption{font-size:12px;color:var(--dim);margin-top:3px} figure.manque div{border:1px dashed var(--line);padding:30px;text-align:center;color:var(--dim);font-size:12px}
+.encart{background:var(--fond);border-left:4px solid var(--acc);padding:8px 12px;border-radius:0 6px 6px 0;margin:10px 0} .a-completer{background:#fff3c4;padding:0 4px;border-radius:3px}
+footer.doc{margin-top:40px;border-top:1px solid var(--line);padding-top:10px;font-size:12px;color:var(--dim)}
+@media print{html{font-size:11.5pt} .page{max-width:none;padding:0} section.sec{break-before:page} section.sec:first-of-type{break-before:auto} nav.toc{break-after:page} h1,h2,h3{break-after:avoid} figure{break-inside:avoid} tr{break-inside:avoid} thead{display:table-header-group} details.code{display:none} a{color:inherit;text-decoration:none}}
+</style></head>
+<body><div class="page"><header class="doc"><h1>Plan d&#x27;implantation générale</h1><div class="sous">Coordonnées, dimensions et vues de chaque ensemble</div><div class="meta">[Organisateur — à compléter] · version v5 du 2 novembre 2026 · 2026-11-02 · [contact — à compléter]</div></header>
+<nav class="toc"><h2>Sommaire</h2><ol><li><a href="#s1">Implantation cotée</a></li><li><a href="#s2">Vues</a></li><li><a href="#s3">Passages de câbles</a></li><li><a href="#s4">Les 14 points à vérifier avant de s&#x27;engager</a></li></ol></nav>
+<section class="sec" id="s1"><h1>1. Implantation cotée</h1><p>Repère : X = axe de la façade (0 au centre, positif côté cour / est), Z = distance au plan de la façade. Toutes les cotes en mètres, issues de <code>unreal/implantation.json</code> (version 2), la source commune de la démo, du visualiseur et du projet Unreal. Chaque ensemble se déplace dans <code>outils/implantation-3d.html</code> (glisser-déposer) ; les contrôles géométriques se recalculent et le JSON exporté alimente tout le reste.</p>
+<table>
+<tr><th>Ensemble</th><th>Position</th><th>Emprise</th><th>Notes</th></tr>
+<tr><td>Façade mappée</td><td>z = 0</td><td>32,5 m de large, corps à 29,2 m, pignon 37,3 m, tour 60,1 m</td><td>relevé photogrammétrique ± 3 à 5 %</td></tr>
+<tr><td>Camion 20 m³</td><td>x = 0, z = 4,2</td><td>7,3 m (+ 1,6 m de hayon) × 2,2 m, 3,15 m de haut</td><td>cabine côté jardin, hayon côté cour, écran 4,3 × 2,2 m côté public</td></tr>
+<tr><td>Piles de subs (4)</td><td>x = ±17,2 et ±21, z = 4</td><td>0,6 × 0,75 m, 2,8 m de subs + têtes</td><td>hors du cône du VP 1 ; têtes TP-980 sur les piles extérieures, T24N sur les intérieures</td></tr>
+<tr><td>Wash de façade (2)</td><td>x = ±13, z = 5,5</td><td>au sol, 0,5 m</td><td>cibles (−10 ; 26) et (10,5 ; 44)</td></tr>
+<tr><td>Coffrets son (2)</td><td>x = ±25, z = 1,6</td><td>0,8 × 0,4 × 1,2 m</td><td>pieds de façade</td></tr>
+<tr><td>Zone public</td><td>x = −26 à 26, z = 7 à 61</td><td>2 808 m² bruts, 2 712 m² nets</td><td>sans barrières, couloirs de 4 m de chaque côté</td></tr>
+<tr><td>Tours de délai (2)</td><td>x = ±13, z = 38</td><td>1,4 × 1,4 m, 5 m de haut</td><td>îlots tenus par un agent, 2 × TP-980 chacune</td></tr>
+<tr><td>Catwalk</td><td>x = −1,2 à 1,2, z = 45,4 à 57,4</td><td>2,4 × 12 m, 1,50 m</td><td>sans garde-corps (face jouée), bandes LED</td></tr>
+<tr><td>Tête de scène</td><td>x = −3 à 3, z = 57,4 à 61,4</td><td>6 × 4 m, 1,50 m</td><td>garde-corps au fond et sur les côtés, 2 escaliers latéraux, backline</td></tr>
+<tr><td>Coulisses</td><td>z = 61,4 à 64,4</td><td>3 m × 10 m</td><td>hors public, câble régie → podium</td></tr>
+<tr><td>Régie étanche</td><td>x = −3,03 à 3,03, z = 64,4 à 66,9</td><td>conteneur 20' 6,06 × 2,44 × 2,59 m, surélevé de 1,20 m</td><td>vitre vers la façade, porte et escalier côté tour</td></tr>
+<tr><td>Tour VP Layher</td><td>x = −4,6 à 4,6, z = 68,5 à 71,5</td><td>3 travées × 3,07 m, plancher à 10,3 m, 12,9 m hors tout</td><td>VP à 10,8 m (lentille), lasers à 11,4 m, 8 lests</td></tr>
+<tr><td>Stands (8)</td><td>x = ±8,1, ±12,3, ±16,5, ±20,7 ; z = 67,5</td><td>tonnelles 3 × 3 m</td><td>1,2 m entre tonnelles, 2 m avec la tour, comptoirs côté façade</td></tr>
+<tr><td>Totems lumière (4)</td><td>x = ±10,2 et ±18,6, z = 67,5</td><td>5,5 m</td><td>dans les intervalles de tonnelles</td></tr>
+<tr><td>Projecteurs de scène (2)</td><td>x = ±4,6, z = 58,4</td><td>pieds 3,6 m</td><td>angles de la tête de scène</td></tr>
+<tr><td>TGBT</td><td>x = −6,5, z = 72</td><td>1,2 × 0,6 × 1,8 m</td><td>derrière la tour, côté jardin</td></tr>
+<tr><td>Coffret lumière · stands</td><td>x = 6,5, z = 72</td><td>0,8 × 0,4 × 1,2 m</td><td>derrière la tour, côté cour</td></tr>
+<tr><td>Bâche opaque</td><td>x = −7 à 7, z = 72,8</td><td>2,2 m de haut</td><td>cache le repos</td></tr>
+<tr><td>Tonnelle repos</td><td>x = 0, z = 75,5</td><td>6 × 3 m</td><td>bancs, table eau, 9 assis</td></tr>
+<tr><td>Tonnelle stockage</td><td>x = 0, z = 79,2</td><td>3 × 3 m</td><td>6 flight-cases</td></tr>
+<tr><td>Groupe électrogène (option)</td><td>x = −12,5, z = 78</td><td>3,2 × 1,5 × 2,2 m</td><td>100 kVA insonorisé, zone d'exclusion 2 m</td></tr>
+</table>
+<p><b>Vidéoprojecteurs</b> : 2 machines classe 40 000 lm à 70 m, rapport 2,02 → deux images de 34,7 × 19,5 m empilées (centres à 9,7 m et 27,6 m), 41 lux sur la façade ; 4 machines donneraient 83 lux. Le VP 2 travaille en shift maximal (inclinaison + warp). Le camion ombre le bas de la façade de 0 à 2,5 m sur 9,6 m de large : zone noire dans le contenu.</p>
+<p><b>Lasers</b> : 2 × 10 W sur la tour, cibles sur la façade entre 5,5 m et le pignon, jamais vers le ciel ni le public ; le bas du faisceau passe à plus de 9 m au-dessus de la zone public.</p></section><section class="sec" id="s2"><h1>2. Vues</h1><div class="photos">
+<figure><img src="photos/15-plan-de-dessus-jour.jpg" alt="15-plan-de-dessus-jour"><figcaption>Plan de dessus de jour, échelle : la zone public fait 52 × 54 m</figcaption></figure>
+<figure><img src="photos/10-vue-de-dessus-nuit.jpg" alt="10-vue-de-dessus-nuit"><figcaption>Vue de dessus de nuit : zone public, podium, flancs, tour, repos</figcaption></figure>
+<figure><img src="photos/01-vue-d-ensemble-montage.jpg" alt="01-vue-d-ensemble-montage"><figcaption>Vue d&#x27;ensemble du parvis en fin de montage (16 h) : tour Layher, régie, podium-catwalk, camion devant la façade, stands sur les flancs</figcaption></figure>
+<figure><img src="photos/02-village-flancs.jpg" alt="02-village-flancs"><figcaption>Le village sur les flancs de la tour et de la régie, comptoirs tournés vers la façade (18 h)</figcaption></figure>
+<figure><img src="photos/04-dj-hayon-camion.jpg" alt="04-dj-hayon-camion"><figcaption>Le camion 20 m³ garé en long : écran sur le flanc, DJ sur le hayon (19 h 30)</figcaption></figure>
+<figure><img src="photos/11-tour-layher.jpg" alt="11-tour-layher"><figcaption>La tour Layher Allround 3 × 3,07 m, plancher à 10,3 m, lests, échelles, tronc de câbles</figcaption></figure>
+<figure><img src="photos/12-regie-podium.jpg" alt="12-regie-podium"><figcaption>La régie surélevée devant la tour et les coulisses derrière le podium</figcaption></figure>
+<figure><img src="photos/13-passages-de-cables.jpg" alt="13-passages-de-cables"><figcaption>Passages de câbles dans le couloir latéral (voie pompiers) et derrière la zone public</figcaption></figure>
+<figure><img src="photos/14-legende-technique.jpg" alt="14-legende-technique"><figcaption>Repères numérotés de la légende technique sur la maquette</figcaption></figure>
+</div></section><section class="sec" id="s3"><h1>3. Passages de câbles</h1><p>≈ 280 m de passages au sol (calcul de la démo) :</p>
+<table>
+<tr><th>Tronçon</th><th>Longueur</th><th>Type</th></tr>
+<tr><td>Troncs jardin et cour : régie → derrière la zone public (z ≈ 63 m) → couloirs latéraux (x = ±27,5 m) → ligne de façade (z = 1,6 m)</td><td>2 × ≈ 110 m</td><td>3 voies ; <b>5 voies roulables</b> sur les ≈ 2 × 62 m des couloirs pompiers</td></tr>
+<tr><td>Traversées du public vers les tours de délai (z = 38 m)</td><td>2 × 14,5 m</td><td>2 voies piétons jaune / noir, un agent par îlot</td></tr>
+<tr><td>Régie → podium (coulisses, hors public)</td><td>3 m</td><td>2 voies</td></tr>
+<tr><td>TGBT → régie, TGBT → tour, GE → TGBT</td><td>≈ 32 m</td><td>3 voies, hors public</td></tr>
+</table>
+<p>Contenu des troncs : puissance (son 32 A tri par côté, lumière, camion), audio (AES ou analogique vers les délais et les racks), DMX, fibre vidéo (écran camion), SDI (cam 3). Les câbles HP restent courts (racks aux pieds de façade).</p></section><section class="sec" id="s4"><h1>4. Les 14 points à vérifier avant de s&#x27;engager</h1><p>Chaque repère est posé sur la maquette (bouton « Légende technique » de la démo). Chaque ligne est une question à poser au loueur, au monteur, au prestataire ou à la Ville.</p>
+<ol><li><b>Façade mappée</b> — accord écrit CMN / DRAC, aucune fixation, emprise du chantier de la tour nord, image limitée au corps de façade, ombre du camion dans le contenu.</li><li><b>Tour VP Layher</b> — nomenclature et références (section Tour Layher), charge, note de calcul au vent, lestage, PV de montage, accès.</li><li><b>Régie étanche surélevée</b> — praticables et charge au sol, 63 A tri dédié, terre, onduleur, étanchéité, clim, vitre vers la façade, porte et escalier côté tour.</li><li><b>Podium-catwalk</b> — charge 500 kg/m², garde-corps de la tête, catwalk sans garde-corps à valider, escaliers, PMR, régisseur de plateau, jauge 35.</li><li><b>Village sur les flancs</b> — 8 tonnelles face à la façade, lestage, espacements (1,2 m entre tonnelles, 2 m avec la tour), extincteurs, électricité des stands.</li><li><b>Sono</b> — 16 SACH118 en 4 piles hors cône VP, têtes TP-980 et T24N, délais, niveaux, prédiction acoustique à faire.</li><li><b>Lumières</b> — 4 totems dans le village (2 Mode B + 2 PAR chacun), 2 wash de façade hors cône, 2 projecteurs de scène, GrandMA3 en régie.</li><li><b>Éclairage public</b> — extinction par la Ville de 22 h à 23 h 20, qui tient l'interrupteur, contact pendant le show.</li><li><b>Zone public</b> — jauge, marquage au sol, agents, couloirs de 4 m, îlots de délai, plan de prévention.</li><li><b>Lasers</b> — classe, NOHD, exclusion sous 5,5 m, DGAC, opérateur, arrêt d'urgence.</li><li><b>Camion 20 m³</b> — écran sur le flanc, hayon (charge, 2 personnes, garde-corps), moteur coupé, pas de DJ pendant le mapping, zone technique avant.</li><li><b>Passages de câbles</b> — 278 m, roulables dans les couloirs pompiers, 2 voies dans le public, régie → podium dans les coulisses, régie → tour par le montant arrière.</li><li><b>Repos et stockage</b> — derrière la tour, bâche opaque, 9 assis, flight-cases.</li><li><b>Électricité</b> — TGBT 125 A tri (86 kVA) ou GE 100 kVA, 7 départs, différentiels, terre, 53,5 kW appelés.</li></ol></section>
+<footer class="doc">Document de travail généré depuis le dépôt du projet (exports/generer_exports.py). Les mentions « à compléter » et « à confirmer » sont à traiter avant envoi. Les volumes des bâtiments voisins sont indicatifs ; la maquette vérifie la géométrie, elle ne remplace ni la commission de sécurité, ni les notes de calcul, ni les déclarations.</footer></div></body></html>

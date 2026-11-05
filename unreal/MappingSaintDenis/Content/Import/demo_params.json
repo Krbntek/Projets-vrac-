@@ -1,0 +1,814 @@
+{
+  "_commentaire": "Paramètres de rendu de la démo animée, version 2 (catwalk, camion DJ, stands sur les flancs, tour Layher). Lus par demo_sequence.py et référence des choix de la démo HTML. Couleurs sRGB 0-1. Unités Unreal : cm, lumens, Kelvin.",
+  "scenario": {
+    "heure_debut": 16.0,
+    "heure_fin": 26.0,
+    "secondes_par_heure": 10,
+    "phases": [
+      {
+        "t": 16.0,
+        "nom": "Montage",
+        "public": 0.0,
+        "eclairage_public": true,
+        "village": false,
+        "sono": false,
+        "ambiance": false,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": false
+      },
+      {
+        "t": 18.0,
+        "nom": "Ouverture du village",
+        "public": 0.15,
+        "eclairage_public": true,
+        "village": true,
+        "sono": false,
+        "ambiance": false,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": true
+      },
+      {
+        "t": 18.6,
+        "nom": "Scène ouverte",
+        "public": 0.3,
+        "eclairage_public": true,
+        "village": true,
+        "sono": false,
+        "ambiance": false,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": true,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": true
+      },
+      {
+        "t": 19.5,
+        "nom": "DJ sur le hayon",
+        "public": 0.5,
+        "eclairage_public": true,
+        "village": true,
+        "sono": true,
+        "ambiance": true,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": true,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": true
+      },
+      {
+        "t": 20.5,
+        "nom": "Défilé des luttes",
+        "public": 0.75,
+        "eclairage_public": true,
+        "village": true,
+        "sono": true,
+        "ambiance": true,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": true,
+        "defile": true,
+        "live": false,
+        "rap": false,
+        "ecran_camion": true
+      },
+      {
+        "t": 21.3,
+        "nom": "Concert",
+        "public": 0.9,
+        "eclairage_public": true,
+        "village": true,
+        "sono": true,
+        "ambiance": true,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": true,
+        "rap": false,
+        "ecran_camion": true
+      },
+      {
+        "t": 22.0,
+        "nom": "Extinction",
+        "public": 1.0,
+        "eclairage_public": false,
+        "village": true,
+        "sono": true,
+        "ambiance": true,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": true
+      },
+      {
+        "t": 22.1,
+        "nom": "Le mapping",
+        "public": 1.0,
+        "eclairage_public": false,
+        "village": true,
+        "sono": true,
+        "ambiance": false,
+        "mapping": true,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": true
+      },
+      {
+        "t": 22.6,
+        "nom": "Les lasers",
+        "public": 1.0,
+        "eclairage_public": false,
+        "village": true,
+        "sono": true,
+        "ambiance": false,
+        "mapping": true,
+        "lasers": true,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": true
+      },
+      {
+        "t": 23.3,
+        "nom": "Rap · second set",
+        "public": 0.85,
+        "eclairage_public": true,
+        "village": true,
+        "sono": true,
+        "ambiance": true,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": true,
+        "ecran_camion": true
+      },
+      {
+        "t": 24.1,
+        "nom": "DJ de clôture",
+        "public": 0.5,
+        "eclairage_public": true,
+        "village": true,
+        "sono": true,
+        "ambiance": true,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": true,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": true
+      },
+      {
+        "t": 24.7,
+        "nom": "Sortie du public",
+        "public": 0.2,
+        "eclairage_public": true,
+        "village": true,
+        "sono": false,
+        "ambiance": true,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": false
+      },
+      {
+        "t": 25.3,
+        "nom": "Démontage",
+        "public": 0.0,
+        "eclairage_public": true,
+        "village": false,
+        "sono": false,
+        "ambiance": false,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": false
+      },
+      {
+        "t": 26.0,
+        "nom": "Fin",
+        "public": 0.0,
+        "eclairage_public": true,
+        "village": false,
+        "sono": false,
+        "ambiance": false,
+        "mapping": false,
+        "lasers": false,
+        "scene_ouverte": false,
+        "dj_hayon": false,
+        "defile": false,
+        "live": false,
+        "rap": false,
+        "ecran_camion": false
+      }
+    ]
+  },
+  "soleil": {
+    "_": "Saint-Denis, fin d'été. Élévation en degrés par heure décimale ; azimut sud à 13h30.",
+    "lever": 6.3,
+    "coucher": 20.8,
+    "elevation_max_deg": 55,
+    "intensite_lux_midi": 80000,
+    "temperature_K_midi": 5600,
+    "temperature_K_coucher": 2300,
+    "ciel": {
+      "jour": [
+        0.62,
+        0.76,
+        0.92
+      ],
+      "crepuscule": [
+        0.95,
+        0.55,
+        0.35
+      ],
+      "nuit": [
+        0.03,
+        0.04,
+        0.08
+      ]
+    },
+    "skylight_intensite": {
+      "jour": 1.0,
+      "nuit": 0.05
+    },
+    "brouillard": {
+      "densite": 0.004,
+      "hauteur_m": 60,
+      "couleur_nuit": [
+        0.05,
+        0.06,
+        0.1
+      ]
+    }
+  },
+  "materiaux": {
+    "_": "PBR. normale_force : amplitude du relief procédural ; teinte_salissure : assombrissement du bas des murs.",
+    "M_Pierre": {
+      "base": [
+        0.85,
+        0.82,
+        0.75
+      ],
+      "rugosite": 0.92,
+      "metal": 0.0,
+      "appareil_m": {
+        "assise": 0.4,
+        "panneresse": 1.2
+      },
+      "normale_force": 0.6,
+      "teinte_salissure": 0.25
+    },
+    "M_Pave": {
+      "base": [
+        0.5,
+        0.48,
+        0.44
+      ],
+      "rugosite": 0.95,
+      "metal": 0.0,
+      "dalle_m": 0.32,
+      "joint_m": 0.02,
+      "normale_force": 0.4,
+      "humidite_nuit": 0.35
+    },
+    "M_Voisin": {
+      "base": [
+        0.73,
+        0.7,
+        0.63
+      ],
+      "rugosite": 0.85,
+      "metal": 0.0,
+      "fenetres": {
+        "largeur_m": 1.2,
+        "hauteur_m": 1.8,
+        "pas_x_m": 2.6,
+        "pas_y_m": 3.0,
+        "part_allumees_nuit": 0.45,
+        "emission_cd_m2": 60,
+        "temperature_K": 2900
+      }
+    },
+    "M_Vitrail": {
+      "base": [
+        0.11,
+        0.16,
+        0.24
+      ],
+      "rugosite": 0.3,
+      "metal": 0.1,
+      "emission_nuit_cd_m2": 8,
+      "couleur_emission": [
+        0.4,
+        0.5,
+        0.8
+      ]
+    },
+    "M_Or": {
+      "base": [
+        0.78,
+        0.64,
+        0.29
+      ],
+      "rugosite": 0.4,
+      "metal": 0.6
+    },
+    "M_Regie": {
+      "base": [
+        0.84,
+        0.87,
+        0.89
+      ],
+      "rugosite": 0.5,
+      "metal": 0.3,
+      "vitre": {
+        "emission_cd_m2": 25,
+        "couleur": [
+          0.62,
+          0.83,
+          1.0
+        ]
+      }
+    },
+    "M_Echafaud": {
+      "base": [
+        0.79,
+        0.54,
+        0.24
+      ],
+      "rugosite": 0.6,
+      "metal": 0.3
+    },
+    "M_Tente": {
+      "base_par_type": {
+        "prevention": [
+          0.31,
+          0.64,
+          1.0
+        ],
+        "secours": [
+          0.97,
+          0.32,
+          0.29
+        ],
+        "accueil": [
+          1.0,
+          0.71,
+          0.33
+        ],
+        "buvette": [
+          0.89,
+          0.75,
+          0.35
+        ],
+        "asso": [
+          0.91,
+          0.88,
+          0.78
+        ]
+      },
+      "rugosite": 0.9,
+      "metal": 0.0,
+      "translucidite_nuit": 0.35
+    },
+    "M_Sono": {
+      "base": [
+        0.07,
+        0.08,
+        0.1
+      ],
+      "rugosite": 0.6,
+      "metal": 0.4
+    },
+    "M_Foule": {
+      "base_par_personne": {
+        "teinte_aleatoire": true,
+        "saturation": 0.3,
+        "luminance": [
+          0.38,
+          0.68
+        ]
+      },
+      "rugosite": 0.9
+    },
+    "M_ConeVP": {
+      "type": "volumetrique",
+      "couleur": [
+        1.0,
+        0.78,
+        0.5
+      ],
+      "densite": 0.07,
+      "additif": true
+    },
+    "M_Faisceau": {
+      "type": "volumetrique",
+      "couleur_cycle_HSL": {
+        "periode_h": 9,
+        "saturation": 0.8,
+        "luminance": 0.6
+      },
+      "densite": 0.12,
+      "additif": true
+    },
+    "M_Laser": {
+      "type": "emissif",
+      "couleurs": [
+        [
+          0.31,
+          0.64,
+          1.0
+        ],
+        [
+          0.25,
+          0.73,
+          0.31
+        ]
+      ],
+      "emission_cd_m2": 2000,
+      "rayon_m": 0.06
+    },
+    "M_ImageMapping": {
+      "type": "emissif-anime",
+      "source": "RenderTarget 512x600 ou Media Player (la vidéo de contenu)",
+      "emission_cd_m2": 15,
+      "masque": "silhouette du corps de façade jusqu'au pignon, tour exclue"
+    },
+    "M_Ecran": {
+      "type": "emissif-anime",
+      "source": "RenderTarget 512x256 : programme de la soirée, vumètre quand la sono joue, sobre pendant le mapping",
+      "emission_cd_m2": 600
+    },
+    "M_Jupe": {
+      "base": [
+        0.05,
+        0.06,
+        0.07
+      ],
+      "rugosite": 0.9,
+      "note": "jupes du catwalk : texture texte « SCÈNE OUVERTE · À VOUS ! » émissive la nuit"
+    },
+    "M_Galva": {
+      "base": [
+        0.71,
+        0.73,
+        0.76
+      ],
+      "rugosite": 0.35,
+      "metal": 0.75
+    },
+    "M_Blanc": {
+      "base": [
+        0.93,
+        0.94,
+        0.95
+      ],
+      "rugosite": 0.5,
+      "metal": 0.2,
+      "note": "camion"
+    }
+  },
+  "lumieres": {
+    "_": "intensités en lumens Unreal (LightUnits.LUMENS). temperature en Kelvin.",
+    "candelabres": {
+      "nombre": 8,
+      "hauteur_m": 9,
+      "lumens": 12000,
+      "temperature_K": 2700,
+      "rayon_m": 40,
+      "allumes_selon": "eclairage_public"
+    },
+    "stands": {
+      "par_stand": 1,
+      "hauteur_m": 2.0,
+      "lumens": 1800,
+      "temperature_K": 2900,
+      "rayon_m": 9,
+      "allumes_selon": "village"
+    },
+    "totems": {
+      "lumens": 20000,
+      "cone_deg": 60,
+      "cycle_couleur": true,
+      "allumes_selon": "ambiance"
+    },
+    "wash_facade": {
+      "lumens": 15000,
+      "cone_deg": 30,
+      "cycle_couleur": true,
+      "allumes_selon": "ambiance"
+    },
+    "vp": {
+      "lumens_par_machine": "depuis implantation.json",
+      "temperature_K": 6500,
+      "cone_deg": "depuis le rapport d'optique",
+      "allumes_selon": "mapping",
+      "note": "le spot n'est qu'un appoint : l'image est portée par M_ImageMapping"
+    },
+    "regie_vitre": {
+      "emission": true,
+      "allumee_de": 17.0,
+      "allumee_a": 25.5
+    },
+    "fenetres_voisins": {
+      "allumees_selon": "nuit"
+    },
+    "scene": {
+      "lumens": 8000,
+      "cone_deg": 50,
+      "couleurs": [
+        [
+          0.4,
+          0.75,
+          1.0
+        ],
+        [
+          1.0,
+          0.45,
+          0.6
+        ]
+      ],
+      "allumes_selon": "scene_ouverte | defile | live | rap",
+      "poursuite": "cible = chanteur / rappeur sur le catwalk"
+    },
+    "ecran_camion": {
+      "emission_cd_m2": 600,
+      "allume_selon": "ecran_camion",
+      "sobre_pendant": "mapping"
+    },
+    "led_nez_de_scene": {
+      "emission_cd_m2": 300,
+      "pulse_hz": 0.4,
+      "allume_selon": "scene_ouverte | defile | live | rap | dj_hayon"
+    }
+  },
+  "cameras": {
+    "plan_sequence": [
+      {
+        "t": 16.0,
+        "pos_m": [
+          -90,
+          45,
+          150
+        ],
+        "cible_m": [
+          0,
+          10,
+          50
+        ]
+      },
+      {
+        "t": 18.0,
+        "pos_m": [
+          30,
+          8,
+          92
+        ],
+        "cible_m": [
+          -4,
+          3,
+          66
+        ]
+      },
+      {
+        "t": 18.6,
+        "pos_m": [
+          13,
+          4.6,
+          43
+        ],
+        "cible_m": [
+          0,
+          2.6,
+          57
+        ]
+      },
+      {
+        "t": 19.5,
+        "pos_m": [
+          -11,
+          6,
+          15
+        ],
+        "cible_m": [
+          2,
+          2.2,
+          4.6
+        ]
+      },
+      {
+        "t": 20.5,
+        "pos_m": [
+          -9,
+          4.5,
+          42
+        ],
+        "cible_m": [
+          0,
+          2.4,
+          52
+        ]
+      },
+      {
+        "t": 21.3,
+        "pos_m": [
+          6,
+          2.6,
+          34
+        ],
+        "cible_m": [
+          0,
+          2.6,
+          48
+        ]
+      },
+      {
+        "t": 22.0,
+        "pos_m": [
+          -40,
+          20,
+          90
+        ],
+        "cible_m": [
+          0,
+          15,
+          10
+        ]
+      },
+      {
+        "t": 22.6,
+        "pos_m": [
+          -18,
+          6,
+          46
+        ],
+        "cible_m": [
+          0,
+          18,
+          0
+        ]
+      },
+      {
+        "t": 23.3,
+        "pos_m": [
+          60,
+          30,
+          120
+        ],
+        "cible_m": [
+          0,
+          15,
+          30
+        ]
+      },
+      {
+        "t": 24.1,
+        "pos_m": [
+          14,
+          3,
+          20
+        ],
+        "cible_m": [
+          3,
+          2,
+          4.5
+        ]
+      },
+      {
+        "t": 24.7,
+        "pos_m": [
+          0,
+          80,
+          120
+        ],
+        "cible_m": [
+          0,
+          0,
+          60
+        ]
+      },
+      {
+        "t": 26.0,
+        "pos_m": [
+          -90,
+          45,
+          150
+        ],
+        "cible_m": [
+          0,
+          10,
+          50
+        ]
+      }
+    ],
+    "fixes": {
+      "public_1m70": {
+        "pos_m": [
+          0,
+          1.7,
+          44
+        ],
+        "cible_m": [
+          0,
+          15,
+          0
+        ]
+      },
+      "balcon_mairie": {
+        "pos_m": [
+          -46,
+          9,
+          72
+        ],
+        "cible_m": [
+          0,
+          12,
+          30
+        ]
+      },
+      "catwalk": {
+        "pos_m": [
+          0,
+          3.2,
+          60.6
+        ],
+        "cible_m": [
+          0,
+          6,
+          0
+        ]
+      },
+      "hayon_dj": {
+        "pos_m": [
+          3.8,
+          2.65,
+          4.3
+        ],
+        "cible_m": [
+          0,
+          2,
+          40
+        ]
+      }
+    },
+    "focale_mm": 28,
+    "capteur": "Super 35",
+    "tenue_des_plans": "chaque plan est tenu jusqu'à 0,3 h avant le suivant (mouvement de 3 s)"
+  },
+  "foule": {
+    "jauge": "zone public nette × 2 pers/m² (5 424)",
+    "part_dessinee": 0.35,
+    "densite_vers_facade": 0.7,
+    "hauteur_m": [
+      1.55,
+      1.95
+    ],
+    "marge_facade_m": 7,
+    "exclusions": "podium + 1 m, îlots de délai + 1,3 m",
+    "visages": "3 carnations × 5 expressions (smiley), calotte de cheveux",
+    "performers": "2 au micro ouvert, groupe de 4, rappeur + hype + DJ de scène, DJ sur le hayon, cortège de 16 avec 3 banderoles"
+  }
+}

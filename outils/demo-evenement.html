@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Démo soirée mapping</title>
+<style>
+  :root{--bg:#0b0d11;--txt:#eef1f5;--dim:#9aa3ad;--acc:#ffb454;--line:#2a3138}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
+            font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow:hidden}
+  #view{position:absolute;inset:0}
+  #view canvas{display:block;width:100%;height:100%}
+  #hud{position:absolute;left:0;right:0;bottom:0;padding:14px 18px 16px;
+       background:linear-gradient(transparent,rgba(5,7,10,.88) 40%);pointer-events:none}
+  #hud>*{pointer-events:auto}
+  #titre{font-size:26px;font-weight:700;letter-spacing:-.01em;text-shadow:0 2px 12px #000}
+  #titre small{font-size:15px;font-weight:400;color:var(--acc);margin-left:10px}
+  #sous{color:var(--dim);font-size:14px;margin:2px 0 10px;max-width:900px;text-shadow:0 1px 6px #000}
+  #ligne{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  button,select{background:#1b2027;color:var(--txt);border:1px solid var(--line);border-radius:7px;
+         padding:7px 12px;font:inherit;cursor:pointer}
+  button:hover{border-color:var(--acc)} button.on{background:var(--acc);color:#1a1200;border-color:var(--acc)}
+  #heure{font-variant-numeric:tabular-nums;font-size:20px;font-weight:700;min-width:64px}
+  input[type=range]{flex:1;min-width:220px;accent-color:var(--acc)}
+  #phases{display:flex;gap:4px;margin-top:6px}
+  .ph{flex:1;height:5px;border-radius:3px;background:#2a3138;position:relative}
+  .ph.on{background:var(--acc)}
+  .ph span{position:absolute;top:8px;left:0;font-size:10.5px;color:var(--dim);white-space:nowrap}
+  #stats{position:absolute;top:14px;right:16px;background:rgba(5,7,10,.72);border:1px solid var(--line);
+         border-radius:10px;padding:10px 14px;font-size:13px;line-height:1.7;min-width:270px;backdrop-filter:blur(6px)}
+  #stats b{color:var(--acc);font-variant-numeric:tabular-nums}
+  #stats .et{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:#555}
+  #stats .et.on{background:#3fb950;box-shadow:0 0 6px #3fb950}
+  #stats .sep{border-top:1px solid var(--line);margin:5px 0 3px}
+  #logo{position:absolute;top:14px;left:16px;font-size:12px;color:var(--dim);background:rgba(5,7,10,.6);
+        padding:6px 10px;border-radius:8px}
+  #rec{display:none;position:absolute;top:58px;left:16px;color:#f85149;font-weight:700;font-size:13px}
+  #rec::before{content:"●";margin-right:6px;animation:cl 1s infinite}
+  @keyframes cl{50%{opacity:.2}}
+  .note{font-size:11px;color:var(--dim)}
+  #legpan{display:none;position:absolute;top:58px;left:16px;width:460px;max-height:calc(100% - 230px);overflow:auto;background:rgba(5,7,10,.9);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:12.5px;line-height:1.45;backdrop-filter:blur(6px)}
+  #legpan h3{margin:8px 0 4px;font-size:13px;color:var(--acc)} #legpan ul{margin:0 0 6px 16px;padding:0} #legpan li{margin:2px 0}
+  #legpan table{border-collapse:collapse;font-size:11.5px;margin:3px 0 6px} #legpan td,#legpan th{border-bottom:1px solid var(--line);padding:2px 6px;text-align:left} #legpan th{color:var(--dim);font-weight:600}
+  #legpan .num{display:inline-block;min-width:22px;height:22px;border-radius:11px;background:var(--acc);color:#1a1200;font-weight:700;text-align:center;line-height:22px;margin-right:6px}
+  #legpan .ok{color:#3fb950} #legpan .q{color:#f0883e}
+  @media(max-width:700px){#stats{display:none} #titre{font-size:18px}}
+</style>
+</head>
+<body>
+<div id="view"></div>
+<div id="logo">Démo d'implantation · maquette de travail, volumes voisins indicatifs</div>
+<div id="rec">ENREGISTREMENT</div>
+<div id="legpan"></div>
+<div id="stats"></div>
+<div id="hud">
+  <div id="titre">—<small id="phase"></small></div>
+  <div id="sous"></div>
+  <div id="ligne">
+    <button id="play">▶ Lecture</button>
+    <span id="heure">16:00</span>
+    <input type="range" id="tl" min="16" max="26" step="0.01" value="16">
+    <select id="vitesse"><option value="20">1 h = 20 s</option><option value="10" selected>1 h = 10 s</option><option value="5">1 h = 5 s</option><option value="2">1 h = 2 s</option></select>
+    <select id="cam"><option value="cine">Caméra : plan-séquence</option><option value="orbite">Caméra : orbite lente</option><option value="public">Caméra : dans le public</option><option value="catwalk">Caméra : depuis le catwalk</option><option value="dj">Caméra : depuis le hayon (DJ)</option><option value="mairie">Caméra : balcon de la mairie</option><option value="libre">Caméra : libre (souris)</option></select>
+    <button id="video">⏺ Enregistrer la vidéo</button>
+    <button id="png">⤓ Image</button>
+    <button id="leg">① Légende technique</button>
+    <label class="note"><input type="file" id="imp" accept=".json" style="display:none"><button id="impb" style="padding:5px 9px">Charger une implantation JSON</button></label>
+  </div>
+  <div id="phases"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* =====================================================================
+   DONNÉES — même schéma (version 2) que unreal/implantation.json.
+   Si une implantation a été chargée dans ce navigateur, on la reprend (localStorage).
+   Repère : X = axe de la façade (0 au centre, + côté cour), Y = hauteur, Z = recul depuis la façade.
+   ===================================================================== */
+// LÉGENDE TECHNIQUE — ce qui est dessiné et ce qu'il faut faire vérifier avant de s'engager.
+// {{TOUR}}, {{JAUGES}}, {{OMBRE}}, {{ELEC}} sont remplis par le code à partir des données.
+const LEGENDE = `
+<div style="font-weight:700;margin-bottom:4px">Éléments techniques à vérifier</div>
+<div class="note">Les repères numérotés sont posés sur la maquette. Chaque ligne = une question à poser au loueur, au monteur, au prestataire ou à la Ville.</div>
+<h3><span class="num">1</span>Façade mappée</h3><ul><li>accord écrit CMN / DRAC pour projeter ; <b>aucune fixation</b> sur le monument</li><li>emprise du chantier de la tour nord sur le parvis et la travée gauche</li><li>image limitée au corps de façade, tour en wash · {{OMBRE}}</li></ul>
+<h3><span class="num">2</span>Tour VP — Layher Allround 3 travées × 3,07 m, plancher à {{PLANCHER}} m</h3>{{TOUR}}
+<h3><span class="num">3</span>Régie étanche 20' devant la tour, surélevée de 1,20 m</h3><ul><li>surélévation sur praticables pour voir la façade <b>par-dessus le podium</b> (sinon retour caméra en régie)</li><li>alimentation dédiée <b>63 A tri</b>, terre, différentiels, onduleur</li><li>étanchéité, clim, vitre vers la façade, porte + escalier côté tour (hors public)</li><li>sortie de câbles aux deux extrémités, vers les troncs jardin et cour</li></ul>
+<h3><span class="num">4</span>Podium-catwalk 1,50 m — tête 6 × 4 m + passerelle 2,4 × 12 m</h3><ul><li>à 3 m devant la régie : les coulisses sont entre les deux, hors public</li><li>charge 500 kg/m², platelage antidérapant, jupe fermée, bandes LED de nez de scène</li><li><b>garde-corps 1,10 m</b> au fond et sur les côtés de la tête ; le catwalk est la face jouée : <b>sans garde-corps</b> → largeur 2,40 m, agents aux angles, lisses basses amovibles à valider en commission</li><li>deux escaliers latéraux 1,20 m, marches 19 cm, mains courantes doubles, nez contrastés, éclairés (un pour monter, un pour descendre)</li><li>accès PMR : plateforme élévatrice mobile ou prise de parole au pied — à trancher</li><li>un régisseur de plateau pour le micro ouvert et le défilé · jauge plateau : {{JSCENE}}</li></ul>
+<h3><span class="num">5</span>Village en ligne sur les flancs — 8 tonnelles 3 × 3 face à la façade</h3><ul><li>4 par côté, de part et d'autre de la tour et de la régie ; comptoirs côté public : <b>les stands voient le show</b></li><li>Prévention et Accueil au plus près de l'axe, Poste de secours à côté</li><li>lestage 4 × 20 kg par tonnelle, toits démontés si vent fort ; 1,20 m entre tonnelles (totems dans les intervalles), 2 m avec la tour</li><li>extincteurs buvette / restauration, électricité des stands depuis le tronc latéral, éclairage de secours</li></ul>
+<h3><span class="num">6</span>Sono — 4 stacks de 4 subs SACH118 + têtes</h3><ul><li>16 × SACH118 (1 × 18", 1 700 W AES, fabrication maison Sound Agency / NoName) en 4 piles de 4 : 2 piles par côté à ±17,2 et ±21 m, <b>hors du cône du VP 1</b> (une pile à ±8,5 m ombrait les portails latéraux sur 3 m)</li><li>têtes estimées : <b>8 × KAMA TP-980</b> en 2 stacks L/R posés sur les piles extérieures, <b>4 × TP-980</b> sur 2 tours de délai à 38 m, <b>4 × T24N</b> en in-fill sur les piles intérieures (le centre devant le camion est couvert par les deux systèmes visés à 10° vers l'intérieur), retours : 2 × T24N (catwalk) + 2 × EPM-8 (DJ) — à confirmer par une prédiction acoustique</li><li>2 groupes de 2 piles (3,8 m entre piles, 34 m entre jardin et cour) : allées de puissance au centre inévitables → calage par groupe, 1 sub inversé par pile (cardioïde) pour protéger la façade et les riverains</li><li>niveaux : <b>102 dB(A)</b> et 118 dB(C) sur 15 min (décret 2017), afficheur en régie ; enceintes hors cône des VP</li></ul>
+<h3><span class="num">7</span>Lumières — totems intégrés au village, wash de façade, scène</h3><ul><li>4 totems 5,5 m dans les intervalles de tonnelles (2 × Starway Mode B + 2 PAR 64 LED chacun), lestés, DMX et puissance protégés</li><li>2 wash de façade devant le camion, hors cône VP, jamais vers les fenêtres riveraines</li><li>2 projecteurs sur pieds aux angles de la tête de scène, bandes LED du catwalk, console GrandMA3 Command Wing en régie</li></ul>
+<h3><span class="num">8</span>Éclairage public</h3><ul><li><b>extinction par la Ville</b> de 22 h à 23 h 20, rallumage pour la sortie</li><li>qui tient l'interrupteur, et un contact pendant le show</li></ul>
+<h3><span class="num">9</span>Zone public — sans barrières</h3>{{JAUGES}}<ul><li>marquage au sol et agents plutôt que vauban ; couloirs latéraux de 4 m libres (voies pompiers), accès métro / tram</li><li>tours de délai dans le public : îlots tenus par un agent chacun</li><li>plan de prévention préfecture / SSIAP / secouristes selon la jauge retenue</li></ul>
+<h3><span class="num">10</span>Lasers</h3><ul><li>classe et puissance, <b>calcul NOHD</b> du prestataire, zone d'exclusion : <b>rien sous 5,5 m sur la façade</b> (camion, DJ)</li><li><b>déclaration DGAC</b> : aucun faisceau vers le ciel, cibles sur la façade seule</li><li>opérateur certifié présent sur la tour, arrêt d'urgence en régie</li></ul>
+<h3><span class="num">11</span>Camion 20 m³ garé en long devant la façade — écran + DJ sur le hayon</h3><ul><li>flanc côté public = surface d'affichage (écran LED ou bâche imprimée, 4,3 × 2,2 m) ; lisible sur les 15 premiers mètres, le reste passe sur la façade</li><li>hayon déployé = plateau DJ à 0,95 m : <b>charge hayon (≈ 750 kg) → 2 personnes maxi</b>, béquilles, garde-corps amovible côté arrière, calage du camion, moteur coupé</li><li>le camion est dans le bas du cône du VP 1 : {{OMBRE}} → <b>pas de set DJ pendant le mapping</b> (silhouette sur la façade), le hayon se libère à 22 h</li><li>zone technique avant (1,7 m entre camion et public) tenue par des agents</li></ul>
+<h3><span class="num">12</span>Passages de câbles</h3><ul><li>troncs jardin / cour depuis la régie : derrière la zone public, puis dans les couloirs latéraux, puis le long de la façade derrière le camion et les subs</li><li>dans les couloirs pompiers : <b>passages renforcés roulables</b> (type 5 voies) ; dans le public (vers les délais) : passages 2 voies piétons jaune / noir</li><li>régie → podium en droite ligne dans les coulisses ; régie → tour par le montant arrière</li></ul>
+<h3><span class="num">13</span>Repos & stockage derrière la tour</h3><ul><li>tonnelle repos 6 × 3 (bancs, eau), tonnelle stockage 3 × 3 (flight-cases), bâche opaque côté public</li><li>hors vue, hors passage, à 1 min de la régie et du plateau ; jauge repos : {{JREPOS}}</li></ul>
+<h3><span class="num">14</span>Électricité — armoires et bilan</h3>{{ELEC}}
+<div class="note" style="margin-top:6px">Rappel : la maquette vérifie la géométrie. Elle ne remplace ni la commission de sécurité, ni les notes de calcul (vent, lestage, acoustique), ni les déclarations.</div>`;
+
+const DEFAUT = () => ({
+  version: 2,
+  projet: {
+    nom: "Basilique Saint-Denis — parvis",
+    facade: { largeur:32.5, hauteur:37.3, profondeur:3.0,
+      contour: [[-16.25,0],[-16.25,29.2],[-5.9,29.2],[0,37.3],[5.9,29.2],[5.2,29.2],[5.2,50.6],[6.1,50.6],[6.7,54.6],[10.5,60.1],[14.3,54.6],[14.9,50.6],[15.8,50.6],[15.8,29.2],[16.25,29.2],[16.25,0]],
+      rosace:{x:0,y:22.5,r:3.0},
+      ouvertures:[[-2.6,2.6,0,5.5],[-12.3,-6.9,0,3.3],[6.9,12.3,0,3.3],[-2.95,2.95,13.6,24],[-11.25,-7.95,12.2,23],[-7.95,-4.65,12.2,23],[7.95,11.25,12.2,23],[11.25,14.55,12.2,23],[6.3,9.5,30.1,36.3],[11.5,14.7,30.1,36.3],[6.3,9.5,37,49],[11.5,14.7,37,49]] },
+    zonePublic:{x0:-26,x1:26,z0:7,z1:61,hautYeux:2.5,densite:2,densiteMax:3},
+    voisins:[{nom:"bâti ouest",x0:-55,x1:-30,z0:0,z1:50,h:16},{nom:"bâti est",x0:32,x1:60,z0:0,z1:45,h:14},{nom:"fond ouest",x0:-60,x1:-40,z0:62,z1:100,h:12},{nom:"fond est",x0:40,x1:70,z0:62,z1:110,h:18}],
+    nef:{x0:-16.25,x1:16.25,z0:-108,z1:-3,h:24}
+  },
+  // tour Layher Allround : 3 travées de 3,07 m, 1 travée de 3,07 m de profondeur, 5 niveaux de 2 m sur embase à 0,30 m
+  bloc:{x:0,z:70,hauteurVP:10.8,plancher:10.3,largeurPlateforme:9.21,profondeurPlateforme:3.07,travees:3,niveaux:5,hauteurNiveau:2.0,base:0.3},
+  projecteurs:[{nom:"VP1 — bas",dx:-1.3,cx:0,cy:9.7,tr:2.02,ratio:16/9,lumens:40000,puissance_w:4200},{nom:"VP2 — haut",dx:1.3,cx:0,cy:27.6,tr:2.02,ratio:16/9,lumens:40000,puissance_w:4200}],
+  lasers:[{nom:"Laser 1",dx:-3.6,dy:0.6,tx:-6,ty:17,puissance:10},{nom:"Laser 2",dx:3.6,dy:0.6,tx:8,ty:20,puissance:10}],
+  regie:{longueur:6.06,largeur:2.44,hauteur:2.59,ecart:1.6,position:'devant',surelevation:1.2},
+  podium:{hauteur:1.5,ecartRegie:3,tete:{largeur:6,profondeur:4},catwalk:{largeur:2.4,longueur:12},escaliers:'cotes'},
+  camion:{x:0,z:4.2,longueur:7.3,largeur:2.2,cabine:2.35,plancher:0.95,hauteurCaisse:2.2,hayon:1.6,ecran:true,chargeHayonKg:750},
+  village:{forme:'flancs',cote:3,ecart:1.2,ecartTour:2.0,z:67.5,stands:[{nom:"Prévention",type:"prevention"},{nom:"Poste de secours",type:"secours"},{nom:"Asso 1",type:"asso"},{nom:"Asso 2",type:"asso"},{nom:"Accueil · infos",type:"accueil"},{nom:"Buvette",type:"buvette"},{nom:"Restauration",type:"buvette"},{nom:"Asso 3",type:"asso"}]},
+  repos:{x:0,z:75.5,tonnelle:{largeur:6,profondeur:3},stockage:{x:0,z:79.2,largeur:3,profondeur:3},bache:{z:72.8,demiLargeur:7,hauteur:2.2}},
+  sono:{z:4,stacks:[-21,-17.2,17.2,21],subsParStack:4,sub:{modele:"SACH118",l:0.6,h:0.7,p:0.75,wAES:1700},
+        tetes:{modele:"KAMA TP-980",parStackExterieur:4,frontFill:2,modeleFrontFill:"T24N"},ouverture:90,portee:62,visee:10,
+        delais:2,delaiX:13,delaiZ:38,delaiH:5,delaiTetes:2},
+  lumieres:{totems:[{x:-10.2,z:67.5,h:5.5},{x:10.2,z:67.5,h:5.5},{x:-18.6,z:67.5,h:5.5},{x:18.6,z:67.5,h:5.5}],
+            wash:[{x:-13,z:5.5,tx:-10,ty:26},{x:13,z:5.5,tx:10.5,ty:44}],
+            scene:[{dx:-4.6,dz:1.0,h:3.6},{dx:4.6,dz:1.0,h:3.6}]},
+  electricite:{
+    armoires:[{nom:"TGBT 125 A tri",x:-6.5,z:72,l:1.2,h:1.8,p:.6},{nom:"Coffret son jardin 63 A",x:-25,z:1.6,l:.8,h:1.2,p:.4},{nom:"Coffret son cour 63 A",x:25,z:1.6,l:.8,h:1.2,p:.4},{nom:"Coffret lumière · stands 63 A",x:6.5,z:72,l:.8,h:1.2,p:.4}],
+    groupe:{nom:"GE 100 kVA insonorisé (si coffret forain insuffisant)",x:-12.5,z:78,l:3.2,h:2.2,p:1.5},
+    bilan:[{systeme:"Son (2 × D20K, 3 × K10, 1 × D4×3000, DSP, X32)",kw:14,depart:"63 A tri"},{systeme:"Lumière (totems, wash, scène, GrandMA3 CW)",kw:4.5,depart:"32 A tri"},{systeme:"Vidéo (2 VP 40 k lm, serveur Resolume, écran camion, 2 lasers)",kw:12.5,depart:"32 A tri"},{systeme:"Captation (3 caméras, régie vidéo, streaming)",kw:1.5,depart:"16 A mono"},{systeme:"Régie (clim, éclairage, onduleur)",kw:3,depart:"16 A tri"},{systeme:"Stands (8 × 2 kW)",kw:16,depart:"63 A tri"},{systeme:"Repos, stockage, balisage, secours",kw:2,depart:"16 A mono"}]
+  }
+});
+let E = DEFAUT();
+try { const s = JSON.parse(localStorage.getItem('implantation-3d')||'null');
+  if (s && s.camion && s.version === 2){ const d = DEFAUT(); Object.keys(d).forEach(k => { if (s[k] !== undefined) E[k] = (typeof d[k] === 'object' && !Array.isArray(d[k])) ? Object.assign(d[k], s[k]) : s[k]; }); }
+  else if (s) console.info('implantation locale ignorée (ancien schéma) — exporter à nouveau depuis le visualiseur'); } catch(e){}
+const P = () => E.projet;
+
+/* =====================================================================
+   LE SCÉNARIO — la soirée, heure par heure. C'est lui que la mairie regarde.
+   Flags : public (fraction de la jauge), ep éclairage public, vil village, son sono, lum lumières
+   d'ambiance, map mapping, las lasers, scn scène ouverte, dj DJ sur le hayon, def défilé des
+   luttes sur le catwalk, live concert (groupe), rap concert rap, cam écran du camion.
+   ===================================================================== */
+const PHASES = [
+  {t:16.0, nom:"Montage",               sous:"Tour Layher, régie, podium-catwalk, camion et village en place. Parvis fermé au public, voies pompiers libres.", public:0.00, ep:true,  vil:false, son:false, lum:false},
+  {t:18.0, nom:"Ouverture du village",  sous:"Les stands ouvrent sur les flancs, face à la façade : prévention et accueil au plus près de l'axe. L'écran du camion annonce le programme.", public:0.15, ep:true, vil:true, cam:true},
+  {t:18.6, nom:"Scène ouverte",         sous:"Micro ouvert sur la tête de scène : chant, slam, prises de parole. Inscriptions au stand Accueil, à vingt mètres. Tout le monde est invité.", public:0.30, ep:true, vil:true, cam:true, scn:true},
+  {t:19.5, nom:"DJ sur le hayon",       sous:"Le DJ ouvre depuis le hayon du camion, devant la façade. Le parvis se remplit, lumières d'ambiance sur les totems.", public:0.50, ep:true, vil:true, cam:true, son:true, lum:true, dj:true},
+  {t:20.5, nom:"Défilé des luttes",     sous:"Les collectifs invités défilent sur le catwalk, banderoles en tête : chacun·e est vu·e de tout le parvis. Le DJ accompagne.", public:0.75, ep:true, vil:true, cam:true, son:true, lum:true, dj:true, def:true},
+  {t:21.3, nom:"Concert",               sous:"Un groupe sur la tête de scène, le chanteur va au bout du catwalk. Dernière lumière du jour.", public:0.90, ep:true, vil:true, cam:true, son:true, lum:true, live:true},
+  {t:22.0, nom:"Extinction",            sous:"La Ville éteint l'éclairage public du parvis : c'est la condition du rendu. Le hayon se libère, le DJ descend.", public:1.00, ep:false, vil:true, cam:true, son:true, lum:true},
+  {t:22.1, nom:"Le mapping",            sous:"Deux zones empilées sur le corps de façade, la tour en wash. Les faisceaux passent au-dessus des têtes ; le camion ombre le bas de la façade.", public:1.00, ep:false, vil:true, cam:true, son:true, map:true},
+  {t:22.6, nom:"Les lasers",            sous:"Tracés sur la façade uniquement, au-dessus de 5,5 m, jamais vers le public ni vers le ciel. Opérateur certifié sur la tour.", public:1.00, ep:false, vil:true, cam:true, son:true, map:true, las:true},
+  {t:23.3, nom:"Rap · second set",      sous:"Rallumage. Rappeur et hype sur le catwalk, DJ de scène au fond : le public est tout autour.", public:0.85, ep:true, vil:true, cam:true, son:true, lum:true, rap:true},
+  {t:24.1, nom:"DJ de clôture",         sous:"Dernier set depuis le hayon, le village reste ouvert pour la sortie.", public:0.50, ep:true, vil:true, cam:true, son:true, lum:true, dj:true},
+  {t:24.7, nom:"Sortie du public",      sous:"Flux vers le métro et le tram par les couloirs latéraux. Poste de secours et accueil restent ouverts.", public:0.20, ep:true, vil:true, lum:true},
+  {t:25.3, nom:"Démontage",             sous:"Parvis rendu propre avant 2 h.", public:0.00, ep:true},
+  {t:26.0, nom:"Fin",                   sous:"", public:0.00, ep:true}
+];
+const FLAGS = ['ep','vil','son','lum','map','las','scn','dj','def','live','rap','cam'];
+function etatA(t){
+  let i = 0; while (i < PHASES.length-2 && PHASES[i+1].t <= t) i++;
+  const a = PHASES[i], b = PHASES[i+1], u = Math.min(1, Math.max(0, (t-a.t)/Math.max(.01, b.t-a.t)));
+  const s = u*u*(3-2*u);                                   // le public arrive et repart progressivement sur toute la phase
+  // les équipements basculent dans les 6 dernières minutes de la phase : un show ne s'éteint pas en 40 min de fondu
+  const D = Math.min(.1, b.t - a.t), v = Math.min(1, Math.max(0, (t - (b.t - D)) / D)), sv = v*v*(3-2*v);
+  const out = {phase:a, public:a.public*(1-s)+b.public*s};
+  FLAGS.forEach(k => out[k] = (a[k] ? 1 : 0) * (1-sv) + (b[k] ? 1 : 0) * sv);
+  return out;
+}
+// soleil : élévation et azimut approchés pour Saint-Denis fin d'été (coucher ~20h45, nuit noire ~22h15)
+function soleil(t){
+  const el = Math.sin((t - 6.2) / (20.8 - 6.2) * Math.PI) * 55;
+  const az = (t - 13.5) / 12 * Math.PI;
+  return {el, az};
+}
+
+/* =====================================================================
+   TEXTURES PROCÉDURALES — pas de fichier externe à charger
+   ===================================================================== */
+function tex(w, h, fn, repeat){
+  const c = document.createElement('canvas'); c.width = w; c.height = h; fn(c.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; if (repeat) t.repeat.set(...repeat); t.anisotropy = 4; return t;
+}
+let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const texPierre = tex(1024, 1024, (g, w, h) => {
+  g.fillStyle = '#d8d1be'; g.fillRect(0, 0, w, h);
+  const ass = 40;
+  for (let y = 0; y < h; y += ass){
+    const dec = (y/ass) % 2 ? 60 : 0;
+    for (let x = -120 + dec; x < w; x += 120){
+      const v = 200 + rnd()*28; g.fillStyle = `rgb(${v+8},${v+2},${v-12})`; g.fillRect(x+1, y+1, 118, ass-2);
+      for (let k = 0; k < 20; k++){ g.fillStyle = `rgba(90,80,60,${rnd()*.08})`; g.fillRect(x+rnd()*118, y+rnd()*ass, rnd()*8, rnd()*3); }
+    }
+  }
+  g.fillStyle = 'rgba(70,60,45,.35)'; for (let y = 0; y < h; y += ass) g.fillRect(0, y, w, 1.5);
+  const img = g.getImageData(0,0,w,h), d = img.data;
+  for (let i = 0; i < d.length; i += 4){ const n = (rnd()-.5)*14; d[i]+=n; d[i+1]+=n; d[i+2]+=n; } g.putImageData(img,0,0);
+}, [1, 1]);
+const texPave = tex(512, 512, (g, w, h) => {
+  g.fillStyle = '#7f7a70'; g.fillRect(0,0,w,h);
+  for (let y = 0; y < h; y += 32) for (let x = 0; x < w; x += 32){ const v = 110 + rnd()*40; g.fillStyle = `rgb(${v},${v-3},${v-10})`; g.fillRect(x+1, y+1, 30, 30); }
+}, [40, 40]);
+const texBati = (fenetres=true) => tex(256, 256, (g, w, h) => {
+  g.fillStyle = '#b9b2a0'; g.fillRect(0,0,w,h);
+  if (fenetres) for (let y = 18; y < h-10; y += 40) for (let x = 14; x < w-10; x += 34){ g.fillStyle = rnd() > .45 ? '#1b2330' : '#3a3f48'; g.fillRect(x, y, 16, 24); }
+}, [3, 2]);
+const texBatiNuit = tex(256, 256, (g, w, h) => {
+  g.fillStyle = '#000'; g.fillRect(0,0,w,h);
+  for (let y = 18; y < h-10; y += 40) for (let x = 14; x < w-10; x += 34){ if (rnd() > .55){ g.fillStyle = `rgb(${220+rnd()*35},${170+rnd()*40},${90+rnd()*40})`; g.fillRect(x, y, 16, 24); } }
+}, [3, 2]);
+const texTente = tex(128, 128, (g, w, h) => { g.fillStyle = '#fff'; g.fillRect(0,0,w,h); for (let i = 0; i < 300; i++){ g.fillStyle = `rgba(0,0,0,${rnd()*.05})`; g.fillRect(rnd()*w, rnd()*h, 3, 3); } });
+const texBois = tex(256, 256, (g, w, h) => { g.fillStyle = '#6b5540'; g.fillRect(0,0,w,h); for (let y = 0; y < h; y += 32){ const v = 85 + rnd()*30; g.fillStyle = `rgb(${v+20},${v},${v-25})`; g.fillRect(0, y+1, w, 30); for (let k = 0; k < 40; k++){ g.fillStyle = `rgba(30,20,10,${rnd()*.15})`; g.fillRect(rnd()*w, y+rnd()*30, rnd()*60, 1); } } }, [6, 2]);
+// bandeau texte (banderoles, écran, jupes de scène)
+function texTexte(w, h, fond, lignes, couleur='#1a1200'){
+  return tex(w, h, (g) => { if (Array.isArray(fond)){ const gr = g.createLinearGradient(0,0,w,0); gr.addColorStop(0,fond[0]); gr.addColorStop(1,fond[1]); g.fillStyle = gr; } else g.fillStyle = fond; g.fillRect(0,0,w,h);
+    g.fillStyle = couleur; g.textAlign = 'center'; g.textBaseline = 'middle';
+    lignes.forEach(([txt, y, px, font]) => { g.font = `${font||'700'} ${px}px Georgia, "Times New Roman", serif`; g.fillText(txt, w/2, y); }); });
+}
+// VISAGES : un smiley par personne (3 carnations × 5 expressions), dessiné sur la face avant de la tête
+const PEAU = [0xf1c9a5, 0xc68e6a, 0x7a4a2e], NVIS = 5;
+function texVisage(peau, expr){
+  return tex(256, 128, (g, w, h) => {
+    g.fillStyle = '#' + peau.toString(16).padStart(6,'0'); g.fillRect(0,0,w,h);
+    const cx = w*.25, ey = h*.44, my = h*.60, d = 15;   // u = 0,25 : la face avant de la sphère (vers +Z local)
+    g.fillStyle = g.strokeStyle = '#1a1210'; g.lineWidth = 4; g.lineCap = 'round';
+    const oeil = (x,y,r) => { g.beginPath(); g.arc(x,y,r,0,7); g.fill(); };
+    switch (expr){
+      case 0: oeil(cx-d,ey,4); oeil(cx+d,ey,4); g.beginPath(); g.arc(cx,my-4,13,.25*Math.PI,.75*Math.PI); g.stroke(); break;                        // sourire
+      case 1: oeil(cx-d,ey,4); oeil(cx+d,ey,4); g.beginPath(); g.arc(cx,my-2,14,.1*Math.PI,.9*Math.PI); g.fill(); g.fillStyle = '#fff'; g.fillRect(cx-9,my+1,18,4); break;   // grand sourire
+      case 2: oeil(cx-d,ey,4.5); oeil(cx+d,ey,4.5); g.beginPath(); g.arc(cx,my+2,7,0,7); g.fill(); break;                                           // oh !
+      case 3: oeil(cx-d,ey,4); g.beginPath(); g.moveTo(cx+d-6,ey); g.lineTo(cx+d+6,ey); g.stroke(); g.beginPath(); g.arc(cx+3,my-4,12,.3*Math.PI,.8*Math.PI); g.stroke(); break;   // clin d'œil
+      default: for (const s of [-1,1]){ g.beginPath(); g.arc(cx+s*d,ey+3,6,1.15*Math.PI,1.85*Math.PI); g.stroke(); } g.beginPath(); g.arc(cx,my-3,15,.15*Math.PI,.85*Math.PI); g.fill(); break;   // rire
+    }
+  });
+}
+const VISAGES = PEAU.map(c => Array.from({length:NVIS}, (_,e) => texVisage(c, e)));
+
+// le CONTENU du mapping : une toile animée, redessinée chaque frame pendant le show
+const mapC = document.createElement('canvas'); mapC.width = 512; mapC.height = 600;
+const texMapping = new THREE.CanvasTexture(mapC); texMapping.minFilter = THREE.LinearFilter;
+function archi(g, w, h){
+  const F = P().facade, sx = w/F.largeur, sy = h/F.hauteur, X = x => w/2 + x*sx, Y = y => h - y*sy;
+  const arc = (x0,x1,y0,yn) => { const r = (x1-x0)/2*sx; g.beginPath(); g.moveTo(X(x0),Y(y0)); g.lineTo(X(x0),Y(yn)); g.arc(X((x0+x1)/2), Y(yn), r, Math.PI, 0); g.lineTo(X(x1),Y(y0)); };
+  return {F, sx, sy, X, Y, arc,
+    portails:[[-2.6,2.6,0,5.4],[-12.3,-6.9,0,4.9],[6.9,12.3,0,4.9]], archivoltes:[[-5.35,5.35,0,5.4],[-13.35,-5.85,0,4.9],[5.85,13.35,0,4.9]],
+    lancettes:[[-11.25,-7.95,12.2,21.85],[-7.95,-4.65,12.2,21.85],[7.95,11.25,12.2,21.85],[11.25,14.55,12.2,21.85]], baie:[-2.95,2.95,10.95,13.6],
+    corniches:[1.4,10.6,12.2,18.8,23.1,25.9,28.4], contreforts:[-15.3,-5.65,5.65,15.3], rose:F.rosace, pignon:[[-5.9,29.2],[0,37.3],[5.9,29.2]]};
+}
+let toits = null;
+function dessinerMapping(t, s){
+  const g = mapC.getContext('2d'), w = mapC.width, h = mapC.height, A = archi(g, w, h), {X, Y, sx, sy} = A;
+  const u = clamp((t - 22.1) / 1.2, 0, 1), tt = t*60;
+  g.globalAlpha = 1; g.fillStyle = '#050a18'; g.fillRect(0,0,w,h);
+  const fondu = (a,b) => clamp(Math.min((u-a)/.06, (b-u)/.06), 0, 1);
+  // ---- chapitre 1 · « Vitrail »
+  let k = fondu(0, .32);
+  if (k > 0){ g.globalAlpha = k;
+    const pal = ['#1b4fa8','#d9262c','#f2b134','#2e8b57','#7b2fbf','#e86f1e','#1fa3c9'];
+    const cell = 18, reveal = clamp(u/.22, 0, 1) * (h + 60);
+    for (let y = h; y > -cell; y -= cell) for (let x = (Math.floor(y/cell)%2)*cell/2 - cell; x < w; x += cell){
+      if (h - y > reveal) continue;
+      const idx = Math.abs(Math.floor(x/cell)*7 + Math.floor(y/cell)*3) % pal.length;
+      const hue = (idx*51 + tt*4) % 360; g.fillStyle = `hsl(${hue},70%,${42 + 10*Math.sin(tt*.6 + x*.02 + y*.03)}%)`;
+      g.beginPath(); g.moveTo(x+cell/2, y-cell); g.lineTo(x+cell, y-cell/2); g.lineTo(x+cell/2, y); g.lineTo(x, y-cell/2); g.closePath(); g.fill(); }
+    g.strokeStyle = 'rgba(10,8,20,.9)'; g.lineWidth = 5;
+    A.corniches.forEach(y => { g.beginPath(); g.moveTo(0,Y(y)); g.lineTo(w,Y(y)); g.stroke(); });
+    A.contreforts.forEach(x => { g.beginPath(); g.moveTo(X(x),h); g.lineTo(X(x),Y(29.2)); g.stroke(); });
+    [...A.archivoltes, ...A.lancettes, A.baie].forEach(o => { A.arc(...o); g.stroke(); });
+    g.beginPath(); g.arc(X(A.rose.x), Y(A.rose.y), A.rose.r*sx, 0, 7); g.stroke();
+    for (let i = 0; i < 12; i++){ const a = i/12*Math.PI*2; g.beginPath(); g.moveTo(X(A.rose.x)+Math.cos(a)*A.rose.r*.3*sx, Y(A.rose.y)+Math.sin(a)*A.rose.r*.3*sx); g.lineTo(X(A.rose.x)+Math.cos(a)*A.rose.r*sx, Y(A.rose.y)+Math.sin(a)*A.rose.r*sx); g.stroke(); }
+  }
+  // ---- chapitre 2 · « Envol »
+  k = fondu(.28, .60);
+  if (k > 0){ g.globalAlpha = k * .85;
+    const gr = g.createLinearGradient(0,0,0,h); gr.addColorStop(0,'#04091c'); gr.addColorStop(.6,'#22163f'); gr.addColorStop(1,'#7a3418'); g.fillStyle = gr; g.fillRect(0,0,w,h);
+    const rg = g.createRadialGradient(X(A.rose.x),Y(A.rose.y),A.rose.r*sx*.2, X(A.rose.x),Y(A.rose.y),A.rose.r*sx*1.9);
+    rg.addColorStop(0,'rgba(255,225,150,.75)'); rg.addColorStop(.35,'rgba(255,170,80,.28)'); rg.addColorStop(1,'rgba(255,140,60,0)'); g.fillStyle = rg; g.fillRect(0,0,w,h);
+    g.strokeStyle = 'rgba(20,12,30,.95)'; g.lineWidth = 2.2; g.lineCap = 'round';
+    for (let i = 0; i < 26; i++){ const sp = .55 + (i%5)*.12, x = ((tt*sp*22 + i*173) % (w+120)) - 60, y = 40 + (i*97 % (h*.7)) + Math.sin(tt*1.3 + i)*14, f = Math.sin(tt*7 + i*1.7), sc = 6 + (i%4)*3;
+      g.beginPath(); g.moveTo(x-sc, y + f*sc*.7); g.quadraticCurveTo(x-sc*.4, y - sc*.3, x, y); g.quadraticCurveTo(x+sc*.4, y - sc*.3, x+sc, y + f*sc*.7); g.stroke(); }
+    g.fillStyle = 'rgba(255,210,140,.16)'; [...A.lancettes, A.baie, ...A.portails].forEach(o => { A.arc(...o); g.fill(); });
+  }
+  // ---- chapitre 3 · « La ville »
+  k = fondu(.56, .86);
+  if (k > 0){ g.globalAlpha = k;
+    g.fillStyle = '#0a1230'; g.fillRect(0,0,w,h);
+    if (!toits){ toits = []; let x = 0; while (x < w){ const lw = 20 + rnd()*40, ht = 60 + rnd()*110, type = rnd(); toits.push({x, lw, ht, type}); x += lw; } }
+    const trace = clamp((u-.56)/.14, 0, 1) * toits.length;
+    g.strokeStyle = '#ffe9b0'; g.lineWidth = 2.4; g.lineJoin = 'round'; g.beginPath(); g.moveTo(0, h);
+    toits.slice(0, Math.ceil(trace)).forEach((r,i) => { const y0 = h - r.ht; g.lineTo(r.x, y0); if (r.type < .5){ g.lineTo(r.x + r.lw/2, y0 - r.lw*.5); } g.lineTo(r.x + r.lw, y0); });
+    g.stroke();
+    g.fillStyle = 'rgba(255,233,176,.85)';
+    toits.slice(0, Math.floor(trace)).forEach((r,i) => { for (let yy = h - r.ht + 14; yy < h - 8; yy += 14) for (let xx = r.x + 5; xx < r.x + r.lw - 6; xx += 10) if (((i*13 + xx + yy) % 7) < 3 && Math.sin(tt*2 + xx + yy) > -.6) g.fillRect(xx, yy, 4, 6); });
+    g.font = `700 ${Math.round(sy*4.2)}px Georgia, "Times New Roman", serif`; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.fillStyle = 'rgba(255,241,208,.96)'; g.shadowColor = 'rgba(255,200,120,.9)'; g.shadowBlur = 18;
+    const mot = 'SAINT-DENIS', part = clamp((u-.6)/.12, 0, 1); g.fillText(mot.slice(0, Math.ceil(part*mot.length)), X(0), Y(16.5)); g.shadowBlur = 0;
+    g.font = `${Math.round(sy*1.6)}px Georgia, serif`; g.fillStyle = 'rgba(255,241,208,.8)'; g.fillText('parvis de la basilique · été 2026', X(0), Y(13.8));
+    g.strokeStyle = '#ffe9b0'; g.lineWidth = 3; g.beginPath(); g.arc(X(A.rose.x), Y(A.rose.y), A.rose.r*sx*.9, 0, 7); g.stroke();
+    for (let i = 0; i < 12; i++){ const a = i/6*Math.PI; g.beginPath(); g.moveTo(X(A.rose.x)+Math.cos(a)*A.rose.r*sx*.78, Y(A.rose.y)+Math.sin(a)*A.rose.r*sx*.78); g.lineTo(X(A.rose.x)+Math.cos(a)*A.rose.r*sx*.9, Y(A.rose.y)+Math.sin(a)*A.rose.r*sx*.9); g.stroke(); }
+    const hh = (t%12)/12*Math.PI*2 - Math.PI/2, mm = (t%1)*Math.PI*2 - Math.PI/2; g.lineWidth = 4;
+    g.beginPath(); g.moveTo(X(A.rose.x), Y(A.rose.y)); g.lineTo(X(A.rose.x)+Math.cos(hh)*A.rose.r*sx*.5, Y(A.rose.y)+Math.sin(hh)*A.rose.r*sx*.5); g.stroke();
+    g.beginPath(); g.moveTo(X(A.rose.x), Y(A.rose.y)); g.lineTo(X(A.rose.x)+Math.cos(mm)*A.rose.r*sx*.72, Y(A.rose.y)+Math.sin(mm)*A.rose.r*sx*.72); g.stroke();
+  }
+  // ---- chapitre 4 · « Finale »
+  k = fondu(.82, 1.01);
+  if (k > 0){ g.globalAlpha = k;
+    g.fillStyle = '#120a1e'; g.fillRect(0,0,w,h);
+    for (let i = 0; i < 6; i++){ const r = ((tt*40 + i*90) % 620); g.strokeStyle = `rgba(255,205,90,${clamp(1 - r/620, 0, 1)*.9})`; g.lineWidth = 6; g.beginPath(); g.arc(X(A.rose.x), Y(A.rose.y), r, 0, 7); g.stroke(); }
+    for (let b = 0; b < 4; b++){ const ph = (tt*.5 + b*.25) % 1, cx = w*(.2 + .6*((b*37)%100)/100), cy = h*.45 - b*60, R = ph*140;
+      g.strokeStyle = `rgba(${b%2?255:120},${b%2?170:220},${b%2?60:255},${(1-ph)*.9})`; g.lineWidth = 2.5;
+      for (let i = 0; i < 18; i++){ const a = i/18*Math.PI*2; g.beginPath(); g.moveTo(cx+Math.cos(a)*R*.6, cy+Math.sin(a)*R*.6 + ph*ph*40); g.lineTo(cx+Math.cos(a)*R, cy+Math.sin(a)*R + ph*ph*60); g.stroke(); } }
+    for (let i = 0; i < 160; i++){ const x = (i*137 % w), y = ((tt*35 + i*61) % (h+20)) - 20; g.fillStyle = `hsl(${(i*23)%360},90%,65%)`; g.fillRect(x, y, 4, 7); }
+    g.fillStyle = 'rgba(255,241,208,.95)'; g.font = `700 ${Math.round(sy*3)}px Georgia, serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MERCI', X(0), Y(16.5));
+  }
+  // ---- toujours : les arêtes de l'architecture
+  g.globalAlpha = .55; g.strokeStyle = 'rgba(255,245,220,.9)'; g.lineWidth = 1.2;
+  [...A.archivoltes, ...A.portails, ...A.lancettes, A.baie].forEach(o => { A.arc(...o); g.stroke(); });
+  g.beginPath(); A.pignon.forEach(([x,y],i) => i ? g.lineTo(X(x),Y(y)) : g.moveTo(X(x),Y(y))); g.stroke();
+  // ---- l'ombre du camion : ce que le VP bas ne peut pas atteindre, on le dit franchement sur la maquette
+  const om = ombreCamion(); g.globalAlpha = .85; g.fillStyle = '#050a18'; g.fillRect(X(om.x0), Y(om.h), (om.x1-om.x0)*sx, om.h*sy);
+  g.globalAlpha = 1; texMapping.needsUpdate = true;
+}
+// l'écran du camion : programme, vumètre pendant la sono, sobre pendant le mapping
+const camC = document.createElement('canvas'); camC.width = 512; camC.height = 256;
+const texCamion = new THREE.CanvasTexture(camC); texCamion.minFilter = THREE.LinearFilter;
+const PROG = ['18 h · village ouvert','18 h 30 · scène ouverte','19 h 30 · DJ sur le hayon','20 h 30 · défilé des luttes','21 h 15 · concert','22 h · mapping & lasers','23 h 20 · rap, second set','minuit · DJ de clôture'];
+function dessinerCamion(t, s){
+  const g = camC.getContext('2d'), w = camC.width, h = camC.height, tt = t*60;
+  g.fillStyle = '#07090f'; g.fillRect(0,0,w,h); g.textAlign = 'center'; g.textBaseline = 'middle';
+  if (s.map > .5){ g.fillStyle = 'rgba(255,180,84,.22)'; g.font = '700 46px Georgia, serif'; g.fillText('SAINT-DENIS', w/2, h/2); }
+  else {
+    const gr = g.createLinearGradient(0,0,w,0); gr.addColorStop(0,'#ff8a3d'); gr.addColorStop(1,'#7b2fbf'); g.fillStyle = gr; g.fillRect(0,0,w,74);
+    g.fillStyle = '#1a1200'; g.font = '700 44px Georgia, serif'; g.fillText('PARVIS EN LUTTES', w/2, 38);
+    g.fillStyle = '#ffe9b0'; g.font = '600 30px -apple-system, "Segoe UI", sans-serif'; g.fillText(PROG[Math.floor(tt/4) % PROG.length], w/2, 118);
+    if (s.son > .5){ for (let i = 0; i < 24; i++){ const v = .25 + .75*Math.abs(Math.sin(tt*3.1 + i*.7)*Math.sin(tt*1.3 + i)); g.fillStyle = `hsl(${(i*15 + tt*20)%360},85%,60%)`; g.fillRect(16 + i*20, 240 - v*92, 14, v*92); } }
+    else { g.fillStyle = 'rgba(255,233,176,.75)'; g.font = '26px Georgia, serif'; g.fillText('scène ouverte · inscriptions au stand Accueil', w/2, 200); }
+  }
+  texCamion.needsUpdate = true;
+}
+
+/* =====================================================================
+   POSITIONS — tout dérive des données
+   ===================================================================== */
+let scene, camera, renderer, controls, sun, hemi, fog;
+const G = {};
+const lerp = (a,b,u) => a+(b-a)*u, clamp = (v,a,b) => Math.min(b,Math.max(a,v));
+const posPlateforme = () => { const b = E.bloc; return {x0:b.x-b.largeurPlateforme/2, x1:b.x+b.largeurPlateforme/2, z0:b.z-b.profondeurPlateforme/2, z1:b.z+b.profondeurPlateforme/2, h:b.plancher, hVP:b.hauteurVP}; };
+const regieBox = () => { const b = E.bloc, r = E.regie, pl = posPlateforme(); const zc = r.position === 'devant' ? pl.z0 - r.ecart - r.largeur/2 : pl.z1 + r.ecart + r.largeur/2, y0 = r.surelevation || 0;
+  return {x:b.x, z:zc, L:r.longueur, l:r.largeur, h:r.hauteur, y0, y1:y0 + r.hauteur, x0:b.x - r.longueur/2, x1:b.x + r.longueur/2, z0:zc - r.largeur/2, z1:zc + r.largeur/2}; };
+// podium-catwalk : la tête à ecartRegie devant la régie, la passerelle qui part vers la façade
+const podiumBox = () => { const rg = regieBox(), pd = E.podium, H = Math.min(1.5, pd.hauteur), x = E.bloc.x, tz1 = rg.z0 - pd.ecartRegie, tz0 = tz1 - pd.tete.profondeur;
+  return {H, x, tete:{x0:x-pd.tete.largeur/2, x1:x+pd.tete.largeur/2, z0:tz0, z1:tz1}, cat:{x0:x-pd.catwalk.largeur/2, x1:x+pd.catwalk.largeur/2, z0:tz0-pd.catwalk.longueur, z1:tz0}}; };
+const camionBox = () => { const c = E.camion, x0 = c.x - c.longueur/2; return {x0, x1:c.x + c.longueur/2, xc0:x0 + c.cabine, xh0:c.x + c.longueur/2, xh1:c.x + c.longueur/2 + c.hayon, z0:c.z - c.largeur/2, z1:c.z + c.largeur/2, yp:c.plancher, yt:c.plancher + c.hauteurCaisse}; };
+function posStands(){ const b = E.bloc, v = E.village, pl = posPlateforme(), n = v.stands.length, out = [];
+  if (v.forme === 'flancs'){ const parCote = Math.ceil(n/2);
+    v.stands.forEach((s,i) => { const side = i < parCote ? -1 : 1, k = side < 0 ? i : i - parCote;
+      out.push({nom:s.nom, type:s.type, x:b.x + side*((pl.x1 - b.x) + v.ecartTour + v.cote/2 + k*(v.cote + v.ecart)), z:v.z, rot:0}); }); return out; }
+  if (v.forme === 'rond'){ const c = {x:b.x, z:pl.z1 + (v.ecartTour||3) + (v.rayon||11)};
+    v.stands.forEach((s,i) => { const a = (n > 1 ? (i/(n-1) - .5) * (300*Math.PI/180) : 0) + Math.PI; out.push({nom:s.nom, type:s.type, x:c.x + Math.sin(a)*v.rayon, z:c.z - Math.cos(a)*v.rayon, rot:Math.PI - a}); }); return out; }
+  const rg = regieBox(), z0 = Math.max(rg.z1, pl.z1) + (v.ecartRegie||1.5) + v.cote/2;
+  v.stands.forEach((s,i) => { const rang = Math.floor(i/2), c = i%2 ? 1 : -1; out.push({nom:s.nom, type:s.type, x:b.x + c*((v.allee||4)/2 + v.cote/2), z:z0 + rang*(v.pas||3.6), rot:0}); }); return out; }
+const TENTE = {prevention:0x4fa3ff, secours:0xf85149, accueil:0xffb454, buvette:0xe4c05a, asso:0xe8e0c8};
+// ombre portée du camion sur la façade par le VP bas : le rayon qui frôle le haut de la caisse
+function ombreCamion(){ const c = camionBox(), b = E.bloc, zc = c.z1, yt = c.yt; const h = yt - (b.hauteurVP - yt) * zc / (b.z - zc), k = b.z / (b.z - zc);
+  return {h:Math.max(0, h), x0:(c.x0 - b.x)*k + b.x, x1:(c.xh1 - b.x)*k + b.x}; }
+// zones interdites au public : podium + 1 m, tours de délai + 1,3 m
+function exclusions(){ const pb = podiumBox(), s = E.sono, out = [[pb.tete.x0-1, pb.tete.x1+1, pb.tete.z0-1, pb.tete.z1+1], [pb.cat.x0-1, pb.cat.x1+1, pb.cat.z0-1, pb.cat.z1]];
+  for (let i = 0; i < s.delais; i++){ const c = i%2 ? 1 : -1; out.push([c*s.delaiX-1.3, c*s.delaiX+1.3, s.delaiZ-1.3, s.delaiZ+1.3]); } return out; }
+const dansExcl = (x,z,ex) => ex.some(b => x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3]);
+// JAUGES : surfaces nettes et capacités, zone par zone
+function jauges(){
+  const Z = P().zonePublic, ex = exclusions(); let brut = 0, net = 0;
+  for (let x = Z.x0 + .5; x < Z.x1; x += 1) for (let z = Z.z0 + .5; z < Z.z1; z += 1){ brut++; if (!dansExcl(x,z,ex)) net++; }
+  const pb = podiumBox(), pl = posPlateforme(), v = E.village, st = posStands(), rg = regieBox();
+  const xMax = Math.max(...st.map(s => Math.abs(s.x - E.bloc.x))) + v.cote/2, xMin = (pl.x1 - E.bloc.x) + 1.5;
+  const flancs = 2 * (xMax - xMin) * Math.max(0, (v.z - v.cote/2) - Z.z1);            // devant les stands, derrière la zone public
+  const scene = (pb.tete.x1-pb.tete.x0)*(pb.tete.z1-pb.tete.z0) + (pb.cat.x1-pb.cat.x0)*(pb.cat.z1-pb.cat.z0);
+  const coulisses = (pb.tete.x1 - pb.tete.x0 + 4) * (rg.z0 - pb.tete.z1);
+  const repos = E.repos.tonnelle.largeur*E.repos.tonnelle.profondeur, hayon = E.camion.largeur*E.camion.hayon;
+  return {brut, net, j2:Math.floor(net*Z.densite), j3:Math.floor(net*(Z.densiteMax||3)), flancs, jFlancs:Math.floor(flancs*1), scene, jScene:Math.floor(scene/1.5), coulisses, jCoulisses:Math.floor(coulisses*1), repos, jRepos:Math.floor(repos/2), hayon, jHayon:2};
+}
+// nomenclature de la tour Layher, déduite de la géométrie (à faire valider par le monteur)
+function nomenclatureTour(){ const b = E.bloc, nx = b.travees, n = b.niveaux, mont = (nx+1)*2;
+  return [["Montant Allround 2,00 m", "2603.200", mont*n + 4, "famille 2603.xxx", true], ["Montant Allround 1,00 m (garde-corps)", "2603.100", mont, "famille 2603.xxx", true],
+    ["Embase (collier de départ)", "2602.000", mont, "", true], ["Vérin de pied 0,60 m", "4001.060", mont, "", true],
+    ["Moise O 3,07 m (niveaux, garde-corps)", "2607.307", (n)*(nx*2 + 4) + 4 + 2*(nx*2 + 2), "LW : 2601.307", true], ["Moise U 3,07 m (support planchers)", "2611.307", nx*2, "", false],
+    ["Diagonale 3,07 × 2,00 m", "2620.307", n*(nx*2 + 2), "famille 2620.xxx", true], ["Plancher acier LW 3,07 × 0,32 m", "3883.307", nx*9, "série 3883 (19,3 kg)", true], ["Plancher acier 3,07 × 0,19 m", "—", nx, "", false],
+    ["Plancher à trappe + échelle alu 3,07 × 0,61 m", "—", n, "", false], ["Plinthe 3,07 m", "—", nx*2 + 2, "Blitz : 1757.307", false],
+    ["Lest béton ≈ 1 t (hors Layher), sanglé", "—", mont, "note de calcul au vent", false], ["Bâche de toit + filet, fixations", "—", 1, "démontage > 50 km/h", false]]; }
+
+/* =====================================================================
+   PRIMITIVES
+   ===================================================================== */
+const std = (o) => new THREE.MeshStandardMaterial(Object.assign({roughness:.85, metalness:0}, o));
+function etiquette(texte, x, y, z, largeur=6, couleur='#ffb454'){
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+  g.fillStyle = 'rgba(10,12,16,.82)'; g.beginPath(); g.roundRect ? g.roundRect(0,0,512,128,28) : g.rect(0,0,512,128); g.fill();
+  g.strokeStyle = couleur; g.lineWidth = 6; g.stroke();
+  g.font = 'bold 60px -apple-system, Segoe UI, Roboto, sans-serif'; g.fillStyle = couleur; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(texte, 256, 66);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c), depthTest:false, transparent:true}));
+  sp.scale.set(largeur, largeur/4, 1); sp.position.set(x, y, z); sp.renderOrder = 20; sp.visible = false; return sp;
+}
+G.legendes = [];
+function marquer(num, x, y, z){ const sp = etiquette(String(num), x, y, z, 5.5); scene.add(sp); G.legendes.push(sp); }
+function nommer(txt, x, y, z, l=5, c='#e6edf3'){ const et = etiquette(txt, x, y, z, l, c); scene.add(et); G.legendes.push(et); }
+function boite(x0,x1,y0,y1,z0,z1,m){ const o = new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0), m); o.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2); o.castShadow = o.receiveShadow = true; return o; }
+function cyl(a,b,r,m,seg=8){ const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length();
+  const o = new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,seg), m); o.position.copy(A).add(B).multiplyScalar(.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
+function coneMesh(sommet, base, rayon, mat){ const A = new THREE.Vector3(...sommet), B = new THREE.Vector3(...base), d = B.clone().sub(A), L = d.length();
+  const g = new THREE.ConeGeometry(rayon, L, 28, 1, true); g.translate(0,-L/2,0); g.rotateX(Math.PI);
+  const o = new THREE.Mesh(g, mat); o.position.copy(A); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
+const fais = (col) => new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:0, side:THREE.DoubleSide, depthWrite:false, blending:THREE.AdditiveBlending});
+const mAlu = () => std({color:0xb9c0c8, metalness:.6, roughness:.35}), mNoir = () => std({color:0x111418, roughness:.6}), mStruct = () => std({color:0x2a2d33, roughness:.7});
+
+/* =====================================================================
+   PERSONNAGES — foules instanciées, un visage par personne
+   ===================================================================== */
+function creerFoule(pts, opt){
+  // Une personne = 2 jambes + torse + 2 bras + tête (smiley) + calotte de cheveux, répartis dans des
+  // InstancedMesh par couleur. pts : [x, z, (yaw)]. opt.groupes : petits groupes qui se font face ;
+  // opt.marcheurs : part des gens qui déambulent. Dans maj(), regard = false (chacun sa vie),
+  // true (tout le monde regarde la façade) ou une fonction q → yaw (ou null pour laisser faire).
+  const VET = [0x1f2a44,0x3a3f48,0x151515,0xa3262b,0xe7e2d8,0x2f6b4f,0xcdb996,0x3b5998], PANT = [0x1c2430,0x101010,0x5a5248], CHEV = [0x1a1210,0x5a3a22,0xc9a24a];
+  const gTorse = THREE.CapsuleGeometry ? new THREE.CapsuleGeometry(.19,.38,2,8) : new THREE.CylinderGeometry(.17,.2,.62,8);
+  const gJambe = new THREE.CylinderGeometry(.075,.085,.82,6), gBrasH = new THREE.CylinderGeometry(.045,.05,.6,6), gTete = new THREE.SphereGeometry(.12,12,8), gChev = new THREE.SphereGeometry(.128,10,5,0,Math.PI*2,0,Math.PI*.55);
+  const gBras = new THREE.BoxGeometry(.07,.55,.07), gTel = new THREE.PlaneGeometry(.1,.16), gMic = new THREE.CylinderGeometry(.022,.018,.22,6), gInst = new THREE.BoxGeometry(.95,.32,.08);
+  const pers = pts.map((p,i) => ({x:p[0], z:p[1], x0:p[0], z0:p[1], y:0, yaw:(p[2] !== undefined ? p[2] : rnd()*6.28), s:.9 + rnd()*.22, ph:rnd()*6.28, vet:Math.floor(rnd()*8), peau:Math.floor(rnd()*3), visage:Math.floor(rnd()*NVIS), pant:Math.floor(rnd()*3), chev:Math.floor(rnd()*3),
+    bras:rnd() < (opt.bras||0), tel:rnd() < (opt.tel||0), marche:rnd() < (opt.marcheurs||0), dir:rnd()*6.28, vit:.25 + rnd()*.35, micro:false, dj:false, defile:false, inst:false}));
+  if (opt.groupes){ const centres = []; for (let i = 0; i < pers.length/4; i++){ const q = pers[Math.floor(rnd()*pers.length)]; centres.push([q.x + (rnd()-.5)*1.4, q.z + (rnd()-.5)*1.4]); }
+    pers.forEach(q => { let best = null, bd = 9; centres.forEach(c => { const d = Math.hypot(c[0]-q.x, c[1]-q.z); if (d < bd){ bd = d; best = c; } });
+      if (best && bd < 2.2 && !q.marche) q.yaw = Math.atan2(best[0]-q.x, best[1]-q.z) + (rnd()-.5)*.5; }); }
+  const N = pers.length, mk = (g, m, n) => { const o = new THREE.InstancedMesh(g, m, n); o.castShadow = false; o.count = 0; o.frustumCulled = false; scene.add(o); return o; };
+  const col = c => std({color:c, roughness:.92});
+  const torses = VET.map(c => mk(gTorse, col(c), N)), brasH = VET.map(c => mk(gBrasH, col(c), 2*N)), jambes = PANT.map(c => mk(gJambe, col(c), 2*N)), chevs = CHEV.map(c => mk(gChev, col(c), N));
+  const tetes = []; VISAGES.forEach(row => row.forEach(tx => tetes.push(mk(gTete, std({map:tx, roughness:.9}), N))));
+  const bras = mk(gBras, col(0x3a3f48), N), tels = mk(gTel, new THREE.MeshBasicMaterial({color:0xcfe8ff}), N), mics = mk(gMic, std({color:0x202226, metalness:.5}), N), insts = mk(gInst, std({color:0x8a3a1e, roughness:.5}), N);
+  const dm = new THREE.Object3D();
+  return { pers, n:0, y0:(opt.y0||0),
+    maj(frac, t, regard, dt){
+      const n = Math.round(clamp(frac,0,1) * pers.length), cT = new Array(8).fill(0), cB = new Array(8).fill(0), cJ = [0,0,0], cH = new Array(tetes.length).fill(0), cC = [0,0,0]; let nb = 0, nt = 0, nm = 0, ni = 0;
+      const tt = t*3600, fn = typeof regard === 'function', amb = fn || regard === true;
+      for (let i = 0; i < n; i++){ const q = pers[i], y0 = this.y0 + q.y;
+        let yaw = q.yaw, pas = 0, bob = Math.sin(tt*1.7 + q.ph)*.025, r = null;
+        if (fn) r = regard(q);
+        if (fn && r !== null && r !== undefined){ yaw = r; if (q.defile) pas = Math.sin(tt*4.2 + q.ph)*.45; bob *= q.dj ? 2.6 : 1.8; }
+        else if (regard === true){ yaw = Math.PI + Math.sin(q.ph)*.25; bob *= 2.2; }
+        else if (q.marche && dt !== undefined){ q.x += Math.sin(q.dir)*q.vit*dt; q.z += Math.cos(q.dir)*q.vit*dt;
+          if (Math.hypot(q.x-q.x0, q.z-q.z0) > 4){ q.dir += Math.PI + (rnd()-.5); } yaw = q.dir; pas = Math.sin(tt*4.2 + q.ph)*.45; }
+        const sy = Math.sin(yaw), cy = Math.cos(yaw), lat = (k) => [q.x + cy*k, q.z - sy*k];
+        for (const side of [-1, 1]){ const [lx, lz] = lat(side*.11); dm.position.set(lx, y0 + .41*q.s + bob*.3, lz); dm.rotation.set(side*pas*Math.cos(yaw), yaw, 0); dm.scale.set(1, q.s, 1); dm.updateMatrix(); jambes[q.pant].setMatrixAt(cJ[q.pant]++, dm.matrix); }
+        dm.position.set(q.x, y0 + 1.1*q.s + bob, q.z); dm.rotation.set(0, yaw + Math.sin(tt*.9+q.ph)*.06, 0); dm.scale.set(1, q.s, 1); dm.updateMatrix(); torses[q.vet].setMatrixAt(cT[q.vet]++, dm.matrix);
+        if (q.dj || q.inst){ // mains devant : sur les platines ou sur l'instrument
+          for (const side of [-1, 1]){ const [ax, az] = lat(side*.22); dm.position.set(ax + sy*.22, y0 + 1.2*q.s + bob, az + cy*.22); dm.rotation.set(-1.15*cy, 0, 0); dm.scale.set(1, q.s, 1); dm.updateMatrix(); brasH[q.vet].setMatrixAt(cB[q.vet]++, dm.matrix); }
+          if (q.inst){ dm.position.set(q.x + sy*.3, y0 + 1.0*q.s + bob, q.z + cy*.3); dm.rotation.set(0, yaw, -.45); dm.scale.set(1,1,1); dm.updateMatrix(); insts.setMatrixAt(ni++, dm.matrix); }
+        } else for (const side of [-1, 1]){ if (amb && ((q.bras && side > 0) || (q.tel && side < 0))) continue;
+          const [ax, az] = lat(side*.27); dm.position.set(ax, y0 + 1.05*q.s + bob, az); dm.rotation.set(-side*pas*.8*cy, yaw, side*.08); dm.scale.set(1, q.s, 1); dm.updateMatrix(); brasH[q.vet].setMatrixAt(cB[q.vet]++, dm.matrix); }
+        const ti = q.peau*NVIS + q.visage; dm.position.set(q.x, y0 + 1.56*q.s + bob, q.z); dm.rotation.set(0, yaw, 0); dm.scale.set(1,1,1); dm.updateMatrix(); tetes[ti].setMatrixAt(cH[ti]++, dm.matrix);
+        dm.position.set(q.x - sy*.025, y0 + 1.575*q.s + bob, q.z - cy*.025); dm.rotation.set(0, yaw, 0); dm.scale.set(1,.85,1); dm.updateMatrix(); chevs[q.chev].setMatrixAt(cC[q.chev]++, dm.matrix);
+        if (amb && q.bras && !q.dj && !q.inst){ const [ax, az] = lat(.27), sw = Math.sin(tt*2.3 + q.ph)*.25; dm.position.set(ax, y0 + 1.62*q.s + bob, az); dm.rotation.set(sw, yaw, .15); dm.scale.set(1,1,1); dm.updateMatrix(); bras.setMatrixAt(nb++, dm.matrix);
+          if (q.micro){ dm.position.set(ax + sy*.05, y0 + 1.62*q.s + bob + .33, az + cy*.05); dm.rotation.set(sw, yaw, .15); dm.updateMatrix(); mics.setMatrixAt(nm++, dm.matrix); } }
+        if (amb && q.tel && !q.dj){ const [ax, az] = lat(-.22); dm.position.set(ax + sy*.15, y0 + 1.45*q.s + bob, az + cy*.15); dm.rotation.set(-.3, yaw, 0); dm.scale.set(1,1,1); dm.updateMatrix(); tels.setMatrixAt(nt++, dm.matrix); } }
+      const fin = (arr, c) => arr.forEach((m,k) => { m.count = c[k]; m.instanceMatrix.needsUpdate = true; });
+      fin(torses, cT); fin(brasH, cB); fin(jambes, cJ); fin(tetes, cH); fin(chevs, cC);
+      [[bras,nb],[tels,nt],[mics,nm],[insts,ni]].forEach(([m,c]) => { m.count = c; m.instanceMatrix.needsUpdate = true; }); this.n = n;
+    } };
+}
+
+/* =====================================================================
+   SCÈNE : podium-catwalk, régie, camion, tour, village, sono, lumières, câbles
+   ===================================================================== */
+function construirePodium(){
+  // tête 6 × 4 à 3 m devant la régie, catwalk 2,4 × 12 vers la façade. 1,50 m. Garde-corps au fond et
+  // sur les côtés de la tête, escaliers latéraux au fond, le catwalk est la face jouée.
+  const pb = podiumBox(), H = pb.H, T = pb.tete, C = pb.cat, cx = pb.x; G.pb = pb;
+  const mBois = std({map:texBois, roughness:.9}), mJupe = std({color:0x0e1013}), ma = mAlu(), ms = mStruct();
+  [[T.x0,T.x1,T.z0,T.z1],[C.x0,C.x1,C.z0,C.z1]].forEach(([x0,x1,z0,z1]) => { scene.add(boite(x0,x1,H-.12,H,z0,z1,mBois)); scene.add(boite(x0+.08,x1-.08,0,H-.12,z0+.08,z1-.08,mJupe)); });
+  for (let x = T.x0+.3; x <= T.x1-.29; x += 1.0) for (const z of [T.z0+.3, T.z1-.3]) scene.add(cyl([x,0,z],[x,H-.12,z],.035,ma));
+  for (let z = C.z0+.3; z <= C.z1; z += 1.0) for (const x of [C.x0+.25, C.x1-.25]) scene.add(cyl([x,0,z],[x,H-.12,z],.035,ma));
+  // garde-corps 1,10 m : fond de la tête (sauf ouvertures des escaliers aux angles) et côtés de la tête
+  const rails = [[T.x0+1.4, T.z1, T.x1-1.4, T.z1], [T.x0, T.z0, T.x0, T.z1-1.5], [T.x1, T.z0, T.x1, T.z1-1.5]];
+  rails.forEach(([x0,z0,x1,z1]) => { for (const hh of [H+.5, H+1.1]) scene.add(cyl([x0,hh,z0],[x1,hh,z1],.025,ma)); const n = Math.max(1, Math.round(Math.hypot(x1-x0,z1-z0)/1.5)); for (let i = 0; i <= n; i++){ const x = x0+(x1-x0)*i/n, z = z0+(z1-z0)*i/n; scene.add(cyl([x,H,z],[x,H+1.1,z],.025,ma)); } });
+  // bandes LED de nez de scène : tout le pourtour du catwalk et le devant de la tête
+  const mLed = std({color:0xffffff, emissive:0xffb454, emissiveIntensity:0}); G.sceneLed = [];
+  [[C.x0-.02,C.x0+.03,C.z0,C.z1],[C.x1-.03,C.x1+.02,C.z0,C.z1],[C.x0,C.x1,C.z0-.02,C.z0+.03],[T.x0,C.x0,T.z0-.02,T.z0+.03],[C.x1,T.x1,T.z0-.02,T.z0+.03]].forEach(([x0,x1,z0,z1]) => { const b = boite(x0,x1,H,H+.1,z0,z1,mLed); scene.add(b); G.sceneLed.push(b); });
+  // escaliers latéraux (fond de la tête) : 8 marches de 19 cm, 1,20 m, mains courantes des deux côtés, nez contrastés
+  const nM = 8, gm = H/nM, pm = .28, zs0 = T.z1 - 1.4, zs1 = T.z1 - .2, mJaune = std({color:0xffe14d}); G.escaliers = [];
+  for (const side of [-1, 1]){ const xe = side < 0 ? T.x0 : T.x1;
+    for (let i = 0; i < nM; i++){ const y1 = gm*(nM-i), x0 = xe + side*i*pm, x1 = xe + side*(i+1)*pm; scene.add(boite(Math.min(x0,x1), Math.max(x0,x1), y1-.05, y1, zs0, zs1, ms)); scene.add(boite(Math.min(x0,x1), Math.min(x0,x1)+.05, y1-.005, y1+.012, zs0, zs1, mJaune)); }
+    const xb = xe + side*nM*pm;
+    for (const z of [zs0, zs1]){ scene.add(cyl([xe,H,z],[xb,gm,z],.025,ma)); scene.add(cyl([xe,H+.95,z],[xb,gm+.95,z],.028,ma)); scene.add(cyl([xb,0,z],[xb,gm+.95,z],.028,ma)); scene.add(cyl([xe,H,z],[xe,H+1.1,z],.028,ma)); }
+    G.escaliers.push({x:xb + side*.6, z:(zs0+zs1)/2, side}); }
+  // backline : table DJ de scène au fond à jardin, clavier à cour, retours au nez de la tête
+  scene.add(boite(cx-2.4,cx-.8,H,H+.9,T.z1-1.5,T.z1-.9, mNoir())); scene.add(boite(cx-2.3,cx-.9,H+.9,H+.98,T.z1-1.45,T.z1-.95, std({color:0x202226, metalness:.6})));
+  scene.add(boite(cx+.4,cx+1.9,H+.75,H+.85,T.z1-1.3,T.z1-.95, mNoir())); for (const x of [cx+.6, cx+1.7]) scene.add(cyl([x,H,T.z1-1.1],[x,H+.75,T.z1-1.1],.02,ma));
+  [-1.6,1.6].forEach(dx => scene.add(boite(cx+dx-.3, cx+dx+.3, H, H+.35, T.z0+.1, T.z0+.5, mNoir())));
+  // micro sur pied à l'entrée du catwalk
+  scene.add(cyl([cx,H,T.z0+1.2],[cx,H+1.5,T.z0+1.2],.015, std({color:0x222}))); scene.add(boite(cx-.06,cx+.06,H+1.45,H+1.62,T.z0+1.14,T.z0+1.26, std({color:0x111, metalness:.6})));
+  // projecteurs de scène sur pieds aux angles de la tête
+  G.sceneLum = [];
+  E.lumieres.scene.forEach((l,i) => { const x = cx + l.dx, z = T.z0 + l.dz, col = i ? 0xff5a8a : 0x2fb8ff; scene.add(cyl([x,0,z],[x,l.h,z],.04, std({color:0x2b2f36, metalness:.5}))); scene.add(boite(x-.15,x+.15,l.h-.2,l.h+.1,z-.15,z+.15, mNoir()));
+    const sp = new THREE.SpotLight(col, 0, 26, .6, .5, 1.2); sp.position.set(x,l.h,z); sp.target.position.set(cx,H+1.2,T.z0-2); scene.add(sp, sp.target);
+    const f = coneMesh([x,l.h-.1,z],[cx,H+.8,T.z0-2], 2.6, fais(col)); scene.add(f); G.sceneLum.push({l:sp, f, x, z, h:l.h}); });
+  // jupes du catwalk : l'invitation se lit des deux côtés, de tout le parvis
+  const tj = texTexte(2048, 256, ['#ff8a3d','#ffb454'], [['SCÈNE OUVERTE · À VOUS !', 100, 120], ['chant · slam · parole libre · inscriptions au stand Accueil', 200, 54, '600']]);
+  for (const side of [-1,1]){ const p = new THREE.Mesh(new THREE.PlaneGeometry(C.z1-C.z0-.4, H-.2), std({map:tj, emissiveMap:tj, emissive:0xffffff, emissiveIntensity:0})); p.position.set(side < 0 ? C.x0-.01 : C.x1+.01, H/2-.05, (C.z0+C.z1)/2); p.rotation.y = side < 0 ? -Math.PI/2 : Math.PI/2; scene.add(p); (G.jupes = G.jupes||[]).push(p); }
+  // qui est là
+  G.scn = creerFoule([[cx-.8, T.z0+1.2, Math.PI],[cx+.8, T.z0+1.6, Math.PI]], {y0:H}); G.scn.pers[0].bras = true; G.scn.pers[0].micro = true; G.scn.pers[1].bras = false;
+  G.live = creerFoule([[cx, T.z0-1, Math.PI],[cx-1.8, T.z0+1.5, Math.PI],[cx+1.8, T.z0+1.5, Math.PI],[cx+1.15, T.z1-.6, Math.PI]], {y0:H}); G.live.pers[0].bras = G.live.pers[0].micro = true; G.live.pers[1].inst = G.live.pers[2].inst = true; G.live.pers[3].dj = true;
+  G.rap = creerFoule([[cx, T.z0-2, Math.PI],[cx+.8, T.z0-.4, Math.PI],[cx-1.6, T.z1-1.9, Math.PI]], {y0:H}); G.rap.pers[0].bras = G.rap.pers[0].micro = true; G.rap.pers[1].bras = G.rap.pers[1].micro = true; G.rap.pers[0].defile = G.rap.pers[1].defile = true; G.rap.pers[2].dj = true;
+  const cort = []; for (let i = 0; i < 16; i++) cort.push([cx + (i%2 ? .6 : -.6), T.z0 - 1 - Math.floor(i/2)*1.1, Math.PI]);
+  G.cortege = creerFoule(cort, {y0:H}); G.cortege.pers.forEach((q,i) => { q.defile = true; q.bras = (i % 6) < 2; });
+  G.bannieres = ['NOS LUTTES','SOLIDARITÉ','ÉGALITÉ'].map((m,k) => { const tb = texTexte(1024, 384, ['#ffb454','#ff5a8a','#4fa3ff'][k], [[m, 192, 150]], '#1a1200');
+    const p = new THREE.Group(), mb = std({map:tb}), f = new THREE.Mesh(new THREE.PlaneGeometry(2.0, .75), mb), d = new THREE.Mesh(new THREE.PlaneGeometry(2.0, .75), mb); d.rotation.y = Math.PI; p.add(f, d); p.visible = false; scene.add(p); return p; });   // deux faces : lisible des deux côtés
+  const file = []; for (let i = 0; i < 6; i++) file.push([G.escaliers[1].x + .9 + i*.8 + (rnd()-.5)*.2, G.escaliers[1].z + (rnd()-.5)*.5, -Math.PI/2]);
+  G.fouleFile = creerFoule(file, {});
+}
+function construireRegie(){
+  const rg = regieBox(), pl = posPlateforme();
+  // surélévation sur praticables : jupe noire, pieds, escalier côté tour
+  if (rg.y0 > 0){ scene.add(boite(rg.x0, rg.x1, .08, rg.y0, rg.z0, rg.z1, std({color:0x0e1013}))); for (let x = rg.x0+.3; x <= rg.x1; x += 1.0) for (const z of [rg.z0+.3, rg.z1-.3]) scene.add(cyl([x,0,z],[x,rg.y0,z],.035, mAlu()));
+    const n = 5, g = rg.y0/n, p = (pl.z0 - rg.z1 - .2)/n, xe = rg.x0 + .9; for (let i = 0; i < n; i++){ const y1 = g*(n-i), z0 = rg.z1 + i*p; scene.add(boite(xe-.6, xe+.6, y1-.05, y1, z0, z0+p, mStruct())); }
+    for (const x of [xe-.6, xe+.6]) scene.add(cyl([x,rg.y0+.95,rg.z1],[x,g+.95,rg.z1+n*p],.025, mAlu())); }
+  scene.add(boite(rg.x0, rg.x1, rg.y0, rg.y1, rg.z0, rg.z1, std({color:0xd7dde4, roughness:.5, metalness:.3})));
+  const fen = new THREE.Mesh(new THREE.PlaneGeometry(3.2,.9), std({color:0x1d2a3d, emissive:0x9fd3ff, emissiveIntensity:0})); fen.position.set(rg.x+.4, rg.y0+1.6, rg.z0-.02); fen.rotation.y = Math.PI; scene.add(fen); G.regieFen = fen;
+  const porte = new THREE.Mesh(new THREE.PlaneGeometry(1,2.2), std({color:0x9aa4ae})); porte.position.set(rg.x0+.9, rg.y0+1.1, rg.z1+.02); scene.add(porte);
+  scene.add(boite(rg.x1-1.2, rg.x1-.2, rg.y1, rg.y1+.6, rg.z-.5, rg.z+.5, std({color:0xbfc6cf})));
+  // sorties de câbles aux deux extrémités
+  for (const x of [rg.x0, rg.x1]) scene.add(boite(x-.15, x+.15, rg.y0-.1, rg.y0+.3, rg.z-.3, rg.z+.3, mNoir()));
+}
+function construireTour(){
+  // Layher Allround : montants 2 m sur embases + vérins, moises à chaque niveau dans les deux sens,
+  // diagonales alternées sur les 4 faces, planchers acier 0,32 au niveau haut, plancher à trappe + échelle
+  // dans la travée jardin à chaque niveau, garde-corps 0,5 / 1,0 m + plinthes, bâche de toit, lests.
+  const b = E.bloc, pl = posPlateforme(), nx = b.travees, n = b.niveaux, hN = b.hauteurNiveau, base = b.base, L = b.profondeurPlateforme;
+  const mG = std({color:0xb5bbc2, metalness:.75, roughness:.35}), mD = std({color:0x8f949a, metalness:.5, roughness:.55}), mP = std({color:0xc98a3c, roughness:.6});
+  const xs = []; for (let i = 0; i <= nx; i++) xs.push(pl.x0 + i*L); const zs = [pl.z0, pl.z1], ys = []; for (let k = 0; k <= n; k++) ys.push(base + k*hN);
+  const ros = new THREE.InstancedMesh(new THREE.CylinderGeometry(.055,.055,.009,8), mG, (nx+1)*2*Math.ceil((ys[n]+1)/.5)); let nr = 0; const dm = new THREE.Object3D();
+  xs.forEach(x => zs.forEach(z => { scene.add(boite(x-.08,x+.08,0,.012,z-.08,z+.08,mG)); scene.add(cyl([x,0,z],[x,base,z],.02,mG)); scene.add(cyl([x,base-.05,z],[x,base+.1,z],.04,mG));
+    for (let k = 0; k < n; k++) scene.add(cyl([x,ys[k],z],[x,ys[k+1],z],.024,mG)); scene.add(cyl([x,ys[n],z],[x,ys[n]+1.0,z],.024,mG));
+    for (let y = base; y <= ys[n] + 1.0; y += .5){ dm.position.set(x,y,z); dm.updateMatrix(); ros.setMatrixAt(nr++, dm.matrix); } }));
+  ros.count = nr; scene.add(ros);
+  ys.forEach((y,k) => { zs.forEach(z => { for (let i = 0; i < nx; i++) scene.add(cyl([xs[i],y,z],[xs[i+1],y,z], k === n ? .028 : .024, mG)); }); xs.forEach(x => scene.add(cyl([x,y,zs[0]],[x,y,zs[1]],.024,mG))); });
+  for (const dy of [.5, 1.0]){ const y = ys[n] + dy; zs.forEach(z => { for (let i = 0; i < nx; i++) scene.add(cyl([xs[i],y,z],[xs[i+1],y,z],.024,mG)); }); [xs[0], xs[nx]].forEach(x => scene.add(cyl([x,y,zs[0]],[x,y,zs[1]],.024,mG))); }
+  zs.forEach(z => scene.add(boite(pl.x0, pl.x1, ys[n]+.06, ys[n]+.21, z-.02, z+.02, mP))); [pl.x0, pl.x1].forEach(x => scene.add(boite(x-.02, x+.02, ys[n]+.06, ys[n]+.21, pl.z0, pl.z1, mP)));
+  for (let k = 0; k < n; k++){ zs.forEach((z,zi) => { for (let i = 0; i < nx; i++){ const d = ((i+k+zi)%2) ? 1 : 0; scene.add(cyl([xs[i+d],ys[k],z],[xs[i+1-d],ys[k+1],z],.02,mG)); } });
+    [xs[0], xs[nx]].forEach((x,xi) => { const d = ((k+xi)%2) ? 1 : 0; scene.add(cyl([x,ys[k],zs[d]],[x,ys[k+1],zs[1-d]],.02,mG)); }); }
+  for (let i = 0; i < nx; i++){ let x = xs[i] + .03; for (let j = 0; j < 10; j++){ const w = j < 9 ? .32 : .19; scene.add(boite(x, x+w-.012, ys[n], ys[n]+.06, pl.z0+.05, pl.z1-.05, mD)); x += w; } }
+  for (let k = 1; k <= n; k++){ const y = ys[k], x0 = xs[0] + .03; if (k < n) scene.add(boite(x0, x0+.61, y, y+.06, pl.z0+.05, pl.z1-.05, mD));
+    const lx = x0 + .3, lz = pl.z0 + .6; scene.add(cyl([lx-.2,y-hN+.1,lz],[lx-.2,y+.3,lz],.015,mG)); scene.add(cyl([lx+.2,y-hN+.1,lz],[lx+.2,y+.3,lz],.015,mG)); for (let yy = y-hN+.3; yy < y+.2; yy += .3) scene.add(cyl([lx-.2,yy,lz],[lx+.2,yy,lz],.012,mG)); }
+  for (const x of [xs[0], xs[nx]]) for (const z of zs) scene.add(cyl([x,ys[n]+1.0,z],[x,ys[n]+2.6,z],.024,mG));
+  scene.add(boite(pl.x0-.25, pl.x1+.25, ys[n]+2.5, ys[n]+2.6, pl.z0-.25, pl.z1+.25, std({color:0xf2f2f2, transparent:true, opacity:.5})));
+  xs.forEach(x => [pl.z0-.95, pl.z1+.95].forEach(z => scene.add(boite(x-.6, x+.6, 0, .6, z-.3, z+.3, std({color:0x9a9a94, roughness:.95})))));
+  E.projecteurs.forEach(p => scene.add(boite(b.x+p.dx-.4, b.x+p.dx+.4, ys[n]+.06, pl.hVP-.21, b.z-.45, b.z+.45, mNoir())));
+  E.lasers.forEach(l => { const x = b.x + l.dx, y = pl.hVP + l.dy, z = b.z; for (const [dx,dz] of [[-.3,-.3],[.3,-.3],[0,.35]]) scene.add(cyl([x,ys[n]+.06,z],[x+dx,y-.12,z+dz],.015,mG)); });
+  scene.add(cyl([xs[1]+.06,0,pl.z1+.06],[xs[1]+.06,ys[n],pl.z1+.06],.045, std({color:0x111})));   // tronc vidéo + puissance, montant arrière
+}
+function construireCamion(){
+  // 20 m³ garé en long devant la façade : cabine côté jardin, caisse, hayon déployé côté cour = plateau DJ.
+  const c = camionBox(), E_ = E.camion, mBlanc = std({color:0xeef0f2, roughness:.5, metalness:.2}), mn = mNoir();
+  scene.add(boite(c.x0+.1, c.xc0-.05, .4, 2.6, c.z0+.05, c.z1-.05, mBlanc));                                         // cabine
+  const pb = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.0), std({color:0x1d2a3d, roughness:.2, metalness:.4})); pb.position.set(c.x0+.09, 1.9, c.z); pb.rotation.y = -Math.PI/2; scene.add(pb);
+  scene.add(boite(c.x0, c.xh0, .5, c.yp, c.z0+.1, c.z1-.1, mn));                                                     // châssis
+  scene.add(boite(c.xc0, c.xh0, c.yp, c.yt, c.z0, c.z1, mBlanc));                                                    // caisse
+  [[c.x0+1.0],[c.xh0-1.2]].forEach(([x]) => [c.z0+.15, c.z1-.15].forEach(z => { const r = new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.3,16), mn); r.rotation.x = Math.PI/2; r.position.set(x,.5,z); scene.add(r); }));
+  // hayon déployé à plat : plateau, béquilles, garde-corps amovible côté façade et en bout
+  scene.add(boite(c.xh0, c.xh1, c.yp-.08, c.yp, c.z0, c.z1, std({color:0x8c9096, metalness:.6, roughness:.4})));
+  for (const z of [c.z0+.2, c.z1-.2]) scene.add(cyl([c.xh1-.1,0,z],[c.xh1-.1,c.yp-.08,z],.03, mAlu()));
+  [[c.xh0,c.z0,c.xh1,c.z0],[c.xh1,c.z0,c.xh1,c.z1]].forEach(([x0,z0,x1,z1]) => { for (const hh of [.5,1.0]) scene.add(cyl([x0,c.yp+hh,z0],[x1,c.yp+hh,z1],.02, mAlu())); scene.add(cyl([x1,c.yp,z1],[x1,c.yp+1.0,z1],.022, mAlu())); scene.add(cyl([x0,c.yp,z0],[x0,c.yp+1.0,z0],.022, mAlu())); });
+  // platines : table, contrôleur, retours au sol face au DJ
+  const xd = (c.xh0 + c.xh1)/2; scene.add(boite(xd-.65, xd+.65, c.yp, c.yp+.9, c.z1-.65, c.z1-.15, mn)); scene.add(boite(xd-.5, xd+.5, c.yp+.9, c.yp+.98, c.z1-.6, c.z1-.2, std({color:0x202226, metalness:.6})));
+  const led = new THREE.Mesh(new THREE.BoxGeometry(.9,.02,.02), std({color:0x3fb950, emissive:0x3fb950, emissiveIntensity:0})); led.position.set(xd, c.yp+.99, c.z1-.4); scene.add(led); G.djLed = led;
+  [[c.xh0-.6],[c.xh1+.6]].forEach(([x]) => { scene.add(cyl([x,0,c.z1+.4],[x,1.1,c.z1+.4],.03, mAlu())); scene.add(boite(x-.2,x+.2,1.1,1.45,c.z1+.2,c.z1+.6, mn)); });
+  // le flanc côté public : écran (toile animée)
+  if (E_.ecran){ const ecr = new THREE.Mesh(new THREE.PlaneGeometry(c.xh0-c.xc0-.2, c.yt-c.yp-.2), new THREE.MeshBasicMaterial({map:texCamion, transparent:true, opacity:0})); ecr.position.set((c.xc0+c.xh0)/2, (c.yp+c.yt)/2, c.z1+.02); scene.add(ecr); G.ecran = ecr;
+    scene.add(boite(c.xc0+.05, c.xh0-.05, c.yp+.05, c.yt-.05, c.z1, c.z1+.015, mn)); }
+  // le DJ
+  G.djH = creerFoule([[xd, c.z1-1.0, 0]], {y0:c.yp}); G.djH.pers[0].dj = true;
+}
+function construireVillage(){
+  G.stands = [];
+  posStands().forEach(s => {
+    const c = E.village.cote, h0 = 2.2, h1 = 3.0, grp = new THREE.Group();
+    [[-c/2,-c/2],[c/2,-c/2],[c/2,c/2],[-c/2,c/2]].forEach(([x,z]) => grp.add(cyl([x,0,z],[x,h0,z],.035, std({color:0x8c9096, metalness:.5}))));
+    const g = new THREE.ConeGeometry(c*Math.SQRT1_2*1.02, h1-h0, 4, 1); g.rotateY(Math.PI/4);
+    const toit = new THREE.Mesh(g, std({color:TENTE[s.type]||0xe8e0c8, map:texTente, roughness:.9, side:THREE.DoubleSide, emissive:TENTE[s.type]||0xe8e0c8, emissiveIntensity:0})); toit.position.set(0,h0+(h1-h0)/2,0); toit.castShadow = true; grp.add(toit);
+    grp.add(boite(-c/2+.2,c/2-.2,0,.95,-c/2+.1,-c/2+.7, std({color:0x6b5a44})));   // comptoir côté -z : vers la façade et le public
+    [[-c/2,-c/2],[c/2,-c/2],[c/2,c/2],[-c/2,c/2]].forEach(([x,z]) => grp.add(boite(x-.2,x+.2,0,.18,z-.2,z+.2, std({color:0x3a3f48}))));
+    if (s.type === 'secours'){ const cr = new THREE.Mesh(new THREE.PlaneGeometry(.9,.9), std({color:0xffffff})); cr.position.set(0, h0+.5, -c/2-.02); cr.rotation.y = Math.PI; grp.add(cr); const pl = new THREE.Mesh(new THREE.PlaneGeometry(.6,.6), std({color:0xf85149})); pl.position.set(0, h0+.5, -c/2-.03); pl.rotation.y = Math.PI; grp.add(pl); }
+    const l = new THREE.PointLight(0xffe0b0, 0, 9, 2); l.position.set(0,h0-.2,0); grp.add(l);
+    grp.position.set(s.x, 0, s.z); grp.rotation.y = s.rot || 0; scene.add(grp); G.stands.push({toit, l});
+    nommer(s.nom, s.x, 4.1, s.z, 5);
+  });
+  // repos & stockage derrière la tour, bâche opaque côté public
+  const r = E.repos, tn = (x, z, w, d, col) => { const grp = new THREE.Group(); [[-w/2,-d/2],[w/2,-d/2],[w/2,d/2],[-w/2,d/2]].forEach(([a,b]) => grp.add(cyl([a,0,b],[a,2.2,b],.035, std({color:0x8c9096, metalness:.5}))));
+    const g = new THREE.BoxGeometry(w+.2, .06, d+.2); const t = new THREE.Mesh(g, std({color:col, map:texTente, roughness:.9})); t.position.set(0, 2.3, 0); grp.add(t); grp.position.set(x, 0, z); scene.add(grp); return grp; };
+  tn(r.x, r.z, r.tonnelle.largeur, r.tonnelle.profondeur, 0xd8d2c4); tn(r.stockage.x, r.stockage.z, r.stockage.largeur, r.stockage.profondeur, 0xb9bfc6);
+  for (let i = 0; i < 4; i++) scene.add(boite(r.x-2.4+i*1.4, r.x-1.2+i*1.4, .42, .48, r.z-.9+(i%2)*1.6, r.z-.6+(i%2)*1.6, std({map:texBois})));   // bancs
+  scene.add(boite(r.x-.6, r.x+.6, 0, .75, r.z+.3, r.z+.9, std({color:0x6b5a44})));   // table eau
+  for (let i = 0; i < 6; i++) scene.add(boite(r.stockage.x-1.2+(i%3)*.8, r.stockage.x-.6+(i%3)*.8, 0, .9+Math.floor(i/3)*.3, r.stockage.z-1+Math.floor(i/3)*1.1, r.stockage.z-.4+Math.floor(i/3)*1.1, std({color:0x15171b, metalness:.4})));   // flight-cases
+  const bz = r.bache.z; scene.add(boite(-r.bache.demiLargeur, r.bache.demiLargeur, 0, r.bache.hauteur, bz-.02, bz+.02, std({color:0x2b2f36, roughness:.9}))); for (let x = -r.bache.demiLargeur; x <= r.bache.demiLargeur; x += 3.5) scene.add(cyl([x,0,bz],[x,r.bache.hauteur+.1,bz],.03, mAlu()));
+}
+function construireSono(){
+  const so = E.sono, sb = so.sub, mn = mNoir(); G.pa = [];
+  so.stacks.forEach((x, i) => { const z = so.z, ext = Math.abs(x) === Math.max(...so.stacks.map(Math.abs)), nS = so.subsParStack;
+    for (let k = 0; k < nS; k++) scene.add(boite(x-sb.l/2, x+sb.l/2, k*sb.h, (k+1)*sb.h-.03, z-sb.p/2, z+sb.p/2, mn));
+    const top = nS*sb.h, nT = ext ? so.tetes.parStackExterieur : so.tetes.frontFill, hT = ext ? .35 : .4;
+    for (let k = 0; k < nT; k++){ const y = top + k*hT; const b = boite(x-(ext?.5:.3), x+(ext?.5:.3), y, y+hT-.02, z-sb.p/2+.1, z+sb.p/2-.05, mn); b.rotation.x = -(k*.05); scene.add(b); }
+    const led = new THREE.Mesh(new THREE.SphereGeometry(.07,8,6), std({color:0x3fb950, emissive:0x3fb950, emissiveIntensity:0})); led.position.set(x+sb.l/2, top-.2, z+sb.p/2); scene.add(led); G.pa.push(led);
+    nommer(`${ext ? 'PA' : 'front-fill'} ${x < 0 ? 'jardin' : 'cour'} · 4 × ${sb.modele}`, x, top + nT*hT + 1.2, z, 7, '#e6edf3'); });
+  for (let i = 0; i < so.delais; i++){ const c = i%2 ? 1 : -1, x = c*so.delaiX, z = so.delaiZ, h = so.delaiH;
+    for (const [dx,dz] of [[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]]) scene.add(cyl([x+dx,0,z+dz],[x+dx*.3,h-1,z+dz*.3],.025, mAlu()));
+    scene.add(cyl([x,0,z],[x,h-.9,z],.05, mAlu())); scene.add(boite(x-.7,x+.7,0,.15,z-.7,z+.7, std({color:0x3a3f48})));
+    for (let k = 0; k < so.delaiTetes; k++) scene.add(boite(x-.5, x+.5, h-.9+k*.36, h-.9+(k+1)*.36-.02, z-.3, z+.3, mn));
+    nommer(`délai ${c<0?'jardin':'cour'} · ${so.delaiTetes} × ${so.tetes.modele}`, x, h+1.0, z, 6, '#e6edf3'); }
+}
+function construireLumieres(){
+  const Z = P().zonePublic; G.totems = []; G.wash = [];
+  E.lumieres.totems.forEach(t => { scene.add(boite(t.x-.5,t.x+.5,0,.25,t.z-.5,t.z+.5, std({color:0x2b2f36, metalness:.5}))); scene.add(cyl([t.x,0,t.z],[t.x,t.h,t.z],.06, std({color:0x2b2f36, metalness:.5})));
+    scene.add(boite(t.x-.5,t.x+.5,t.h-.3,t.h-.15,t.z-.1,t.z+.1, mNoir())); scene.add(boite(t.x-.5,t.x+.5,t.h-.1,t.h+.05,t.z-.1,t.z+.1, mNoir()));   // 2 barres Mode B
+    [-.35,.35].forEach(dx => scene.add(cyl([t.x+dx,t.h+.1,t.z],[t.x+dx,t.h+.35,t.z-.15],.12, mNoir())));                                            // 2 PAR 64
+    const cx = (Z.x0+Z.x1)/2, cz = (Z.z0+Z.z1)/2, d = new THREE.Vector3(cx-t.x, -t.h, cz-t.z); const base = new THREE.Vector3(t.x,t.h,t.z).add(d.clone().normalize().multiplyScalar(26));
+    const f = coneMesh([t.x,t.h-.2,t.z],[base.x,Math.max(.1,base.y),base.z], 7, fais(0xb36bff)); scene.add(f);
+    const l = new THREE.SpotLight(0xb36bff, 0, 60, .6, .5, 1.2); l.position.set(t.x,t.h,t.z); l.target.position.set(cx,0,cz); scene.add(l, l.target); G.totems.push({f, l, t}); });
+  E.lumieres.wash.forEach(w => { scene.add(boite(w.x-.45,w.x+.45,0,.5,w.z-.35,w.z+.35, std({color:0x111418, metalness:.5})));
+    const f = coneMesh([w.x,.5,w.z],[w.tx,w.ty,0], 4.5, fais(0xb36bff)); scene.add(f);
+    const l = new THREE.SpotLight(0xb36bff, 0, 80, .25, .6, 1); l.position.set(w.x,.5,w.z); l.target.position.set(w.tx,w.ty,0); scene.add(l, l.target); G.wash.push({f, l}); });
+}
+// PASSAGES DE CÂBLES : troncs jardin / cour depuis la régie, délais à travers le public, régie → podium, TGBT → régie et tour, GE → TGBT
+function tracesCables(){
+  const rg = regieBox(), Z = P().zonePublic, s = E.sono, el = E.electricite, pb = podiumBox(), pl = posPlateforme(), zl = Z.z1 + 2.2, xs = Z.x1 + 1.5, zf = 1.6, cb = camionBox(), out = [];
+  for (const c of [-1, 1]){ out.push({nom:`tronc ${c<0?'jardin':'cour'}`, type:'tronc', pts:[[rg.x + c*rg.L/2, zl],[c*xs, zl],[c*xs, zf],[c < 0 ? cb.x0 - 1.2 : cb.xh1 + .8, zf]]});
+    if (s.delais) out.push({nom:`délai ${c<0?'jardin':'cour'}`, type:'public', pts:[[c*xs, s.delaiZ],[c*s.delaiX, s.delaiZ]]}); }
+  out.push({nom:'régie → podium', type:'coulisses', pts:[[rg.x, rg.z0],[rg.x, pb.tete.z1]]});
+  const tg = el.armoires[0]; out.push({nom:'TGBT → régie', type:'tronc', pts:[[tg.x, tg.z],[tg.x, zl],[rg.x - rg.L/2, zl]]});
+  out.push({nom:'TGBT → tour', type:'tronc', pts:[[tg.x, tg.z],[tg.x, pl.z1+.3],[pl.x0 + 3.07 + .06, pl.z1 + .3]]});
+  if (el.groupe) out.push({nom:'GE → TGBT', type:'tronc', pts:[[el.groupe.x, el.groupe.z],[tg.x, el.groupe.z],[tg.x, tg.z]]});
+  return out;
+}
+function construireCables(){
+  const mC = std({color:0x15171b, roughness:.8}), mJ = std({color:0xffd23f, roughness:.7}), mR = std({color:0x2a2a2a}); G.cables = tracesCables(); let total = 0;
+  G.cables.forEach(c => { const w = c.type === 'public' ? .9 : .5, h = c.type === 'public' ? .09 : .07;
+    for (let i = 0; i < c.pts.length-1; i++){ const [x0,z0] = c.pts[i], [x1,z1] = c.pts[i+1], L = Math.hypot(x1-x0, z1-z0); total += L; if (L < .05) continue;
+      const seg = boite(-L/2, L/2, 0, h, -w/2, w/2, c.type === 'public' ? mR : mC); seg.position.set((x0+x1)/2, 0, (z0+z1)/2); seg.rotation.y = -Math.atan2(z1-z0, x1-x0); scene.add(seg);
+      const pas = c.type === 'tronc' ? 2.0 : 1.0; for (let d = pas/2; d < L; d += pas){ const u = d/L, ray = boite(-.06, .06, h, h+.012, -w/2, w/2, mJ); ray.position.set(x0+(x1-x0)*u, 0, z0+(z1-z0)*u); ray.rotation.y = -Math.atan2(z1-z0, x1-x0); scene.add(ray); } } });
+  G.cablesLongueur = total;
+}
+function construireElectricite(){
+  const el = E.electricite;
+  el.armoires.forEach(a => { scene.add(boite(a.x-a.l/2, a.x+a.l/2, 0, a.h, a.z-a.p/2, a.z+a.p/2, std({color:0x9aa4ae, metalness:.4, roughness:.5}))); scene.add(boite(a.x-a.l/2+.1, a.x+a.l/2-.1, a.h*.55, a.h*.75, a.z-a.p/2-.01, a.z-a.p/2+.01, std({color:0xffd23f}))); nommer(a.nom, a.x, a.h+1.1, a.z, 6.5, '#ffd23f'); });
+  if (el.groupe){ const g = el.groupe; scene.add(boite(g.x-g.l/2, g.x+g.l/2, 0, g.h, g.z-g.p/2, g.z+g.p/2, std({color:0x5b6168, metalness:.3, roughness:.6}))); scene.add(cyl([g.x+g.l/2-.3, g.h, g.z],[g.x+g.l/2-.3, g.h+.6, g.z],.08, mNoir())); nommer('GE 100 kVA (option)', g.x, g.h+1.1, g.z, 5.5, '#ffd23f'); }
+}
+
+function construire(){
+  const F = P().facade, Z = P().zonePublic;
+  const sol = new THREE.Mesh(new THREE.PlaneGeometry(260, 240), std({map:texPave, roughness:.95})); sol.rotation.x = -Math.PI/2; sol.position.set(0,0,60); sol.receiveShadow = true; scene.add(sol);
+  // marquage au sol de la zone public et des couloirs (pas de barrières)
+  const trait = (x0,x1,z0,z1) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(x1-x0, z1-z0), new THREE.MeshBasicMaterial({color:0xfff1c0, transparent:true, opacity:.55})); m.rotation.x = -Math.PI/2; m.position.set((x0+x1)/2, .015, (z0+z1)/2); scene.add(m); };
+  trait(Z.x0, Z.x0+.15, Z.z0, Z.z1); trait(Z.x1-.15, Z.x1, Z.z0, Z.z1); trait(Z.x0, Z.x1, Z.z0, Z.z0+.15); trait(Z.x0, Z.x1, Z.z1-.15, Z.z1);
+  // façade texturée pierre
+  const forme = new THREE.Shape(); F.contour.forEach(([x,y],i) => i ? forme.lineTo(x,y) : forme.moveTo(x,y));
+  const gf = new THREE.ExtrudeGeometry(forme, {depth:F.profondeur, bevelEnabled:false}); gf.translate(0,0,-F.profondeur);
+  const uv = gf.attributes.uv, pos = gf.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, pos.getX(i)/12, pos.getY(i)/12);
+  G.facade = new THREE.Mesh(gf, std({map:texPierre, roughness:.92})); G.facade.castShadow = G.facade.receiveShadow = true; scene.add(G.facade);
+  const vitre = std({color:0x1d2a3d, roughness:.3, metalness:.1, emissive:0x2a3a55, emissiveIntensity:0});
+  G.vitraux = [];
+  F.ouvertures.forEach(([x0,x1,y0,y1],i) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,y1-y0), i<3 ? std({color:0x2a2620}) : vitre.clone()); p.position.set((x0+x1)/2,(y0+y1)/2,.02); scene.add(p); if (i>=3) G.vitraux.push(p); });
+  const r = F.rosace; const rose = new THREE.Mesh(new THREE.RingGeometry(r.r*.72, r.r, 48), std({color:0xc8a24a, roughness:.35, metalness:.6})); rose.position.set(r.x,r.y,.03); scene.add(rose);
+  const vit = new THREE.Mesh(new THREE.CircleGeometry(r.r*.72, 48), vitre.clone()); vit.position.set(r.x,r.y,.04); scene.add(vit); G.vitraux.push(vit);
+  const fi = new THREE.Shape(); [[-16.25,0],[-16.25,29.2],[-5.9,29.2],[0,37.3],[5.9,29.2],[16.25,29.2],[16.25,0]].forEach(([x,y],i) => i ? fi.lineTo(x,y) : fi.moveTo(x,y));
+  const gi = new THREE.ShapeGeometry(fi); { const uv = gi.attributes.uv, po = gi.attributes.position; for (let i = 0; i < uv.count; i++) uv.setXY(i, (po.getX(i)+F.largeur/2)/F.largeur, po.getY(i)/F.hauteur); }
+  G.image = new THREE.Mesh(gi, new THREE.MeshBasicMaterial({map:texMapping, transparent:true, opacity:0, blending:THREE.NormalBlending, depthWrite:false}));
+  G.image.position.set(0, 0, .08); scene.add(G.image);
+  const n = P().nef; scene.add(boite(n.x0,n.x1,0,n.h,n.z0,n.z1, std({map:texPierre}))); scene.add(boite(n.x0-.5,n.x1+.5,n.h,n.h+1.5,n.z0,n.z1, std({color:0x4a463e})));
+  G.voisins = []; P().voisins.forEach(v => { const m = std({map:texBati(), emissiveMap:texBatiNuit, emissive:0xffffff, emissiveIntensity:0}); const b = boite(v.x0,v.x1,0,v.h,v.z0,v.z1,m); scene.add(b); G.voisins.push(b); });
+  G.candelabres = [];
+  [[-34,2],[34,2],[-34,30],[34,30],[-34,58],[34,58],[-14,80],[14,80]].forEach(([x,z]) => {
+    const mat = std({color:0x2b2f36, metalness:.6, roughness:.4}); scene.add(cyl([x,0,z],[x,9,z],.12,mat));
+    const tete = new THREE.Mesh(new THREE.SphereGeometry(.45,12,8), std({color:0xfff2d0, emissive:0xffd9a0, emissiveIntensity:0})); tete.position.set(x,9.2,z); scene.add(tete);
+    const l = new THREE.PointLight(0xffd9a0, 0, 40, 2); l.position.set(x,9,z); scene.add(l); G.candelabres.push({tete, l});
+  });
+  construireTour(); construireRegie(); construirePodium(); construireCamion(); construireVillage(); construireSono(); construireLumieres(); construireCables(); construireElectricite();
+  // VP : machines, cônes, spots
+  G.vps = [];
+  E.projecteurs.forEach(p => { const b = E.bloc, x = b.x+p.dx, y = b.hauteurVP, z = b.z, W = z/p.tr, H = W/p.ratio;
+    const corps = new THREE.Mesh(new THREE.BoxGeometry(.6,.42,.7), std({color:0x222730, metalness:.5, roughness:.4})); corps.position.set(x,y,z); corps.lookAt(new THREE.Vector3(p.cx,p.cy,0)); scene.add(corps);
+    const C = [[p.cx-W/2,p.cy-H/2,0],[p.cx+W/2,p.cy-H/2,0],[p.cx+W/2,p.cy+H/2,0],[p.cx-W/2,p.cy+H/2,0]], pos = [];
+    for (let i = 0; i < 4; i++) pos.push(x,y,z, ...C[i], ...C[(i+1)%4]);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+    const cone = new THREE.Mesh(geo, fais(0xffc880)); scene.add(cone);
+    const l = new THREE.SpotLight(0xfff0dc, 0, 200, Math.atan((W/2)/z)*1.15, .3, 2); l.position.set(x,y,z); l.target.position.set(p.cx,p.cy,0); scene.add(l, l.target); G.vps.push({cone, l}); });
+  G.lasers = [];
+  E.lasers.forEach((l,i) => { const b = E.bloc, x = b.x+l.dx, y = b.hauteurVP+l.dy, z = b.z;
+    scene.add(boite(x-.2,x+.2,y-.12,y+.12,z-.2,z+.2, std({color:0x111418, metalness:.6})));
+    const m = new THREE.MeshBasicMaterial({color:i ? 0x3fb950 : 0x4fa3ff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false});
+    const beam = cyl([x,y,z],[l.tx,l.ty,0],.06,m); scene.add(beam);
+    const pt = new THREE.Mesh(new THREE.SphereGeometry(.35,10,8), m.clone()); pt.position.set(l.tx,l.ty,.1); scene.add(pt); G.lasers.push({beam, pt, src:[x,y,z], l}); });
+  // public : 35 % de la jauge dessinés, plus dense vers la façade, jamais sur le podium ni sur les îlots de délai
+  const ex = exclusions(), capa = Math.round((Z.x1-Z.x0)*(Z.z1-Z.z0)*Z.densite*.35), pts = [];
+  for (let i = 0; i < capa; i++){ const u = rnd(), x = Z.x0 + 1 + rnd()*(Z.x1-Z.x0-2), z = Z.z0 + 1 + Math.pow(u, .65)*(Z.z1-Z.z0-2); if (dansExcl(x, z, ex)) continue;
+    pts.push([x + (rnd()-.5)*1.2, z + (rnd()-.5)*1.2]); }
+  G.foule = creerFoule(pts, {bras:.22, tel:.18, groupes:true, marcheurs:.12});
+  // légende : repères numérotés
+  const pl2 = posPlateforme(), rg2 = regieBox(), pb = podiumBox(), so2 = E.sono, cb = camionBox(), st = posStands(), el = E.electricite, Tt = E.lumieres.totems;
+  marquer(1, 0, 40, 0); marquer(2, E.bloc.x, pl2.h + 4.4, E.bloc.z); marquer(3, rg2.x, rg2.y1 + 2.2, rg2.z); marquer(4, pb.x, pb.H + 4, (pb.cat.z0 + pb.cat.z1)/2);
+  marquer(5, st[1].x, 5.4, st[1].z); marquer(5, st[5].x, 5.4, st[5].z); marquer(6, so2.stacks[0], 7.6, so2.z); marquer(6, so2.stacks[so2.stacks.length-1], 7.6, so2.z);
+  marquer(7, Tt[0].x, Tt[0].h + 1.9, Tt[0].z); marquer(8, 34, 10.8, 30); marquer(9, (Z.x0+Z.x1)/2, 3, Z.z0 + 14); marquer(10, E.bloc.x + 3.6, pl2.hVP + 2.4, E.bloc.z);
+  marquer(11, cb.x1, cb.yt + 2.2, E.camion.z); marquer(12, -(Z.x1+1.5), 2.6, so2.delaiZ); marquer(12, Z.x1+1.5, 2.6, Z.z1 + 2.2); marquer(13, E.repos.x, 4.6, E.repos.z); marquer(14, el.armoires[0].x, el.armoires[0].h + 2.6, el.armoires[0].z);
+  G.jauges = jauges();
+}
+
+/* =====================================================================
+   ANIMATION — état visuel en fonction de l'heure
+   ===================================================================== */
+function appliquer(t, dt){
+  const s = etatA(t), so = soleil(t), F = P().facade;
+  const jour = clamp((so.el + 6) / 18, 0, 1), chaud = clamp(1 - Math.abs(so.el - 2) / 10, 0, 1);
+  const ciel = new THREE.Color().setRGB(lerp(.03, .62, jour) + chaud*.35*jour, lerp(.04, .76, jour) + chaud*.12*jour, lerp(.08, .92, jour));
+  scene.background = ciel; fog.color.copy(ciel);
+  const R = 300; sun.position.set(Math.sin(so.az)*R*Math.cos(so.el*Math.PI/180), Math.sin(so.el*Math.PI/180)*R, -Math.cos(so.az)*R*Math.cos(so.el*Math.PI/180));
+  sun.intensity = clamp(so.el / 25, 0, 1) * 1.6; sun.color.setRGB(1, lerp(.55, .96, clamp(so.el/15,0,1)), lerp(.3, .88, clamp(so.el/15,0,1)));
+  hemi.intensity = lerp(.06, .75, jour); hemi.color.copy(ciel);
+  const nuit = 1 - jour, ep = s.ep * nuit, tt = t*3600, pulse = .75 + .25*Math.sin(tt*2.6);
+  G.candelabres.forEach(c => { c.l.intensity = ep * 2.2; c.tete.material.emissiveIntensity = ep * 2.5; });
+  G.voisins.forEach(v => v.material.emissiveIntensity = nuit * .9);
+  G.regieFen.material.emissiveIntensity = (t > 17 && t < 25.5) ? .8 : 0;
+  G.vitraux.forEach(v => v.material.emissiveIntensity = nuit * .5);
+  G.stands.forEach(st => { st.l.intensity = s.vil * nuit * 1.6; st.toit.material.emissiveIntensity = s.vil * nuit * .35; });
+  G.pa.forEach(led => led.material.emissiveIntensity = s.son * 2); G.djLed.material.emissiveIntensity = s.dj * 2;
+  const teinte = new THREE.Color().setHSL((t*.11) % 1, .8, .6);
+  G.totems.forEach(o => { o.l.intensity = s.lum * nuit * 3; o.l.color.copy(teinte); o.f.material.color.copy(teinte); o.f.material.opacity = s.lum * nuit * .14; });
+  G.wash.forEach(o => { o.l.intensity = s.lum * nuit * 2.5; o.f.material.opacity = s.lum * nuit * .12; o.l.color.copy(teinte); o.f.material.color.copy(teinte); });
+  // mapping + écran du camion
+  G.vps.forEach(v => { v.cone.material.opacity = s.map * .07; v.l.intensity = s.map * .35; });
+  G.image.material.opacity = s.map * .93;
+  if (s.map > 0.01) dessinerMapping(t, s);
+  if (G.ecran){ G.ecran.material.opacity = s.cam * (s.map > .5 ? .5 : 1); if (s.cam > .01) dessinerCamion(t, s); }
+  // lasers : balayage lent, cibles sur la façade au-dessus de 5,5 m
+  G.lasers.forEach((o,i) => { const a = t*2.1 + i*2, tx = clamp(o.l.tx + Math.sin(a)*5.5, -F.largeur/2+1, F.largeur/2-1), ty = clamp(o.l.ty + Math.cos(a*.7)*6, 5.5, F.hauteur-1);
+    const A = new THREE.Vector3(...o.src), B = new THREE.Vector3(tx,ty,0), d = B.clone().sub(A), L = d.length();
+    o.beam.scale.set(1, L / o.beam.geometry.parameters.height, 1); o.beam.position.copy(A).add(B).multiplyScalar(.5); o.beam.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize());
+    o.pt.position.set(tx,ty,.1); o.beam.material.opacity = s.las * .9; o.pt.material.opacity = s.las; });
+  // scène : qui fait quoi
+  const pb = G.pb, H = pb.H, cx = pb.x, T = pb.tete, C = pb.cat, catL = C.z1 - C.z0, tri = v => { const m = v % 2; return m < 1 ? m : 2 - m; };
+  const animScene = s.scn + s.def + s.live + s.rap, show = s.map > .5 || s.las > .5;
+  G.scn.maj(s.scn, t, q => Math.PI + Math.sin(tt*.3 + q.ph)*.2);
+  { const ch = G.live.pers[0], u = .5 + .5*Math.sin(tt*.09); ch.x = cx + Math.sin(tt*.5)*.5; ch.z = T.z0 - .6 - u*(catL - 2.5); G.live.maj(s.live, t, q => Math.PI); }
+  { const ph = tt*.045, u = tri(ph), aller = (ph % 2) < 1, r = G.rap.pers[0], h = G.rap.pers[1]; r.x = cx + Math.sin(tt*.7)*.5; r.z = T.z0 - .5 - u*(catL - 2); r.yaw = aller ? Math.PI : 0; h.x = cx + .75; h.z = Math.min(T.z0 + .8, r.z + 1.7); h.yaw = r.yaw; G.rap.maj(s.rap, t, q => q.yaw); }
+  G.djH.maj(s.dj, t, q => 0);
+  G.cortege.pers.forEach((q,i) => { const ph = tt*.035 + Math.floor(i/2)*.1, u = tri(ph), aller = (ph % 2) < 1; q.z = (T.z0 - .8) - u*(catL - 2.2); q.yaw = aller ? Math.PI : 0; });
+  G.cortege.maj(s.def, t, q => q.yaw);
+  G.bannieres.forEach((b,k) => { const i = k*6, a = G.cortege.pers[i], c = G.cortege.pers[i+1], vis = s.def > .05 && i+1 < G.cortege.n; b.visible = vis; if (vis){ b.position.set((a.x+c.x)/2, H + 2.05, (a.z+c.z)/2); b.rotation.y = a.yaw; } });
+  G.fouleFile.maj(s.scn, t, false);
+  // le public : regarde la façade pendant le show, le catwalk pendant la scène, et danse quand le DJ joue
+  const versCatwalk = q => { const pz = clamp(q.z, C.z0, T.z1), d = Math.hypot(cx - q.x, pz - q.z); return d > 26 ? null : Math.atan2(cx - q.x, pz - q.z); };
+  G.foule.maj(s.public, t, show ? true : (animScene > .5 ? versCatwalk : (s.dj > .5 ? (q => null) : false)), dt);
+  // lumières de scène : poursuite sur le catwalk pendant les concerts, fixes sinon
+  const sc = animScene > .01 ? Math.min(1, animScene) : 0, cible = (s.live > .5) ? G.live.pers[0] : (s.rap > .5 ? G.rap.pers[0] : null);
+  G.sceneLum.forEach(o => { o.l.intensity = sc * nuit * 2.6 * pulse; o.f.material.opacity = sc * nuit * .15 * pulse;
+    const tz = cible ? cible.z : T.z0 - 2, tx = cible ? cible.x : cx; o.l.target.position.set(tx, H + 1.2, tz); o.l.target.updateMatrixWorld();
+    const A = new THREE.Vector3(o.x, o.h - .1, o.z), B = new THREE.Vector3(tx, H + .8, tz), d = B.clone().sub(A); o.f.scale.set(1, d.length() / o.f.geometry.parameters.height, 1); o.f.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); });
+  G.sceneLed.forEach(b => b.material.emissiveIntensity = (sc + s.dj*.4) * (1.4 * pulse) * (.4 + .6*nuit)); G.sceneLed[0].material.emissive.copy(sc > .5 && s.rap > .5 ? teinte : new THREE.Color(0xffb454));
+  G.jupes.forEach(j => j.material.emissiveIntensity = nuit * .8 * s.vil + .05);
+  renderer.toneMappingExposure = lerp(1.05, .85, jour);
+  // HUD
+  const Z = P().zonePublic, J = G.jauges;
+  const hh = Math.floor(t) % 24, mm = Math.floor((t%1)*60);
+  document.getElementById('heure').textContent = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  document.getElementById('titre').firstChild.textContent = s.phase.nom; document.getElementById('phase').textContent = P().nom;
+  document.getElementById('sous').textContent = s.phase.sous;
+  const lmTot = E.projecteurs.reduce((a,p)=>a+p.lumens,0), W = E.bloc.z/E.projecteurs[0].tr, Hh = W/E.projecteurs[0].ratio, lux = lmTot*.7/(2*W*Hh);
+  const scene_ = s.live > .5 ? 'concert live' : s.rap > .5 ? 'rap' : s.def > .5 ? 'défilé des luttes' : s.scn > .5 ? 'micro ouvert' : 'vide';
+  const fmt = n => n.toLocaleString('fr-FR');
+  document.getElementById('stats').innerHTML = `
+    <div>Public estimé <b>${fmt(Math.round(s.public*J.j2))}</b> / ${fmt(J.j2)} (${Z.densite} pers/m²)</div>
+    <div class="note">zone nette ${fmt(J.net)} m² · maxi ERP ${fmt(J.j3)} à ${Z.densiteMax} pers/m²</div>
+    <div class="sep"></div>
+    <div><span class="et ${s.ep>.5?'on':''}"></span>Éclairage public ${s.ep>.5?'allumé':'<b>éteint</b>'}</div>
+    <div><span class="et ${s.vil>.5?'on':''}"></span>Village ${s.vil>.5?'ouvert':'fermé'}</div>
+    <div><span class="et ${s.son>.5?'on':''}"></span>Sono ${s.son>.5?'en service':'coupée'} · <span class="et ${s.dj>.5?'on':''}"></span>DJ hayon</div>
+    <div><span class="et ${animScene>.5?'on':''}"></span>Catwalk : ${scene_}</div>
+    <div><span class="et ${s.map>.5?'on':''}"></span>Mapping ${s.map>.5?`<b>${Math.round(lux)} lux</b> · ${(lmTot/1000)}k lm`:'éteint'}</div>
+    <div><span class="et ${s.las>.5?'on':''}"></span>Lasers ${s.las>.5?'sur façade seule':'éteints'}</div>
+    <div class="note" style="margin-top:4px">Soleil ${so.el.toFixed(0)}° · ${so.el < -6 ? 'nuit' : so.el < 0 ? 'crépuscule' : 'jour'}</div>`;
+  document.querySelectorAll('#phases .ph').forEach((el,i) => el.classList.toggle('on', PHASES[i].t <= t));
+}
+
+/* =====================================================================
+   CAMÉRAS
+   ===================================================================== */
+const CLES = [
+  {t:16.0, p:[-90,45,150], c:[0,10,50]},    // vue d'ensemble, montage
+  {t:18.0, p:[30,8,92],    c:[-4,3,66]},    // les stands sur le flanc cour, face à la façade
+  {t:18.6, p:[13,4.6,43],  c:[0,2.6,57]},   // la tête de scène et le catwalk, par-dessus les premiers rangs
+  {t:19.5, p:[-11,6,15],   c:[2,2.2,4.6]},  // le camion et le DJ, depuis la zone technique
+  {t:20.5, p:[-9,4.5,42],  c:[0,2.4,52]},   // le défilé sur le catwalk
+  {t:21.3, p:[6,2.6,34],   c:[0,2.6,48]},   // le concert, dans le public
+  {t:22.0, p:[-40,20,90],  c:[0,15,10]},    // extinction
+  {t:22.6, p:[-18,6,46],   c:[0,18,0]},     // le mapping, de près
+  {t:23.3, p:[60,30,120],  c:[0,15,30]},    // vue d'ensemble du show
+  {t:24.1, p:[14,3,20],    c:[3,2,4.5]},    // DJ de clôture
+  {t:24.7, p:[0,80,120],   c:[0,0,60]},     // plan de dessus pour la sortie
+  {t:26.0, p:[-90,45,150], c:[0,10,50]}
+];
+// chaque plan est tenu jusqu'à 0,3 h avant le suivant : le mouvement de caméra dure 3 s, le plan reste lisible
+const CLES2 = []; CLES.forEach((k,i) => { CLES2.push(k); const n = CLES[i+1]; if (n && n.t - k.t > .5) CLES2.push({t:n.t - .3, p:k.p, c:k.c}); });
+function cameraCine(t){
+  let i = 0; while (i < CLES2.length-2 && CLES2[i+1].t <= t) i++;
+  const a = CLES2[i], b = CLES2[i+1], u = clamp((t-a.t)/(b.t-a.t), 0, 1), s = u*u*(3-2*u);
+  camera.position.set(lerp(a.p[0],b.p[0],s), lerp(a.p[1],b.p[1],s), lerp(a.p[2],b.p[2],s));
+  controls.target.set(lerp(a.c[0],b.c[0],s), lerp(a.c[1],b.c[1],s), lerp(a.c[2],b.c[2],s));
+}
+let modeCam = 'cine', orb = 0;
+function cameraMaj(t, dt){
+  const pb = G.pb, cb = camionBox();
+  if (modeCam === 'cine') cameraCine(t);
+  else if (modeCam === 'orbite'){ orb += dt*.06; camera.position.set(Math.sin(orb)*120, 45, 60+Math.cos(orb)*120); controls.target.set(0,12,40); }
+  else if (modeCam === 'public'){ camera.position.set(Math.sin(t)*2 + 5, 1.7, 40); controls.target.set(0,15,0); }
+  else if (modeCam === 'catwalk'){ camera.position.set(pb.x, pb.H + 1.7, pb.tete.z1 - .8); controls.target.set(0, 6, 0); }
+  else if (modeCam === 'dj'){ camera.position.set((cb.xh0+cb.xh1)/2, cb.yp + 1.7, cb.z1 - 1); controls.target.set(0, 2, 40); }
+  else if (modeCam === 'mairie'){ camera.position.set(-46, 9, 72); controls.target.set(0,12,30); }
+  controls.update();
+}
+
+/* =====================================================================
+   LECTURE, VIDÉO, INIT
+   ===================================================================== */
+let t = 16, lecture = false, dernier = performance.now(), rec = null, chunks = [];
+function legendeHTML(){
+  const J = G.jauges, om = ombreCamion(), fmt = n => n.toLocaleString('fr-FR'), nom = nomenclatureTour(), el = E.electricite, tot = el.bilan.reduce((a,b) => a + b.kw, 0);
+  const tour = `<table><tr><th>Pièce</th><th>Réf. Layher</th><th>Qté</th><th>Note</th></tr>${nom.map(([p,r,q,n,ok]) => `<tr><td>${p}</td><td class="${ok?'ok':'q'}">${r}</td><td>${q}</td><td>${n}</td></tr>`).join('')}</table>
+    <ul><li>Réf. <span class="ok">vertes</span> : citées dans les documents Layher consultés (DOC0345, FIS 64, brochure Allround NL) ; <span class="q">orange</span> : à confirmer sur le catalogue « Layher Éléments » (layher.fr) avant commande</li><li>charge : 2 VP (~95 kg), 2 lasers, 2 techniciens, bâche → classe de charge et <b>note de calcul au vent</b> du monteur, lestage ≈ 8 t à confirmer</li><li>montage et PV par une entreprise qualifiée, contrôle avant mise en service, accès par plancher à trappe et échelle à chaque niveau</li></ul>`;
+  const jg = `<table><tr><th>Espace</th><th>Surface</th><th>Jauge</th></tr>
+    <tr><td>Zone public (nette, hors podium et îlots de délai)</td><td>${fmt(J.net)} m²</td><td><b>${fmt(J.j2)}</b> à 2 pers/m² · ${fmt(J.j3)} maxi à 3</td></tr>
+    <tr><td>Flancs devant les stands (files, circulation)</td><td>${fmt(Math.round(J.flancs))} m²</td><td>${fmt(J.jFlancs)} à 1 pers/m²</td></tr>
+    <tr><td>Plateau (tête + catwalk)</td><td>${fmt(Math.round(J.scene))} m²</td><td>${J.jScene} en défilé (1,5 m²/pers), 500 kg/m²</td></tr>
+    <tr><td>Coulisses (entre podium et régie)</td><td>${fmt(Math.round(J.coulisses))} m²</td><td>${J.jCoulisses} artistes et régisseurs</td></tr>
+    <tr><td>Repos équipe</td><td>${J.repos} m²</td><td>${J.jRepos} assis</td></tr>
+    <tr><td>Hayon (plateau DJ)</td><td>${J.hayon.toFixed(1)} m²</td><td>${J.jHayon} personnes (charge ${E.camion.chargeHayonKg} kg)</td></tr></table>`;
+  const elec = `<table><tr><th>Système</th><th>Appelé</th><th>Départ</th></tr>${el.bilan.map(b => `<tr><td>${b.systeme}</td><td>${b.kw} kW</td><td>${b.depart}</td></tr>`).join('')}<tr><td><b>Total</b></td><td><b>${tot} kW</b></td><td><b>TGBT 125 A tri</b> (86 kVA) ou GE 100 kVA</td></tr></table>
+    <ul><li>TGBT derrière la tour (côté jardin), coffrets son aux pieds de façade, coffret lumière / stands côté cour ; différentiels 30 mA par départ, terre commune, câbles ${fmt(Math.round(G.cablesLongueur))} m de passages au sol</li><li>synoptiques complets : <code>evenement/SYNOPTIQUES.md</code></li></ul>`;
+  return LEGENDE.replace('{{TOUR}}', tour).replace(/\{\{JAUGES\}\}/g, jg).replace(/\{\{OMBRE\}\}/g, `ombre du camion sur le bas de la façade : 0 → ${om.h.toFixed(1)} m sur ${(om.x1-om.x0).toFixed(1)} m de large`)
+    .replace('{{ELEC}}', elec).replace('{{PLANCHER}}', E.bloc.plancher.toFixed(1)).replace('{{JSCENE}}', `${J.jScene} personnes en défilé`).replace('{{JREPOS}}', `${J.jRepos} assis`);
+}
+function init(){
+  const vue = document.getElementById('view');
+  scene = new THREE.Scene(); fog = new THREE.Fog(0x000000, 200, 520); scene.fog = fog;
+  camera = new THREE.PerspectiveCamera(40, 1, .1, 1500);
+  renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true}); renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.outputEncoding = THREE.sRGBEncoding;
+  vue.appendChild(renderer.domElement);
+  hemi = new THREE.HemisphereLight(0xdfeeff, 0x6b6250, .8); scene.add(hemi);
+  sun = new THREE.DirectionalLight(0xfff1dc, 1.2); sun.castShadow = true; Object.assign(sun.shadow.camera, {left:-130, right:130, top:130, bottom:-130, far:700}); sun.shadow.mapSize.set(2048,2048); sun.shadow.bias = -.0005; scene.add(sun);
+  construire();
+  controls = new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.maxPolarAngle = Math.PI*.49;
+  const ph = document.getElementById('phases'); PHASES.slice(0,-1).forEach(p => { const d = document.createElement('div'); d.className = 'ph'; d.innerHTML = `<span>${String(Math.floor(p.t%24)).padStart(2,'0')}h ${p.nom}</span>`; ph.appendChild(d); });
+  const tl = document.getElementById('tl'), play = document.getElementById('play');
+  tl.addEventListener('input', () => { t = +tl.value; });
+  play.addEventListener('click', () => { lecture = !lecture; play.textContent = lecture ? '❚❚ Pause' : '▶ Lecture'; play.classList.toggle('on', lecture); if (lecture && t >= 25.99) t = 16; });
+  document.getElementById('cam').addEventListener('change', e => { modeCam = e.target.value; controls.enabled = (modeCam === 'libre'); });
+  controls.enabled = false;
+  document.getElementById('png').addEventListener('click', () => { renderer.render(scene, camera); const a = document.createElement('a'); a.href = renderer.domElement.toDataURL('image/png'); a.download = `demo-${document.getElementById('heure').textContent.replace(':','h')}.png`; a.click(); });
+  document.getElementById('video').addEventListener('click', basculerVideo);
+  const lp = document.getElementById('legpan'); lp.innerHTML = legendeHTML();
+  document.getElementById('leg').addEventListener('click', e => { const on = lp.style.display !== 'block'; lp.style.display = on ? 'block' : 'none'; e.target.classList.toggle('on', on); G.legendes.forEach(sp => sp.visible = on); });
+  document.getElementById('impb').addEventListener('click', () => document.getElementById('imp').click());
+  document.getElementById('imp').addEventListener('change', e => { const f = e.target.files[0]; if (!f) return; f.text().then(txt => { try { const j = JSON.parse(txt); if (!j.camion) j.version = 1; localStorage.setItem('implantation-3d', JSON.stringify(j)); location.reload(); } catch(err){ alert('JSON illisible'); } }); });
+  redim(); window.addEventListener('resize', redim); boucle();
+}
+function basculerVideo(){
+  const b = document.getElementById('video');
+  if (rec){ rec.stop(); return; }
+  if (!window.MediaRecorder || !renderer.domElement.captureStream){ alert("Ce navigateur ne sait pas enregistrer le canvas. Utilise Chrome ou Firefox, ou capture l'écran."); return; }
+  const flux = renderer.domElement.captureStream(30);
+  const type = ['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm','video/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+  rec = new MediaRecorder(flux, {mimeType:type, videoBitsPerSecond: 8e6}); chunks = [];
+  rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+  rec.onstop = () => { const blob = new Blob(chunks, {type: rec.mimeType}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'demo-implantation.' + (rec.mimeType.includes('mp4') ? 'mp4' : 'webm'); a.click(); rec = null; b.textContent = '⏺ Enregistrer la vidéo'; b.classList.remove('on'); document.getElementById('rec').style.display = 'none'; lecture = false; document.getElementById('play').textContent = '▶ Lecture'; document.getElementById('play').classList.remove('on'); };
+  t = 16; lecture = true; document.getElementById('play').textContent = '❚❚ Pause'; document.getElementById('play').classList.add('on');
+  rec.start(500); b.textContent = '■ Arrêter'; b.classList.add('on'); document.getElementById('rec').style.display = 'block';
+}
+function redim(){ const v = document.getElementById('view'), w = v.clientWidth, h = v.clientHeight; renderer.setSize(w,h,false); camera.aspect = w/h; camera.updateProjectionMatrix(); renderer.domElement.style.width = w+'px'; renderer.domElement.style.height = h+'px'; }
+function boucle(){
+  requestAnimationFrame(boucle);
+  const now = performance.now(), dt = Math.min(.5, (now-dernier)/1000); dernier = now;
+  if (lecture){ t += dt / (+document.getElementById('vitesse').value); if (t >= 26){ t = 26; lecture = false; document.getElementById('play').textContent = '▶ Lecture'; document.getElementById('play').classList.remove('on'); if (rec) rec.stop(); } document.getElementById('tl').value = t; }
+  appliquer(t, dt); cameraMaj(t, dt); renderer.render(scene, camera);
+}
+init();
+</script>
+</body>
+</html>

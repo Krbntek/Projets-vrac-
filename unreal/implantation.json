@@ -1,0 +1,514 @@
+{
+ "_commentaire": "Implantation version 2 (schéma de outils/demo-evenement.html). Mètres. X = axe façade (0 = centre, + côté cour), Y = hauteur, Z = recul depuis le plan de la façade. SOURCE : on modifie ici (ou dans le visualiseur / la démo), puis on relance generer_projet_unreal.py.",
+ "version": 2,
+ "projet": {
+  "nom": "Basilique Saint-Denis — parvis",
+  "facade": {
+   "largeur": 32.5,
+   "hauteur": 37.3,
+   "profondeur": 3,
+   "contour": [
+    [
+     -16.25,
+     0
+    ],
+    [
+     -16.25,
+     29.2
+    ],
+    [
+     -5.9,
+     29.2
+    ],
+    [
+     0,
+     37.3
+    ],
+    [
+     5.9,
+     29.2
+    ],
+    [
+     5.2,
+     29.2
+    ],
+    [
+     5.2,
+     50.6
+    ],
+    [
+     6.1,
+     50.6
+    ],
+    [
+     6.7,
+     54.6
+    ],
+    [
+     10.5,
+     60.1
+    ],
+    [
+     14.3,
+     54.6
+    ],
+    [
+     14.9,
+     50.6
+    ],
+    [
+     15.8,
+     50.6
+    ],
+    [
+     15.8,
+     29.2
+    ],
+    [
+     16.25,
+     29.2
+    ],
+    [
+     16.25,
+     0
+    ]
+   ],
+   "rosace": {
+    "x": 0,
+    "y": 22.5,
+    "r": 3
+   },
+   "ouvertures": [
+    [
+     -2.6,
+     2.6,
+     0,
+     5.5
+    ],
+    [
+     -12.3,
+     -6.9,
+     0,
+     3.3
+    ],
+    [
+     6.9,
+     12.3,
+     0,
+     3.3
+    ],
+    [
+     -2.95,
+     2.95,
+     13.6,
+     24
+    ],
+    [
+     -11.25,
+     -7.95,
+     12.2,
+     23
+    ],
+    [
+     -7.95,
+     -4.65,
+     12.2,
+     23
+    ],
+    [
+     7.95,
+     11.25,
+     12.2,
+     23
+    ],
+    [
+     11.25,
+     14.55,
+     12.2,
+     23
+    ],
+    [
+     6.3,
+     9.5,
+     30.1,
+     36.3
+    ],
+    [
+     11.5,
+     14.7,
+     30.1,
+     36.3
+    ],
+    [
+     6.3,
+     9.5,
+     37,
+     49
+    ],
+    [
+     11.5,
+     14.7,
+     37,
+     49
+    ]
+   ]
+  },
+  "zonePublic": {
+   "x0": -26,
+   "x1": 26,
+   "z0": 7,
+   "z1": 61,
+   "hautYeux": 2.5,
+   "densite": 2,
+   "densiteMax": 3
+  },
+  "voisins": [
+   {
+    "nom": "bâti ouest",
+    "x0": -55,
+    "x1": -30,
+    "z0": 0,
+    "z1": 50,
+    "h": 16
+   },
+   {
+    "nom": "bâti est",
+    "x0": 32,
+    "x1": 60,
+    "z0": 0,
+    "z1": 45,
+    "h": 14
+   },
+   {
+    "nom": "fond ouest",
+    "x0": -60,
+    "x1": -40,
+    "z0": 62,
+    "z1": 100,
+    "h": 12
+   },
+   {
+    "nom": "fond est",
+    "x0": 40,
+    "x1": 70,
+    "z0": 62,
+    "z1": 110,
+    "h": 18
+   }
+  ],
+  "nef": {
+   "x0": -16.25,
+   "x1": 16.25,
+   "z0": -108,
+   "z1": -3,
+   "h": 24
+  }
+ },
+ "bloc": {
+  "x": 0,
+  "z": 70,
+  "hauteurVP": 10.8,
+  "plancher": 10.3,
+  "largeurPlateforme": 9.21,
+  "profondeurPlateforme": 3.07,
+  "travees": 3,
+  "niveaux": 5,
+  "hauteurNiveau": 2,
+  "base": 0.3
+ },
+ "projecteurs": [
+  {
+   "nom": "VP1 — bas",
+   "dx": -1.3,
+   "cx": 0,
+   "cy": 9.7,
+   "tr": 2.02,
+   "ratio": 1.7777777777777777,
+   "lumens": 40000,
+   "puissance_w": 4200
+  },
+  {
+   "nom": "VP2 — haut",
+   "dx": 1.3,
+   "cx": 0,
+   "cy": 27.6,
+   "tr": 2.02,
+   "ratio": 1.7777777777777777,
+   "lumens": 40000,
+   "puissance_w": 4200
+  }
+ ],
+ "lasers": [
+  {
+   "nom": "Laser 1",
+   "dx": -3.6,
+   "dy": 0.6,
+   "tx": -6,
+   "ty": 17,
+   "puissance": 10
+  },
+  {
+   "nom": "Laser 2",
+   "dx": 3.6,
+   "dy": 0.6,
+   "tx": 8,
+   "ty": 20,
+   "puissance": 10
+  }
+ ],
+ "regie": {
+  "longueur": 6.06,
+  "largeur": 2.44,
+  "hauteur": 2.59,
+  "ecart": 1.6,
+  "position": "devant",
+  "surelevation": 1.2
+ },
+ "podium": {
+  "hauteur": 1.5,
+  "ecartRegie": 3,
+  "tete": {
+   "largeur": 6,
+   "profondeur": 4
+  },
+  "catwalk": {
+   "largeur": 2.4,
+   "longueur": 12
+  },
+  "escaliers": "cotes"
+ },
+ "camion": {
+  "x": 0,
+  "z": 4.2,
+  "longueur": 7.3,
+  "largeur": 2.2,
+  "cabine": 2.35,
+  "plancher": 0.95,
+  "hauteurCaisse": 2.2,
+  "hayon": 1.6,
+  "ecran": true,
+  "chargeHayonKg": 750
+ },
+ "village": {
+  "forme": "flancs",
+  "cote": 3,
+  "ecart": 1.2,
+  "ecartTour": 2,
+  "z": 67.5,
+  "stands": [
+   {
+    "nom": "Prévention",
+    "type": "prevention"
+   },
+   {
+    "nom": "Poste de secours",
+    "type": "secours"
+   },
+   {
+    "nom": "Asso 1",
+    "type": "asso"
+   },
+   {
+    "nom": "Asso 2",
+    "type": "asso"
+   },
+   {
+    "nom": "Accueil · infos",
+    "type": "accueil"
+   },
+   {
+    "nom": "Buvette",
+    "type": "buvette"
+   },
+   {
+    "nom": "Restauration",
+    "type": "buvette"
+   },
+   {
+    "nom": "Asso 3",
+    "type": "asso"
+   }
+  ]
+ },
+ "repos": {
+  "x": 0,
+  "z": 75.5,
+  "tonnelle": {
+   "largeur": 6,
+   "profondeur": 3
+  },
+  "stockage": {
+   "x": 0,
+   "z": 79.2,
+   "largeur": 3,
+   "profondeur": 3
+  },
+  "bache": {
+   "z": 72.8,
+   "demiLargeur": 7,
+   "hauteur": 2.2
+  }
+ },
+ "sono": {
+  "z": 4,
+  "stacks": [
+   -21,
+   -17.2,
+   17.2,
+   21
+  ],
+  "subsParStack": 4,
+  "sub": {
+   "modele": "SACH118",
+   "l": 0.6,
+   "h": 0.7,
+   "p": 0.75,
+   "wAES": 1700
+  },
+  "tetes": {
+   "modele": "KAMA TP-980",
+   "parStackExterieur": 4,
+   "frontFill": 2,
+   "modeleFrontFill": "T24N"
+  },
+  "ouverture": 90,
+  "portee": 62,
+  "visee": 10,
+  "delais": 2,
+  "delaiX": 13,
+  "delaiZ": 38,
+  "delaiH": 5,
+  "delaiTetes": 2
+ },
+ "lumieres": {
+  "totems": [
+   {
+    "x": -10.2,
+    "z": 67.5,
+    "h": 5.5
+   },
+   {
+    "x": 10.2,
+    "z": 67.5,
+    "h": 5.5
+   },
+   {
+    "x": -18.6,
+    "z": 67.5,
+    "h": 5.5
+   },
+   {
+    "x": 18.6,
+    "z": 67.5,
+    "h": 5.5
+   }
+  ],
+  "wash": [
+   {
+    "x": -13,
+    "z": 5.5,
+    "tx": -10,
+    "ty": 26
+   },
+   {
+    "x": 13,
+    "z": 5.5,
+    "tx": 10.5,
+    "ty": 44
+   }
+  ],
+  "scene": [
+   {
+    "dx": -4.6,
+    "dz": 1,
+    "h": 3.6
+   },
+   {
+    "dx": 4.6,
+    "dz": 1,
+    "h": 3.6
+   }
+  ]
+ },
+ "electricite": {
+  "armoires": [
+   {
+    "nom": "TGBT 125 A tri",
+    "x": -6.5,
+    "z": 72,
+    "l": 1.2,
+    "h": 1.8,
+    "p": 0.6
+   },
+   {
+    "nom": "Coffret son jardin 63 A",
+    "x": -25,
+    "z": 1.6,
+    "l": 0.8,
+    "h": 1.2,
+    "p": 0.4
+   },
+   {
+    "nom": "Coffret son cour 63 A",
+    "x": 25,
+    "z": 1.6,
+    "l": 0.8,
+    "h": 1.2,
+    "p": 0.4
+   },
+   {
+    "nom": "Coffret lumière · stands 63 A",
+    "x": 6.5,
+    "z": 72,
+    "l": 0.8,
+    "h": 1.2,
+    "p": 0.4
+   }
+  ],
+  "groupe": {
+   "nom": "GE 100 kVA insonorisé (si coffret forain insuffisant)",
+   "x": -12.5,
+   "z": 78,
+   "l": 3.2,
+   "h": 2.2,
+   "p": 1.5
+  },
+  "bilan": [
+   {
+    "systeme": "Son (2 × D20K, 3 × K10, 1 × D4×3000, DSP, X32)",
+    "kw": 14,
+    "depart": "63 A tri"
+   },
+   {
+    "systeme": "Lumière (totems, wash, scène, GrandMA3 CW)",
+    "kw": 4.5,
+    "depart": "32 A tri"
+   },
+   {
+    "systeme": "Vidéo (2 VP 40 k lm, serveur Resolume, écran camion, 2 lasers)",
+    "kw": 12.5,
+    "depart": "32 A tri"
+   },
+   {
+    "systeme": "Captation (3 caméras, régie vidéo, streaming)",
+    "kw": 1.5,
+    "depart": "16 A mono"
+   },
+   {
+    "systeme": "Régie (clim, éclairage, onduleur)",
+    "kw": 3,
+    "depart": "16 A tri"
+   },
+   {
+    "systeme": "Stands (8 × 2 kW)",
+    "kw": 16,
+    "depart": "63 A tri"
+   },
+   {
+    "systeme": "Repos, stockage, balisage, secours",
+    "kw": 2,
+    "depart": "16 A mono"
+   }
+  ]
+ }
+}
