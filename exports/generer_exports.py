@@ -142,9 +142,9 @@ def inventaire_html():
 def photos_html(noms, legendes):
     out = ['<div class="photos">']
     for n in noms:
-        f = os.path.join(PHOTOS, n + ".jpg")
+        f = os.path.join(ICI, n + ".jpg") if "/" in n else os.path.join(PHOTOS, n + ".jpg")
         if not os.path.exists(f): out.append(f'<figure class="manque"><div>photo manquante : {html.escape(n)}</div></figure>'); continue
-        out.append(f'<figure><img src="photos/{n}.jpg" alt="{html.escape(n)}"><figcaption>{html.escape(legendes.get(n, n.replace("-", " ")[3:]))}</figcaption></figure>')
+        out.append(f'<figure><img src="{n if "/" in n else "photos/" + n}.jpg" alt="{html.escape(n)}"><figcaption>{html.escape(legendes.get(n, n.replace("-", " ")[3:]))}</figcaption></figure>')
     out.append("</div>"); return "\n".join(out)
 
 # ----------------------------------------------------------------- assemblage

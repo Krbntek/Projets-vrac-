@@ -20,48 +20,189 @@
     "12-regie-podium": "La régie surélevée devant la tour et les coulisses derrière le podium",
     "13-passages-de-cables": "Passages de câbles dans le couloir latéral (voie pompiers) et derrière la zone public",
     "14-legende-technique": "Repères numérotés de la légende technique sur la maquette",
-    "15-plan-de-dessus-jour": "Plan de dessus de jour, échelle : la zone public fait 52 × 54 m"
+    "15-plan-de-dessus-jour": "Plan de dessus de jour, échelle : la zone public fait 52 × 54 m",
+    "studio/01-perspective-jour": "Configuration minimale, vue d'ensemble de jour",
+    "studio/02-plan": "Plan : camion à 20 m, podium, piles, tonnelles le long de la façade, zone public derrière",
+    "studio/03-depuis-le-public": "Depuis le public : le camion, le podium, la façade",
+    "studio/04-face-a-la-facade": "Face à la façade : les images des deux VP (31 × 19,5 m et 35 × 22 m)",
+    "studio/05-perspective-nuit": "De nuit",
+    "studio/06-public-nuit": "Depuis le public, de nuit",
+    "studio/07-toit-du-camion": "Le toit du camion : VP, lasers, piles de subs, régie"
   },
   "documents": [
-    {"fichier": "dossier-technique", "titre": "Dossier technique — soirée mapping sur le parvis de la basilique", "sous_titre": "Implantation générale, sécurité, son, lumière, vidéo, électricité",
-     "sections": [
-       {"md": "presentation.md"},
-       {"md": "implantation.md"},
-       {"photos": ["15-plan-de-dessus-jour", "01-vue-d-ensemble-montage", "10-vue-de-dessus-nuit", "02-village-flancs", "03-scene-ouverte-catwalk", "04-dj-hayon-camion", "05-defile-des-luttes", "06-concert", "07-mapping", "08-lasers", "09-rap-second-set", "11-tour-layher", "12-regie-podium", "13-passages-de-cables", "14-legende-technique"], "titre": "La maquette, heure par heure", "intro": "Images extraites de la démo animée `outils/demo-evenement.html` (maquette de travail : les bâtiments voisins sont des volumes indicatifs). La vidéo complète est jointe : `exports/demo-soiree.mp4`."},
-       {"md": "securite.md"},
-       {"synoptiques": "0. Résumé", "titre": "Puissance et jauges — résumé"},
-       {"synoptiques": "1. Bilan de puissance"},
-       {"synoptiques": "2. Synoptique électrique"},
-       {"synoptiques": "3. Synoptique son"},
-       {"synoptiques": "4. Synoptique lumière"},
-       {"synoptiques": "5. Synoptique vidéo"},
-       {"synoptiques": "6. Synoptique captation"},
-       {"synoptiques": "7. Passages de câbles"},
-       {"synoptiques": "8. Tour Layher"},
-       {"md": "legende-technique.md"},
-       {"inventaire": true},
-       {"synoptiques": "9. Ce qui reste"},
-       {"md": "annexes.md"}
-     ]},
-    {"fichier": "fiche-declaration", "titre": "Fiche de déclaration — rassemblement et soirée sur le parvis", "sous_titre": "Résumé pour la mairie, la préfecture et les services (à compléter puis joindre le dossier technique)",
-     "sections": [
-       {"md": "fiche-declaration.md"},
-       {"photos": ["15-plan-de-dessus-jour", "01-vue-d-ensemble-montage"], "titre": "Plan et vue d'ensemble", "intro": "Le plan coté complet est dans le dossier technique (section Implantation)."},
-       {"synoptiques": "0. Résumé", "titre": "Jauges et puissance"},
-       {"md": "securite.md"}
-     ]},
-    {"fichier": "plan-implantation", "titre": "Plan d'implantation générale", "sous_titre": "Coordonnées, dimensions et vues de chaque ensemble",
-     "sections": [
-       {"md": "implantation.md"},
-       {"photos": ["15-plan-de-dessus-jour", "10-vue-de-dessus-nuit", "01-vue-d-ensemble-montage", "02-village-flancs", "04-dj-hayon-camion", "11-tour-layher", "12-regie-podium", "13-passages-de-cables", "14-legende-technique"], "titre": "Vues"},
-       {"synoptiques": "7. Passages de câbles"},
-       {"md": "legende-technique.md"}
-     ]},
-    {"fichier": "inventaire-materiel", "titre": "Inventaire du matériel et des structures", "sous_titre": "Extrait du registre, avec la nomenclature de la tour Layher",
-     "sections": [
-       {"inventaire": true},
-       {"synoptiques": "8. Tour Layher"},
-       {"photos": ["11-tour-layher", "04-dj-hayon-camion"], "titre": "Vues"}
-     ]}
+    {
+      "fichier": "config-minimale",
+      "titre": "Configuration minimale — camion à 20 m",
+      "sous_titre": "Vues du studio, contrôles, inventaire à louer",
+      "sections": [
+        {
+          "md": "config-minimale.md"
+        },
+        {
+          "photos": [
+            "studio/01-perspective-jour",
+            "studio/02-plan",
+            "studio/03-depuis-le-public",
+            "studio/04-face-a-la-facade",
+            "studio/07-toit-du-camion",
+            "studio/05-perspective-nuit",
+            "studio/06-public-nuit"
+          ],
+          "titre": "Vues de la maquette"
+        }
+      ]
+    },
+    {
+      "fichier": "dossier-technique",
+      "titre": "Dossier technique — soirée mapping sur le parvis de la basilique",
+      "sous_titre": "Implantation générale, sécurité, son, lumière, vidéo, électricité",
+      "sections": [
+        {
+          "md": "presentation.md"
+        },
+        {
+          "md": "implantation.md"
+        },
+        {
+          "photos": [
+            "15-plan-de-dessus-jour",
+            "01-vue-d-ensemble-montage",
+            "10-vue-de-dessus-nuit",
+            "02-village-flancs",
+            "03-scene-ouverte-catwalk",
+            "04-dj-hayon-camion",
+            "05-defile-des-luttes",
+            "06-concert",
+            "07-mapping",
+            "08-lasers",
+            "09-rap-second-set",
+            "11-tour-layher",
+            "12-regie-podium",
+            "13-passages-de-cables",
+            "14-legende-technique"
+          ],
+          "titre": "La maquette, heure par heure",
+          "intro": "Images extraites de la démo animée `outils/demo-evenement.html` (maquette de travail : les bâtiments voisins sont des volumes indicatifs). La vidéo complète est jointe : `exports/demo-soiree.mp4`."
+        },
+        {
+          "md": "securite.md"
+        },
+        {
+          "synoptiques": "0. Résumé",
+          "titre": "Puissance et jauges — résumé"
+        },
+        {
+          "synoptiques": "1. Bilan de puissance"
+        },
+        {
+          "synoptiques": "2. Synoptique électrique"
+        },
+        {
+          "synoptiques": "3. Synoptique son"
+        },
+        {
+          "synoptiques": "4. Synoptique lumière"
+        },
+        {
+          "synoptiques": "5. Synoptique vidéo"
+        },
+        {
+          "synoptiques": "6. Synoptique captation"
+        },
+        {
+          "synoptiques": "7. Passages de câbles"
+        },
+        {
+          "synoptiques": "8. Tour Layher"
+        },
+        {
+          "md": "legende-technique.md"
+        },
+        {
+          "inventaire": true
+        },
+        {
+          "synoptiques": "9. Ce qui reste"
+        },
+        {
+          "md": "annexes.md"
+        }
+      ]
+    },
+    {
+      "fichier": "fiche-declaration",
+      "titre": "Fiche de déclaration — rassemblement et soirée sur le parvis",
+      "sous_titre": "Résumé pour la mairie, la préfecture et les services (à compléter puis joindre le dossier technique)",
+      "sections": [
+        {
+          "md": "fiche-declaration.md"
+        },
+        {
+          "photos": [
+            "15-plan-de-dessus-jour",
+            "01-vue-d-ensemble-montage"
+          ],
+          "titre": "Plan et vue d'ensemble",
+          "intro": "Le plan coté complet est dans le dossier technique (section Implantation)."
+        },
+        {
+          "synoptiques": "0. Résumé",
+          "titre": "Jauges et puissance"
+        },
+        {
+          "md": "securite.md"
+        }
+      ]
+    },
+    {
+      "fichier": "plan-implantation",
+      "titre": "Plan d'implantation générale",
+      "sous_titre": "Coordonnées, dimensions et vues de chaque ensemble",
+      "sections": [
+        {
+          "md": "implantation.md"
+        },
+        {
+          "photos": [
+            "15-plan-de-dessus-jour",
+            "10-vue-de-dessus-nuit",
+            "01-vue-d-ensemble-montage",
+            "02-village-flancs",
+            "04-dj-hayon-camion",
+            "11-tour-layher",
+            "12-regie-podium",
+            "13-passages-de-cables",
+            "14-legende-technique"
+          ],
+          "titre": "Vues"
+        },
+        {
+          "synoptiques": "7. Passages de câbles"
+        },
+        {
+          "md": "legende-technique.md"
+        }
+      ]
+    },
+    {
+      "fichier": "inventaire-materiel",
+      "titre": "Inventaire du matériel et des structures",
+      "sous_titre": "Extrait du registre, avec la nomenclature de la tour Layher",
+      "sections": [
+        {
+          "inventaire": true
+        },
+        {
+          "synoptiques": "8. Tour Layher"
+        },
+        {
+          "photos": [
+            "11-tour-layher",
+            "04-dj-hayon-camion"
+          ],
+          "titre": "Vues"
+        }
+      ]
+    }
   ]
 }

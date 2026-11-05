@@ -32,7 +32,7 @@ from trimesh.visual.material import PBRMaterial
 from shapely.geometry import Polygon
 
 ICI = os.path.dirname(os.path.abspath(__file__))
-SRC = os.path.join(ICI, "implantation.json")
+SRC = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1].endswith(".json") else os.path.join(ICI, "implantation.json")   # python3 generer_projet_unreal.py autre.json
 PROJ = os.path.join(ICI, "MappingSaintDenis")
 D_SCENE = os.path.join(PROJ, "Content", "Import", "Scene")
 D_ELEM = os.path.join(PROJ, "Content", "Import", "Elements")
@@ -519,7 +519,7 @@ def main_v3(E):
             poser("SM_Projecteur", elem_projecteur(), dict(nom=nom, x=o["x"], y=o["altitude"], z=o["z"], rot=look_at_y([o["x"], o["altitude"], o["z"]], [o["cx"], o["cy"], 0]) + math.pi))
             coins = [[im["x0"], im["y0"], 0], [im["x1"], im["y0"], 0], [im["x1"], im["y1"], 0], [im["x0"], im["y1"], 0]]
             poser(f"SM_ConeVP_{o['id']}", [FRUSTUM_VP([o["x"], o["altitude"], o["z"]], coins, M["cone"]), PLAN_XY(im["x0"], im["x1"], im["y0"], im["y1"], .06, mat("M_ImageVP", (1, .71, .33), alpha=.25))], dict(nom=f"ConeVP_{o['id']}", x=0, z=0))
-            lumieres.append(dict(nom=f"Light_VP_{o['id']}", pos=[o["x"], o["altitude"], o["z"]], cible=[o["cx"], o["cy"], 0], lumens=o["lumens"], angle=2*math.atan((im["W"]/2)/o["z"]), couleur=[1, .94, .86]))
+            lumieres.append(dict(nom=f"Light_VP_{o['id']}", pos=[o["x"], o["altitude"], o["z"]], cible=[o["cx"], o["cy"], 0], lumens=o.get("lumens", {"x10000":7500,"hdt1000":10000,"pu2220b":20000,"l1500uh":12000,"l1755u":15000}.get(o.get("modele"), 10000)), angle=2*math.atan((im["W"]/2)/o["z"]), couleur=[1, .94, .86]))
         elif t == "laser":
             poser("SM_Laser", elem_laser(), dict(nom=nom, x=o["x"], y=o["altitude"], z=o["z"]))
             poser(f"SM_FaisceauLaser_{o['id']}", [CYL([o["x"], o["altitude"], o["z"]], [o["tx"], o["ty"], 0], .05, M["laser"])], dict(nom=f"FaisceauLaser_{o['id']}", x=0, z=0))

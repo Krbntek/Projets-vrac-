@@ -1,0 +1,499 @@
+{
+ "projet": {
+  "nom": "Basilique Saint-Denis — parvis",
+  "facade": {
+   "largeur": 32.5,
+   "hauteur": 37.3,
+   "profondeur": 3,
+   "contour": [
+    [
+     -16.25,
+     0
+    ],
+    [
+     -16.25,
+     29.2
+    ],
+    [
+     -5.9,
+     29.2
+    ],
+    [
+     0,
+     37.3
+    ],
+    [
+     5.9,
+     29.2
+    ],
+    [
+     5.2,
+     29.2
+    ],
+    [
+     5.2,
+     50.6
+    ],
+    [
+     6.1,
+     50.6
+    ],
+    [
+     6.7,
+     54.6
+    ],
+    [
+     10.5,
+     60.1
+    ],
+    [
+     14.3,
+     54.6
+    ],
+    [
+     14.9,
+     50.6
+    ],
+    [
+     15.8,
+     50.6
+    ],
+    [
+     15.8,
+     29.2
+    ],
+    [
+     16.25,
+     29.2
+    ],
+    [
+     16.25,
+     0
+    ]
+   ],
+   "rosace": {
+    "x": 0,
+    "y": 22.5,
+    "r": 3
+   },
+   "ouvertures": [
+    [
+     -2.6,
+     2.6,
+     0,
+     5.5
+    ],
+    [
+     -12.3,
+     -6.9,
+     0,
+     3.3
+    ],
+    [
+     6.9,
+     12.3,
+     0,
+     3.3
+    ],
+    [
+     -2.95,
+     2.95,
+     13.6,
+     24
+    ],
+    [
+     -11.25,
+     -7.95,
+     12.2,
+     23
+    ],
+    [
+     -7.95,
+     -4.65,
+     12.2,
+     23
+    ],
+    [
+     7.95,
+     11.25,
+     12.2,
+     23
+    ],
+    [
+     11.25,
+     14.55,
+     12.2,
+     23
+    ],
+    [
+     6.3,
+     9.5,
+     30.1,
+     36.3
+    ],
+    [
+     11.5,
+     14.7,
+     30.1,
+     36.3
+    ],
+    [
+     6.3,
+     9.5,
+     37,
+     49
+    ],
+    [
+     11.5,
+     14.7,
+     37,
+     49
+    ]
+   ]
+  },
+  "voisins": [
+   {
+    "x0": -55,
+    "x1": -30,
+    "z0": 0,
+    "z1": 50,
+    "h": 16
+   },
+   {
+    "x0": 32,
+    "x1": 60,
+    "z0": 0,
+    "z1": 45,
+    "h": 14
+   },
+   {
+    "x0": -60,
+    "x1": -40,
+    "z0": 62,
+    "z1": 100,
+    "h": 12
+   },
+   {
+    "x0": 40,
+    "x1": 70,
+    "z0": 62,
+    "z1": 110,
+    "h": 18
+   }
+  ],
+  "nef": {
+   "x0": -16.25,
+   "x1": 16.25,
+   "z0": -108,
+   "z1": -3,
+   "h": 24
+  }
+ },
+ "version": 3,
+ "nom": "Minimale — camion NoName à 20 m",
+ "zone": {
+  "x0": -20,
+  "x1": 20,
+  "z0": 26,
+  "z1": 60,
+  "densite": 2
+ },
+ "objets": [
+  {
+   "id": 1,
+   "type": "camion",
+   "x": 0,
+   "z": 20,
+   "rot": 0,
+   "nom": "Camion 20 m³ NoName",
+   "hayon": 1.6,
+   "ecran": 1
+  },
+  {
+   "id": 2,
+   "type": "vp",
+   "x": -1.2,
+   "z": 20,
+   "rot": 0,
+   "nom": "VP 1 · Epson PU2220B + ELPLU04 (toit)",
+   "modele": "pu2220b",
+   "optique": "lu04",
+   "tr": 0.64,
+   "altitude": 3.5,
+   "cx": 0,
+   "cy": 9
+  },
+  {
+   "id": 3,
+   "type": "vp",
+   "x": 1.2,
+   "z": 20,
+   "rot": 0,
+   "nom": "VP 2 · Epson L1755U + ELPLU03 (toit)",
+   "modele": "l1755u",
+   "optique": "lu03",
+   "tr": 0.57,
+   "altitude": 3.5,
+   "cx": 0,
+   "cy": 9
+  },
+  {
+   "id": 4,
+   "type": "laser",
+   "x": -3,
+   "z": 20,
+   "rot": 0,
+   "nom": "Laser 1 (à identifier)",
+   "altitude": 3.5,
+   "tx": -6,
+   "ty": 17,
+   "w": 10
+  },
+  {
+   "id": 5,
+   "type": "laser",
+   "x": 3,
+   "z": 20,
+   "rot": 0,
+   "nom": "Laser 2 (à identifier)",
+   "altitude": 3.5,
+   "tx": 8,
+   "ty": 20,
+   "w": 10
+  },
+  {
+   "id": 6,
+   "type": "podium",
+   "x": 0,
+   "z": 24,
+   "rot": 3.141592653589793,
+   "nom": "Podium 3 praticables 2 × 1",
+   "nx": 3,
+   "nz": 1,
+   "hauteur": 1,
+   "gardecorps": 1
+  },
+  {
+   "id": 7,
+   "type": "pile_subs",
+   "x": -6.5,
+   "z": 20,
+   "rot": 3.141592653589793,
+   "nom": "Pile jardin (4 SACH118 + 4 têtes)",
+   "subs": 4,
+   "tetes": 4,
+   "ouverture": 90,
+   "portee": 60
+  },
+  {
+   "id": 8,
+   "type": "pile_subs",
+   "x": 6.5,
+   "z": 20,
+   "rot": 3.141592653589793,
+   "nom": "Pile cour (4 + 4)",
+   "subs": 4,
+   "tetes": 4,
+   "ouverture": 90,
+   "portee": 60
+  },
+  {
+   "id": 9,
+   "type": "pile_subs",
+   "x": -2.5,
+   "z": 24.5,
+   "rot": 3.141592653589793,
+   "nom": "Pile podium (4 + 2)",
+   "subs": 4,
+   "tetes": 2,
+   "ouverture": 90,
+   "portee": 60
+  },
+  {
+   "id": 10,
+   "type": "tonnelle",
+   "x": -12,
+   "z": 4.5,
+   "rot": 3.141592653589793,
+   "nom": "Prévention",
+   "usage": "prevention"
+  },
+  {
+   "id": 11,
+   "type": "tonnelle",
+   "x": -7.5,
+   "z": 4.5,
+   "rot": 3.141592653589793,
+   "nom": "Poste de secours",
+   "usage": "secours"
+  },
+  {
+   "id": 12,
+   "type": "tonnelle",
+   "x": 7.5,
+   "z": 4.5,
+   "rot": 3.141592653589793,
+   "nom": "Accueil",
+   "usage": "accueil"
+  },
+  {
+   "id": 13,
+   "type": "tonnelle",
+   "x": 12,
+   "z": 4.5,
+   "rot": 3.141592653589793,
+   "nom": "Buvette",
+   "usage": "buvette"
+  },
+  {
+   "id": 14,
+   "type": "parled",
+   "x": -4,
+   "z": 25.3,
+   "rot": 0,
+   "nom": "PAR LED 1",
+   "tx": 0,
+   "ty": 1.5,
+   "tz": 24
+  },
+  {
+   "id": 15,
+   "type": "parled",
+   "x": 4,
+   "z": 25.3,
+   "rot": 0,
+   "nom": "PAR LED 2",
+   "tx": 0,
+   "ty": 1.5,
+   "tz": 24
+  },
+  {
+   "id": 16,
+   "type": "parled",
+   "x": -9,
+   "z": 22,
+   "rot": 0,
+   "nom": "PAR LED 3",
+   "tx": 0,
+   "ty": 1.5,
+   "tz": 24
+  },
+  {
+   "id": 17,
+   "type": "parled",
+   "x": 9,
+   "z": 22,
+   "rot": 0,
+   "nom": "PAR LED 4",
+   "tx": 0,
+   "ty": 1.5,
+   "tz": 24
+  },
+  {
+   "id": 18,
+   "type": "regie_table",
+   "x": -8.5,
+   "z": 17.5,
+   "rot": 0,
+   "nom": "Régie (table, non couverte)"
+  },
+  {
+   "id": 19,
+   "type": "tente",
+   "x": 10.5,
+   "z": 16.5,
+   "rot": 0,
+   "nom": "Tente garage 3 × 5 (repli régie)"
+  },
+  {
+   "id": 20,
+   "type": "armoire",
+   "x": -12,
+   "z": 17,
+   "rot": 0,
+   "nom": "Coffret : 2 × 32 A tri (son / vidéo + lumière)",
+   "ampères": 63
+  },
+  {
+   "id": 21,
+   "type": "ge",
+   "x": -14,
+   "z": 13,
+   "rot": 0,
+   "nom": "Groupe 63 A tri (si pas de coffret forain)",
+   "kva": 44
+  },
+  {
+   "id": 22,
+   "type": "balise",
+   "x": -20,
+   "z": 24,
+   "rot": 0,
+   "nom": "Bénévole 1"
+  },
+  {
+   "id": 23,
+   "type": "balise",
+   "x": 20,
+   "z": 24,
+   "rot": 0,
+   "nom": "Bénévole 2"
+  },
+  {
+   "id": 24,
+   "type": "balise",
+   "x": -20,
+   "z": 42,
+   "rot": 0,
+   "nom": "Bénévole 3"
+  },
+  {
+   "id": 25,
+   "type": "balise",
+   "x": 20,
+   "z": 42,
+   "rot": 0,
+   "nom": "Bénévole 4"
+  },
+  {
+   "id": 26,
+   "type": "balise",
+   "x": -10,
+   "z": 60,
+   "rot": 0,
+   "nom": "Bénévole 5"
+  },
+  {
+   "id": 27,
+   "type": "balise",
+   "x": 10,
+   "z": 60,
+   "rot": 0,
+   "nom": "Bénévole 6"
+  }
+ ],
+ "inventaire": {
+  "camion": 0,
+  "podium": 3,
+  "pile_subs": 0,
+  "laser": 0,
+  "tonnelle": 4,
+  "totem": 0,
+  "wash": 0,
+  "parled": 0,
+  "tente": 1,
+  "regie_table": 1,
+  "regie": 0,
+  "tour": 0,
+  "delai": 0,
+  "armoire": 0,
+  "ge": 0,
+  "barnum": 0,
+  "balise": 6,
+  "vp:x10000": 2,
+  "vp:hdt1000": 0,
+  "vp:pu2220b": 0,
+  "vp:l1500uh": 0,
+  "vp:l1755u": 0
+ }
+}
