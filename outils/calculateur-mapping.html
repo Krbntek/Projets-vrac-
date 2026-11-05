@@ -1,362 +1,1553 @@
 <!DOCTYPE html>
+<!--
+  Calculateur mapping - v4.0 (octobre 2026)
+  Code libre (licence MIT) : https://github.com/krbntek/projets-vrac-
+  Donnees editables : blocs LENSES / MODELS / PARC / MATS / TEXS / SURFACES en tete du code JavaScript.
+  Historique : v1 base 2xCP-X10000 - v2 photometrie, references, contrastes - v3 parc nominatif,
+  consommation, decor Panthere, harmonisation - v4 themes et tailles de texte, cartes visuelles
+  surfaces/projecteurs, exports (impression PDF, rapport HTML, config JSON), encart transparence -
+  v4.1 barre d'outils unique collante (configuration, dispositions, prereglages du parc, menus
+  Exporter et Affichage), titres de sections, etat actif de la disposition -
+  v4.2 bloc CONFIG des parametres principaux en tete du code, catalogues standardises avec
+  gabarits et sources par entree, ajout Epson EB-L1500UH (devis) et ELPLU04/ELPLM15 associees -
+  v4.3 proprietaires retrouves (WLTP, Bargraph, Novelty a confirmer), pastille proprio et badge
+  de puissance, classe de focale sur les cartes, suggestions automatiques de machine par surface -
+  v4.4 proprietaires confirmes (Novelty, Gregoire/Le Bercail), symboles legendes au lieu de
+  nouvelles couleurs, menus fermables au telephone, recoupement externe refaisable (foot-lambert,
+  liens sources), matrice rapide machine x optique, cahier des charges location avec references.
+-->
 <html lang="fr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Calculateur mapping façade</title>
+<meta name="description" content="Calculateur libre de mapping vidéo : couverture, photométrie, harmonisation de projecteurs, consommation.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#07090d">
+<title>Calculateur mapping v4</title>
 <style>
   :root{
-    --bg:#0e1116; --panel:#161b22; --line:#2a3138; --txt:#e6edf3; --dim:#8b949e;
-    --acc:#ffb454; --ok:#3fb950; --warn:#f0883e; --bad:#f85149; --beam:#ffb45433;
+    --bg:#07090d; --panel:#121820; --panel2:#0a0e14; --line:#3a4552; --txt:#f8fafc; --dim:#b9c3cf;
+    --a:#ffb454; --b:#4cc9f0; --ok:#3ddc84; --warn:#ff9500; --bad:#ff3b30;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--txt);
-       font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-  header{padding:22px 16px 10px;border-bottom:1px solid var(--line)}
-  h1{margin:0;font-size:20px;font-weight:600}
-  header p{margin:6px 0 0;color:var(--dim);font-size:13px}
-  .wrap{display:grid;grid-template-columns:330px 1fr;gap:16px;padding:16px;max-width:1320px;margin:0 auto}
-  @media(max-width:880px){.wrap{grid-template-columns:1fr}}
-  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
-  .panel h2{margin:0 0 10px;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--acc)}
-  label{display:block;margin:9px 0 3px;font-size:12px;color:var(--dim)}
-  input,select{width:100%;background:#0b0f14;border:1px solid var(--line);color:var(--txt);
-               border-radius:6px;padding:7px 9px;font-size:14px;font-family:inherit}
-  input:focus,select:focus{outline:none;border-color:var(--acc)}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  table{width:100%;border-collapse:collapse;font-size:14px}
-  td{padding:6px 2px;border-bottom:1px solid var(--line)}
-  td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
-  .big{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums}
-  .unit{font-size:13px;color:var(--dim);font-weight:400}
-  .verdict{margin-top:12px;padding:11px 13px;border-radius:8px;font-size:14px;
-           border-left:3px solid var(--dim);background:#0b0f14}
-  .v-ok{border-color:var(--ok)} .v-warn{border-color:var(--warn)} .v-bad{border-color:var(--bad)}
-  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  @media(max-width:700px){.grid3{grid-template-columns:1fr}}
-  svg{width:100%;height:auto;background:#0b0f14;border-radius:8px}
-  .note{font-size:12px;color:var(--dim);margin-top:10px}
-  .proj{color:var(--acc);font-weight:400}
-  header a{color:var(--acc)}
-  optgroup{color:var(--dim)}
-  code{background:#0b0f14;padding:1px 5px;border-radius:4px;font-size:13px}
+       font:calc(15px*var(--fscale,1))/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:12px 16px 40px}
+  .top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+  .top h1{margin:0;font-size:calc(18px*var(--fscale,1));font-weight:700;flex:1;min-width:180px}
+  select,input[type=number],input[type=text]{background:var(--panel2);border:1px solid #5a6676;color:var(--txt);
+       border-radius:6px;padding:7px 9px;font-size:calc(14px*var(--fscale,1));font-family:inherit;max-width:100%}
+  select:focus,input:focus,button:focus-visible{outline:2px solid #fff;outline-offset:1px}
+  #surf{min-width:220px}
+  .custom{display:none;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+  .custom.on{display:flex}
+  .custom label{font-size:calc(12px*var(--fscale,1));color:var(--dim);display:flex;flex-direction:column;gap:3px}
+  .custom input{width:90px}
+  svg#diag,#scaleLux>svg{width:100%;height:auto;display:block;background:#0a0e14;border-radius:10px;border:1px solid var(--line)}
+  h3{margin:18px 0 6px;font-size:calc(14px*var(--fscale,1));letter-spacing:.04em;text-transform:uppercase;color:var(--dim)}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:10px 0}
+  .env{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  @media(max-width:720px){.env{grid-template-columns:1fr}}
+  .env label{font-size:calc(12px*var(--fscale,1));color:var(--dim);display:flex;flex-direction:column;gap:4px;min-width:0}
+  .env select{width:100%;min-width:0}
+  .env .amb{display:flex;gap:6px}.env .amb input{width:80px}.env .amb select{flex:1;min-width:0}
+  .env small{color:var(--dim);font-size:calc(12px*var(--fscale,1))}
+  .rhoBox{display:none}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 2px;font-size:calc(12px*var(--fscale,1))}
+  .legend span{display:inline-flex;align-items:center;gap:6px;color:var(--txt)}
+  .legend i{width:14px;height:14px;border-radius:3px;display:inline-block;border:1px solid #fff6}
+  .chips{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:10px 0}
+  .chip{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--dim);border-radius:8px;padding:8px 10px}
+  .chip b{display:block;font-size:calc(22px*var(--fscale,1));font-variant-numeric:tabular-nums;line-height:1.2}
+  .chip span{display:block;font-size:calc(12px*var(--fscale,1));color:var(--dim)}
+  .chip em{display:block;font-style:normal;font-size:calc(13px*var(--fscale,1));font-weight:700;margin-top:2px}
+  .modes,.layout{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+  button{background:var(--panel);color:var(--txt);border:1px solid #5a6676;border-radius:6px;
+         padding:7px 11px;font-size:calc(13px*var(--fscale,1));font-family:inherit;cursor:pointer}
+  button:hover{border-color:#fff}
+  button.on{background:#232d3a;border-color:#fff;font-weight:700}
+  .pairs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+  .pairs b{font-size:calc(12px*var(--fscale,1));color:var(--dim);font-weight:600;margin-right:4px}
+  .projs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .projs.single{grid-template-columns:1fr}
+  @media(max-width:720px){.projs{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;border-top:4px solid}
+  .card.A{border-top-color:var(--a)} .card.B{border-top-color:var(--b)}
+  .card h2{margin:0 0 6px;font-size:calc(15px*var(--fscale,1))}
+  .card h2 span{color:var(--dim);font-weight:400;font-size:calc(13px*var(--fscale,1))}
+  .card .unit{width:100%;margin-bottom:6px}
+  .card .lensRow{width:100%}
+  .card .lens{font-size:calc(12px*var(--fscale,1));color:var(--dim);margin:6px 0}
+  .ctl{margin:8px 0}
+  .ctl .lab{display:flex;justify-content:space-between;font-size:calc(12px*var(--fscale,1));color:var(--dim)}
+  .ctl .lab b{color:var(--txt);font-variant-numeric:tabular-nums;font-weight:600}
+  input[type=range]{width:100%;margin:4px 0 0}
+  .A input[type=range]{accent-color:var(--a)} .B input[type=range]{accent-color:var(--b)}
+  .seg{display:flex;gap:6px;margin-top:6px}
+  .seg button{flex:1;padding:6px}
+  .gauge{margin-top:10px;font-size:calc(12px*var(--fscale,1));color:var(--dim)}
+  .gauge .track{position:relative;height:14px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;margin-top:4px}
+  .gauge .track i{display:block;height:100%;border-radius:6px}
+  .gauge .track u{position:absolute;top:-3px;bottom:-3px;width:2px;background:#fff}
+  .res{font-size:calc(13px*var(--fscale,1));color:var(--dim);margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+  .res b{color:var(--txt)}
+  .verdicts{margin-top:12px;display:grid;gap:8px}
+  .v{padding:9px 12px;border-radius:8px;background:var(--panel2);border-left:5px solid var(--dim);font-size:calc(14px*var(--fscale,1))}
+  .v.ok{border-color:var(--ok)} .v.warn{border-color:var(--warn)} .v.bad{border-color:var(--bad)}
+  .cas{display:grid;grid-template-columns:200px 1fr 120px;gap:8px;align-items:center;margin:3px 0;font-size:calc(12px*var(--fscale,1))}
+  @media(max-width:720px){.cas{grid-template-columns:110px 1fr 90px}}
+  .cas .tr{height:16px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;overflow:hidden}
+  .cas .tr i{display:block;height:100%}
+  .cas b{font-variant-numeric:tabular-nums;text-align:right}
+  .casT{font-weight:700;margin:10px 0 2px;font-size:calc(13px*var(--fscale,1))}
+  details{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px}
+  summary{cursor:pointer;font-size:calc(13px*var(--fscale,1));color:var(--dim)}
+  .adv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}
+  @media(max-width:640px){.adv{grid-template-columns:1fr 1fr}}
+  .adv label{font-size:calc(12px*var(--fscale,1));color:var(--dim);display:flex;flex-direction:column;gap:3px}
+  .adv label{min-width:0} .adv input,.adv select{width:100%;min-width:0}
+  dl{margin:8px 0 0;display:grid;grid-template-columns:150px 1fr;gap:6px 14px;font-size:calc(13px*var(--fscale,1))}
+  @media(max-width:640px){dl{grid-template-columns:1fr}}
+  dt{font-weight:700;color:var(--txt)} dd{margin:0;color:var(--dim)} dd b{color:var(--txt)}
+  .note{font-size:calc(12px*var(--fscale,1));color:var(--dim);margin-top:10px}
+  table{border-collapse:collapse;width:100%;font-size:calc(13px*var(--fscale,1));margin-top:8px}
+  th,td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:left;vertical-align:middle}
+  th{color:var(--dim);font-weight:600;font-size:calc(12px*var(--fscale,1))}
+  td input[type=text]{width:100%;min-width:140px}
+  td input[type=number]{width:100px}
+  .parcWrap{overflow-x:auto}
+  .sortRow{display:flex;gap:8px;align-items:center;margin:6px 0;font-size:calc(13px*var(--fscale,1));color:var(--dim)}
+
+  /* ===== v4 : themes, affichage, cartes, exports ===== */
+  :root{--fscale:1}
+  :root[data-theme="clair"]{--bg:#eef1f5;--panel:#ffffff;--panel2:#dde3ea;--line:#9fb0c0;--txt:#131a22;--dim:#45515e}
+  :root[data-theme="clair"] :is(.chip em,.gauge b){filter:brightness(.6) saturate(1.5)}
+  :root[data-theme="clair"] button.on{background:#d9e4f0}
+  :root[data-theme="max"]{--bg:#000;--panel:#000;--panel2:#05070a;--line:#fff;--txt:#fff;--dim:#e2e8f0}
+  .gauge .track u{background:var(--txt)}
+  .dispRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:.87em;color:var(--dim)}
+  .dispRow>span{min-width:72px}
+  .dispRow label{display:flex;flex-direction:column;font-size:.78em;gap:2px;align-items:center}
+  input[type=color]{width:46px;height:32px;padding:2px;background:var(--panel2);border:1px solid #5a6676;border-radius:6px}
+  .surfRow{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;margin-bottom:6px;-webkit-overflow-scrolling:touch}
+  .surfCard{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:106px;padding:8px 6px;flex-shrink:0}
+  .surfCard svg{color:var(--dim)} .surfCard.on svg{color:var(--a)}
+  .surfCard span{font-size:.8em;font-weight:700;line-height:1.15;text-align:center}
+  .surfCard small{font-size:.72em;color:var(--dim)}
+  .surfCard.on{border-color:var(--a);border-width:2px;padding:7px 5px}
+  .card{min-width:0}
+  .toolbar{position:sticky;top:0;z-index:40;display:flex;gap:10px;row-gap:6px;align-items:center;flex-wrap:wrap;
+    background:var(--bg);padding:8px 0;margin-bottom:6px;border-bottom:1px solid var(--line)}
+  .tgroup{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .toolbar select{font-size:.87em;max-width:190px}
+  details.menu{position:relative;margin:0;padding:0;background:none;border:none}
+  details.menu>summary{list-style:none;cursor:pointer;background:var(--panel);border:1px solid #5a6676;
+    border-radius:6px;padding:7px 11px;font-size:.87em;color:var(--txt);user-select:none}
+  details.menu>summary::-webkit-details-marker{display:none}
+  details.menu>summary::after{content:" ▾";color:var(--dim)}
+  details.menu[open]>summary{border-color:#fff;background:#232d3a}
+  :root[data-theme="clair"] details.menu[open]>summary{background:#d9e4f0}
+  details.menu>div{position:absolute;right:0;top:calc(100% + 6px);z-index:60;background:var(--panel);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:272px;
+    box-shadow:0 10px 28px #000b;display:flex;flex-direction:column;gap:8px}
+  #menuExport>div button{width:100%;text-align:left}
+  @media(max-width:720px){
+    details.menu{position:static}
+    details.menu>div{position:fixed;left:12px;right:12px;top:auto;bottom:12px;max-height:70vh;overflow:auto}
+  }
+  [data-lay].on{border-color:#fff;background:#232d3a;font-weight:700}
+  :root[data-theme="clair"] [data-lay].on{background:#d9e4f0}
+  #sources table,#harmo table{display:block;overflow-x:auto;max-width:100%}
+  .unitRow{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;-webkit-overflow-scrolling:touch}
+  .unitCard{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:94px;padding:6px;flex-shrink:0}
+  .unitCard b{font-size:.78em;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .unitCard small{font-size:.7em;color:var(--dim)}
+  .unitCard em,#parcBody em,#sugg em{font-style:normal;font-size:.72em;font-weight:700;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 5px;white-space:nowrap}
+  .mx{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+  .mx:last-of-type{border-bottom:none}
+  .mx>b{min-width:170px;font-size:.9em}
+  .chipS{border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:.82em;background:var(--panel2);color:var(--txt);cursor:pointer}
+  .chipS.ok{border-color:#3ddc84} .chipS.mid{border-color:#ff9500}
+  .chipS.no{opacity:.5;cursor:default;border-style:dashed}
+  .closeMenu{align-self:flex-end;padding:4px 10px;font-size:.8em}
+  .unitCard.on{border-width:2px;padding:5px}
+  .A .unitCard.on{border-color:var(--a)} .B .unitCard.on{border-color:var(--b)}
+  #surf{display:none} .card .unit{display:none}
+  .cone{margin-left:6px}
+  [data-dens="ess"] :is(.d2,.chip span,.legend){display:none}
+  .eq{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.87em}
+  .eq b{font-variant-numeric:tabular-nums}
+  .eq .f{color:var(--a);font-weight:700}
+  #report{display:none}
+  @media print{
+    body{background:#fff!important;color:#000!important}
+    body.printing .wrap>*:not(#report){display:none!important}
+    body.printing #report{display:block!important}
+    #report table{border-collapse:collapse;font-size:12px}
+    #report td,#report th{border:1px solid #666;padding:3px 6px;text-align:left}
+    #report a{color:#000}
+  }
 </style>
 </head>
 <body>
-<header>
-  <h1>Calculateur mapping façade <span id="projName" class="proj"></span></h1>
-  <p>Éclairement, optique, pavage des projecteurs et résolution de composition —
-     pour n'importe quelle façade. Outil partagé :
-     <code>outils/calculateur-mapping.html</code> dans
-     <a href="https://github.com/Krbntek/Projets-vrac-" target="_blank" rel="noopener">Krbntek/Projets-vrac-</a>.
-     Les réglages sont mémorisés dans ce navigateur.</p>
-</header>
-
 <div class="wrap">
-  <div>
-    <div class="panel">
-      <h2>Projet</h2>
-      <label>Nom du chantier</label>
-      <input type="text" id="proj" placeholder="ex. Basilique Saint-Denis">
-      <label>Façade de référence</label>
-      <select id="preset">
-        <option value="">— saisie libre —</option>
-        <optgroup label="Basilique Saint-Denis (relevé 2026)">
-          <option value="32.5,37.3,997">Corps de façade + pignon</option>
-          <option value="32.5,60.1,1302">Façade entière, tour comprise</option>
-          <option value="11.3,37.3,378">Travée centrale seule</option>
-          <option value="10.6,58,305">Tour sud seule</option>
-        </optgroup>
-        <optgroup label="Gabarits génériques">
-          <option value="20,15,260">Petite façade urbaine 20 × 15 m</option>
-          <option value="40,25,850">Façade type hôtel de ville 40 × 25 m</option>
-          <option value="60,30,1500">Grande façade 60 × 30 m</option>
-          <option value="100,25,2200">Front bâti large 100 × 25 m</option>
-        </optgroup>
+
+  <div class="top">
+    <h1>Mapping — calculateur de couverture et de rendu <span id="mois" style="color:var(--a);font-weight:600"></span></h1>
+    <select id="surf" aria-label="Surface"></select>
+  </div>
+  <div class="toolbar" id="toolbar">
+    <div class="tgroup">
+      <button id="n1" title="Un seul projecteur">1 VP</button>
+      <button id="n2" title="Deux projecteurs">2 VP</button>
+    </div>
+    <div class="tgroup" id="layRow">
+      <button data-lay="side" title="Images côte à côte">Côte à côte</button>
+      <button data-lay="vert" title="L'une au-dessus de l'autre">Empilées</button>
+      <button data-lay="stack" title="Exactement superposées">Superposées</button>
+      <button id="swap" title="Échanger les projecteurs A et B">⇄ A/B</button>
+    </div>
+    <select id="pairSel" aria-label="Préréglages du parc"></select>
+    <details class="menu" id="menuExport"><summary>Exporter</summary><div>
+      <button class="closeMenu" type="button">✕ Fermer</button>
+      <button id="btnPrint">Imprimer / PDF</button>
+      <button id="btnReport">Rapport HTML</button>
+      <button id="btnCfg">Config JSON</button>
+      <button id="btnImp">Importer une config</button>
+      <input type="file" id="impFile" accept="application/json,.json" style="display:none">
+    </div></details>
+    <details class="menu" id="menuDisp"><summary>Affichage</summary><div>
+      <button class="closeMenu" type="button">✕ Fermer</button>
+      <div class="dispRow"><span>Palette</span>
+        <button data-th="sombre">Sombre</button><button data-th="clair">Clair</button>
+        <button data-th="max">Contraste max</button><button data-th="perso">Personnalisée</button></div>
+      <div class="dispRow" id="palBox" style="display:none">
+        <label>Image A<input type="color" id="palA"></label>
+        <label>Image B<input type="color" id="palB"></label>
+        <label>Fond<input type="color" id="palBg"></label>
+        <label>Panneaux<input type="color" id="palPanel"></label>
+        <label>Texte<input type="color" id="palTxt"></label>
+      </div>
+      <div class="dispRow"><span>Texte</span>
+        <button data-fsz="s">A−</button><button data-fsz="m">A</button>
+        <button data-fsz="l">A+</button><button data-fsz="xl">A++</button></div>
+      <div class="dispRow"><span>Étiquettes</span>
+        <button data-dn="full">Complètes</button><button data-dn="ess">Essentielles</button></div>
+    </div></details>
+  </div>
+
+  <h3>Surface</h3>
+  <div class="surfRow" id="surfRow" aria-label="Choix de la surface"></div>
+  <div class="custom" id="customBox">
+    <label>Largeur (m)<input type="number" id="cw" value="8" step="0.1"></label>
+    <label>Hauteur (m)<input type="number" id="ch" value="4" step="0.1"></label>
+    <label>Recul max (m)<input type="number" id="cr" value="12" step="0.1" max="50"></label>
+  </div>
+
+  <h3>Conditions de projection</h3>
+  <div class="panel">
+    <div class="env">
+      <label title="Lumière qui éclaire déjà la surface avant que le projecteur ne s'allume : éclairage public, enseignes, lune, crépuscule.">
+        Pollution lumineuse (lux parasites sur la surface)
+        <div class="amb"><select id="ambSel"></select><input type="number" id="amb" min="0.1" step="1" value="20"></div>
+        <small>Plus c'est lumineux autour, plus les noirs de l'image deviennent gris.</small>
+      </label>
+      <label title="Part de la lumière que la matière renvoie vers le public.">
+        Matière du support
+        <select id="mat"></select>
+        <small id="matInfo"></small>
+        <span class="rhoBox" id="rhoBox">Réflectance personnalisée ρ
+          <input type="number" id="rhoPerso" min="0.01" max="0.95" step="0.05" value="0.50"></span>
+      </label>
+      <label title="Le relief crée des micro-ombres : l'image perd en luminosité et en finesse.">
+        Texture / relief
+        <select id="tex"></select>
+        <small id="texInfo"></small>
+      </label>
+    </div>
+  </div>
+
+  <svg id="diag" viewBox="0 0 900 560" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Schéma de la surface et des images projetées"></svg>
+  <div class="legend" id="legend"></div>
+
+  <div class="chips" id="chips"></div>
+
+  <div class="panel" id="harmo"></div>
+
+  <h3>Suggestions — quelle machine pour cette surface ?</h3>
+  <div class="panel parcWrap" id="sugg"></div>
+
+  <h3>Si le parc ne suffit pas — cahier des charges pour louer</h3>
+  <div class="panel" id="specs"></div>
+
+  <h3>Projecteurs</h3>
+  <div class="projs" id="projs">
+    <div class="card A" id="cardA"></div>
+    <div class="card B" id="cardB"></div>
+  </div>
+
+  <h3>Échelle de puissance — que vaut cet éclairement avec cette pollution lumineuse ?</h3>
+  <div class="panel"><div id="scaleLux"></div>
+    <div class="note">Les bandes se déplacent quand vous changez la lumière parasite, le contraste natif du projecteur ou la qualité visée :
+      le trait blanc est la puissance réellement reçue par l'image.</div></div>
+
+  <h3>Cascade des lumens — de la fiche technique à ce que voit le public</h3>
+  <div class="panel" id="cascade"></div>
+
+  <h3>Consommation électrique de la configuration</h3>
+  <div class="panel">
+    <div class="adv">
+      <label>Accessoires (serveur, switch, ventilation) W<input type="number" id="acc" value="200" step="50" min="0"></label>
+      <label>Durée de l'événement (h)<input type="number" id="hours" value="4" step="0.5" min="0"></label>
+    </div>
+    <div class="note" style="margin-top:8px">Puissance par projecteur : éditable dans le tableau du parc. Circuit de référence : 230 V, 16 A, 80 % utilisable (2,94 kW). Facteur de puissance 0,9 (estimation).</div>
+  </div>
+
+  <h3>Points d'attention</h3>
+  <div class="verdicts" id="verdicts"></div>
+
+  <h3>Parc — propriétaires et références</h3>
+  <div class="panel">
+    <div class="sortRow">
+      Trier par
+      <select id="sort" aria-label="Trier le parc">
+        <option value="owner">Propriétaire</option>
+        <option value="model">Modèle</option>
+        <option value="lm">Puissance (lumens)</option>
       </select>
     </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2>Surface projetée</h2>
-      <div class="row">
-        <div><label>Largeur (m)</label><input type="number" id="fw" value="32.5" step="0.1"></div>
-        <div><label>Hauteur (m)</label><input type="number" id="fh" value="37.3" step="0.1"></div>
-      </div>
-      <div class="row">
-        <div><label>Débord par côté (m)</label><input type="number" id="bleed" value="1.1" step="0.1"></div>
-        <div><label>Pierre réelle (m²)</label><input type="number" id="stone" value="997" step="1"></div>
-      </div>
-      <p class="note" style="margin-top:6px">La « pierre réelle » est la surface de
-         maçonnerie dans le cadre (997 m² pour le corps + pignon, contre 1 212 m² de
-         rectangle englobant) : c'est elle qui dit combien de lumens sont utiles.</p>
+    <div class="parcWrap">
+      <table>
+        <thead><tr><th></th><th>Propriétaire</th><th>Repère</th><th>Projecteur</th><th>Flux</th><th>Puissance</th><th>Utilisé dans</th></tr></thead>
+        <tbody id="parcBody"></tbody>
+      </table>
     </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2>Implantation</h2>
-      <label>Distance projecteur → façade (m) — libre, 55-80 m conseillé</label>
-      <input type="number" id="dist" value="70" step="0.1">
-      <div class="row">
-        <div><label>Format machine</label>
-          <select id="ar"><option value="1.7778">16:9</option><option value="1.6">16:10</option>
-          <option value="1.9">1.90:1 (DCI)</option></select></div>
-        <div><label>Orientation</label>
-          <select id="orient"><option value="L">Paysage</option><option value="P">Portrait (rot. 90°)</option></select></div>
-      </div>
-      <label>Recouvrement de blend (m)</label>
-      <input type="number" id="ovl" value="1.7" step="0.1">
-    </div>
-
-    <div class="panel" style="margin-top:12px">
-      <h2>Parc projecteurs</h2>
-      <div class="row">
-        <div><label>Nombre</label><input type="number" id="n" value="2" min="1" step="1"></div>
-        <div><label>Lumens / unité</label><input type="number" id="lm" value="10000" step="500"></div>
-      </div>
-      <div class="row">
-        <div><label>Rendement η</label><input type="number" id="eta" value="0.70" step="0.05" min="0.3" max="1"></div>
-        <div><label>Réflectance pierre ρ</label><input type="number" id="rho" value="0.55" step="0.05" min="0.1" max="0.9"></div>
-      </div>
-      <div class="row">
-        <div><label>Résolution horiz. (px)</label>
-          <select id="res"><option value="3840">4K UHD 3840</option><option value="1920">WUXGA/HD 1920</option>
-          <option value="2560">WQXGA 2560</option><option value="4096">DCI 4K 4096</option></select></div>
-        <div><label>Cible (lux)</label><input type="number" id="cible" value="80" step="10"></div>
-      </div>
-    </div>
-    <p class="note">Méthode, relevé photogrammétrique et génération du SVG :
-       skill <code>mapping-facade</code>. Étude Saint-Denis :
-       <code>mapping-basilique-saint-denis/CALCULS-MAPPING.md</code>.</p>
+    <div class="note"><b>Légende</b> : ▂ &lt;8 k lm · ▂▄ 8–12 k · ▂▄▆ 12–16 k · ▂▄▆█ &gt;16 k — LASER = source laser (pas d'usure de lampe) — ⚠ = donnée non confirmée par le fabricant.</div>
+    <div class="note">Les noms et puissances sont enregistrés dans ce navigateur (cet appareil). Pour les garder partout, demande-moi de les mettre dans le fichier.</div>
   </div>
 
-  <div>
-    <div class="grid3">
-      <div class="panel"><h2>Éclairement</h2>
-        <div class="big" id="lux">–</div><span class="unit">lux sur la pierre</span>
-        <div style="margin-top:8px" class="unit">Luminance <b id="cdm2">–</b> cd/m²</div>
-      </div>
-      <div class="panel"><h2>Optique</h2>
-        <div class="big" id="tr">–</div><span class="unit">rapport de projection</span>
-        <div style="margin-top:8px" class="unit">Image unitaire <b id="img">–</b></div>
-      </div>
-      <div class="panel"><h2>Définition</h2>
-        <div class="big" id="pxm">–</div><span class="unit">px/m</span>
-        <div style="margin-top:8px" class="unit">soit <b id="mmpx">–</b> mm/pixel</div>
-      </div>
+  <details>
+    <summary>Réglages photométriques</summary>
+    <div class="adv">
+      <label>Mode de puissance<select id="mode"><option value="1">Plein régime (100 %)</option><option value="0.8">Éco (≈ 80 %)</option></select></label>
+      <label>Perte lampe usée (%)<input type="number" id="usure" value="20" step="5" min="0" max="70"></label>
+      <label>Cible (lux)<input type="number" id="cible" value="80" step="10"></label>
+      <label>Rendement η<input type="number" id="eta" value="0.70" step="0.05" min="0.3" max="1"></label>
+      <label>Qualité visée<select id="qual"></select></label>
     </div>
+  </details>
 
-    <div class="panel" style="margin-top:12px">
-      <h2>Pavage &amp; couverture</h2>
-      <svg id="diag" viewBox="0 0 900 520" preserveAspectRatio="xMidYMid meet"></svg>
-      <div class="verdict" id="verdictGeo"></div>
-    </div>
+  <details open>
+    <summary>Comprendre les paramètres en langage simple</summary>
+    <dl>
+      <dt>Lumen (lm)</dt><dd>La quantité de lumière que sort le projecteur. Comme le <b>débit d'un robinet</b> : ça ne dit rien de ce qu'on voit sur le mur.</dd>
+      <dt>Lux (lx)</dt><dd>La lumière reçue par <b>chaque m²</b> de surface. Même débit étalé sur une surface 4 fois plus grande = 4 fois moins de lux. Ici : lux = lumens × η ÷ m².</dd>
+      <dt>Nit (cd/m²)</dt><dd>La <b>luminosité de l'image telle que l'œil la perçoit</b> : lux × réflectance ÷ π. Un cinéma tourne autour de 48 nits, une télé de salon 200 à 500.</dd>
+      <dt>Réflectance ρ</dt><dd>La part de lumière que la matière <b>renvoie</b>. Toile blanche ≈ 0,9 ; mur blanc 0,75 ; pierre claire 0,55 ; pierre sombre 0,12. Pour une peinture de scène, la valeur dépend du pigment : un jaune renvoie beaucoup, un bleu presque rien. Valeurs indicatives, à mesurer sur un échantillon si possible.</dd>
+      <dt>Texture</dt><dd>Un relief marqué crée des <b>micro-ombres</b> : l'image est plus sombre et moins nette. Le calcul réduit la réflectance et le verdict signale la perte de finesse.</dd>
+      <dt>Pollution lumineuse</dt><dd>La lumière déjà présente sur la surface (éclairage public, enseignes, crépuscule). Elle s'ajoute au blanc <b>et au noir</b> de l'image : les noirs deviennent gris.</dd>
+      <dt>Contraste effectif</dt><dd>Rapport entre le blanc et le noir <b>réellement vus</b> = (lux projet. + lux parasites) ÷ (lux projet. ÷ contraste natif + lux parasites). Il ne dépasse jamais le contraste natif du projecteur.</dd>
+      <dt>Rendement η</dt><dd>Les pertes avant que la lumière ne serve : optique, bords de l'image plus sombres, poussière. 0,70 est une valeur prudente.</dd>
+      <dt>Usure / éco / laser</dt><dd>Une lampe perd du flux avec les heures (réglable) ; le mode éco baisse la puissance ; une source laser dérive peu (10 % retenus).</dd>
+      <dt>Watt (W) et ampère (A)</dt><dd>Le <b>watt</b> est la puissance consommée. L'<b>ampère</b> est le courant tiré du secteur : I = W ÷ (230 V × 0,9). Un circuit de 16 A ne doit pas dépasser environ 2,9 kW en continu.</dd>
+    </dl>
+  </details>
 
-    <div class="panel" style="margin-top:12px">
-      <h2>Distance ↔ optique</h2>
-      <p class="note" style="margin:0 0 8px">Le rapport d'optique ne change ni le format
-         de l'image ni sa luminosité : il dit seulement <b>où se mettre</b>. À image
-         constante, les lumens sur la pierre sont les mêmes à 40 m qu'à 123 m.</p>
-      <table id="tOpt"></table>
-    </div>
+  <details class="meta">
+    <summary>Transparence &amp; méta — contexte, IA, méthodes de calcul, références</summary>
+    <dl>
+      <dt>Contexte de production</dt><dd>Outil développé en octobre 2026 pour préparer des mappings vidéo
+        événementiels (façades, scénographies suspendues). Code libre sous licence MIT, versionné sur
+        <a href="https://github.com/krbntek/projets-vrac-" style="color:var(--b)">GitHub — krbntek/projets-vrac-</a> :
+        chaque évolution est consultable dans l'historique git.</dd>
+      <dt>Rôle de l'IA</dt><dd>Co-écrit avec l'assistant IA <b>Claude</b> (Anthropic) via Claude Code, en sessions
+        itératives : l'humain fixe les besoins, fournit les données de terrain (plans, fiches techniques, photos)
+        et valide ; l'IA écrit le code, recoupe les spécifications sur plusieurs sources, simule et teste dans un
+        navigateur. Toute donnée non recoupée est marquée ⚠ dans l'interface. À l'usage, aucun calcul n'est fait
+        par une IA : tout est exécuté par les formules ci-dessous, lisibles dans le source de cette page.</dd>
+      <dt>Technologies</dt><dd>Un seul fichier HTML + CSS + SVG + JavaScript sans aucune bibliothèque. Aucune
+        requête réseau, aucune télémétrie : la page fonctionne hors-ligne et rien ne quitte l'appareil
+        (préférences et parc stockés dans le navigateur, exportables en JSON).</dd>
+      <dt>Méthode &amp; limites</dt><dd>Modèle photométrique simplifié : surface plane, éclairement moyen uniforme
+        (flux utile ÷ aire), support diffus lambertien, lumière parasite uniforme. Le décalage d'optique est
+        contrôlé mais la projection oblique (keystone) n'est pas modélisée. Les pertes (η = 0,70 par défaut,
+        usure lampe, dérive laser 10 %) et les contrastes natifs non documentés sont des <b>estimations
+        d'ingénierie</b>, toutes réglables. La vérification au luxmètre sur site reste indispensable.</dd>
+    </dl>
+    <div class="casT">Les équations, recalculées en direct avec les valeurs du projecteur A</div>
+    <div id="eqLive"></div>
+    <div class="casT">Références</div>
+    <ul style="font-size:.87em;color:var(--dim);padding-left:18px;margin:6px 0">
+      <li>CIE S 017 — Vocabulaire international de l'éclairage (définitions du lumen, du lux, de la cd/m²)</li>
+      <li>IES Lighting Handbook, 10ᵉ édition — photométrie des surfaces, réflectances des matériaux</li>
+      <li>Relation lambertienne L = E·ρ∕π pour une surface diffuse idéale (photométrie classique)</li>
+      <li>ISO/IEC 21118 et ANSI IT7.228 — mesure du flux des projecteurs (« lumens ANSI »)</li>
+      <li>ANSI/AVIXA 3M-2011 — rapport de contraste utile d'une image projetée selon l'usage</li>
+      <li>IEC 61966-2-1 (sRGB) — gamma ≈ 2,2 utilisé pour convertir niveau vidéo ↔ luminance</li>
+      <li>Densité optique d'un filtre ND : D = −log₁₀(T)</li>
+      <li><b>Vérifier par toi-même, hors de cet outil</b> — resaisis Φ (flux utile), la surface et ρ dans :
+        <a href="https://elitescreens.com/2016/04/ansi-lumens-foot-lamberts-image-luminance/" style="color:var(--b)">Elite Screens — ANSI lumens &amp; foot-lamberts</a> ·
+        <a href="https://www.avnetwork.com/avnetwork/understanding-image-luminance" style="color:var(--b)">AVNetwork — Understanding Image Luminance</a> ·
+        <a href="https://xtenav.com/projector-throw-ratio/" style="color:var(--b)">XTEN-AV — Throw ratio = distance ÷ largeur</a>.
+        La ligne « Recoupement externe » ci-dessus fait déjà ce calcul avec tes valeurs courantes.</li>
+      <li>Fiches produits recoupées : tableau des sources en bas de page (Hitachi, Eiki, Epson, ProjectorCentral, B&amp;H)</li>
+    </ul>
+  </details>
 
-    <div class="grid3" style="margin-top:12px">
-      <div class="panel"><h2>Bilan lumière</h2><table id="tLum"></table></div>
-      <div class="panel"><h2>Bilan machine</h2><table id="tMac"></table></div>
-      <div class="panel"><h2>Composition</h2><table id="tComp"></table></div>
-    </div>
-
-    <div class="verdict" id="verdictLum" style="margin-top:12px"></div>
-  </div>
+  <div class="note" id="sources"></div>
+  <div id="report"></div>
 </div>
 
 <script>
 const $ = id => document.getElementById(id);
 const F = (v,d=1) => (isFinite(v)? v.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d}) : '–');
+const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const VERSION='4.4';
 
-function calc(){
-  const fw=+$('fw').value, fh=+$('fh').value, bleed=+$('bleed').value;
-  const dist=+$('dist').value, ar0=+$('ar').value, portrait=$('orient').value==='P';
-  const ar = portrait ? 1/ar0 : ar0;
-  const ovl=+$('ovl').value, n=Math.max(1,+$('n').value), lm=+$('lm').value;
-  const stone=+$('stone').value, eta=+$('eta').value, rho=+$('rho').value, resH=+$('res').value, cible=+$('cible').value;
+/* ======================================================================
+   =============  PARAMÈTRES PRINCIPAUX — À MODIFIER ICI  ===============
+   Tous les réglages par défaut de l'outil sont dans ce bloc CONFIG.
+   On les change ici une fois pour toutes ; l'interface permet ensuite
+   de les ajuster ponctuellement sans toucher au code.
+   Le recul de chaque surface prédéfinie se règle dans SURFACES
+   (champs recul = max et reculMin = min, en mètres).
+   ====================================================================== */
+const CONFIG = {
+  // --- géométrie / schéma ----------------------------------------------
+  reculMaxPerso: 12,   // m  — recul max proposé pour la surface « Personnalisée »
+  pasRepere: 10,       // m  — espacement des graduations du schéma
+  tailleHumain: 1.75,  // m  — hauteur du personnage de référence du schéma
+  // --- photométrie -------------------------------------------------------
+  rendement: 0.70,     // η  — pertes optique/bords/poussière (0,3 à 1)
+  usureLampe: 20,      // %  — flux perdu par une lampe usée (sources à lampe)
+  deriveLaser: 0.10,   //    — fraction de flux perdue retenue pour un laser
+  modeEco: 0.80,       //    — facteur de flux du mode éco
+  cibleLux: 80,        // lux — cible d'éclairement par défaut
+  qualiteDefaut: 3,    //    — indice LEVELS (2 Lisible · 3 Correct · 4 Bon · 5 Très bon)
+  // --- électricité -------------------------------------------------------
+  tension: 230,        // V  — réseau
+  cosPhi: 0.9,         //    — facteur de puissance estimé
+  circuitA: 16,        // A  — calibre du disjoncteur de référence
+  chargeCircuit: 0.8,  //    — part du circuit utilisable en continu
+  accessoiresW: 200,   // W  — serveur média, switch, ventilation (défaut)
+  dureeH: 4            // h  — durée d'événement par défaut
+};
+const LASER_DERATE = CONFIG.deriveLaser;
+const U_RES = CONFIG.tension, COS_PHI = CONFIG.cosPhi,
+      CIRC_KW = CONFIG.tension*CONFIG.circuitA*CONFIG.chargeCircuit/1000;
 
-  // ---- géométrie : on cale la largeur d'image sur la façade + débord
-  const iw = fw + 2*bleed;            // largeur image unitaire
-  const ih = iw / ar;                 // hauteur image unitaire
-  const tr = dist / iw;
-
-  // nombre de rangées nécessaires pour couvrir la hauteur avec recouvrement
-  let rows = 1;
-  if (ih < fh) rows = Math.max(1, Math.ceil((fh - ovl) / (ih - ovl)));
-  const hTot = rows*ih - (rows-1)*ovl;
-
-  // surfaces
-  const S = fw*fh;                                   // surface utile (pierre)
-  const Sproj = iw * hTot;                           // union éclairée (géométrie)
-  const Semis = rows * iw * ih;                      // surface ÉMISE : compte 2 fois
-                                                     // la zone de blend, qui y est
-                                                     // atténuée -> base des lux
-  const rendCadre = Math.min(1, S/Sproj);            // part des pixels dans le cadre façade
-  const rendGeo = Math.min(1, stone/Semis);          // part des lumens utiles
-
-  // ---- lumière
-  const flux = n*lm;
-  const E = flux*eta/Semis;          // lux = flux / surface EMISE (blend déduit)
-  const L = E*rho/Math.PI;
-  const Azone = iw*ih;                       // surface d'UNE zone
-  const stack = Math.ceil(cible*Azone/(lm*eta));   // machines a empiler par zone
-  const nCible = rows*stack;                 // parc total pour la cible
-  const stackNow = Math.max(1, Math.round(n/rows));
-
-  // ---- définition
-  const pxm = resH/iw;
-  const compW = Math.round(resH);
-  const ovlPx = Math.round(ovl*pxm);
-  const compH = Math.round(rows*(resH/ar) - (rows-1)*ovlPx);
-  const mpx = compW*compH/1e6;
-
-  // ---- affichage chiffres clés
-  $('lux').textContent = F(E,0);
-  $('cdm2').textContent = F(L,1);
-  $('tr').textContent = F(tr,2)+':1';
-  $('img').textContent = F(iw,1)+' × '+F(ih,1)+' m';
-  $('pxm').textContent = F(pxm,0);
-  $('mmpx').textContent = F(1000/pxm,1);
-
-  $('tLum').innerHTML = `
-    <tr><td>Cadre façade</td><td>${F(S,0)} m²</td></tr>
-    <tr><td>Surface éclairée (union)</td><td>${F(Sproj,0)} m²</td></tr>
-    <tr><td>Surface émise (${rows} zone${rows>1?'s':''})</td><td>${F(Semis,0)} m²</td></tr>
-    <tr><td>Pixels dans le cadre</td><td>${F(rendCadre*100,0)} %</td></tr>
-    <tr><td><b>Lumens sur la pierre</b></td><td>${F(rendGeo*100,0)} %</td></tr>
-    <tr><td>Flux installé</td><td>${F(flux,0)} lm</td></tr>
-    <tr><td>Flux utile (η=${eta})</td><td>${F(flux*eta,0)} lm</td></tr>
-    <tr><td>Éclairement</td><td>${F(E,1)} lux</td></tr>
-    <tr><td>dont utiles</td><td>${F(flux*eta*rendGeo,0)} lm</td></tr>`;
-
-  $('tMac').innerHTML = `
-    <tr><td>Machines posées</td><td>${n}</td></tr>
-    <tr><td>Pavage nécessaire</td><td>${rows} rangée${rows>1?'s':''}</td></tr>
-    <tr><td>Couverture</td><td>${F(iw,1)} × ${F(hTot,1)} m</td></tr>
-    <tr><td>Rapport de projection</td><td>${F(tr,2)}:1</td></tr>
-    <tr><td>Puissance estimée</td><td>~${F(n*lm*0.00016,1)} kW</td></tr>
-    <tr><td>Machines par zone</td><td>${stackNow}</td></tr>
-    <tr><td>Pour ${cible} lux, il faut</td><td>${nCible} × ${F(lm,0)} lm</td></tr>`;
-
-  $('tComp').innerHTML = `
-    <tr><td>Composition</td><td>${compW} × ${compH}</td></tr>
-    <tr><td>Mégapixels</td><td>${F(mpx,1)} Mpx</td></tr>
-    <tr><td>Blend vertical</td><td>${ovlPx} px</td></tr>
-    <tr><td>Échelle SVG (1u=1cm)</td><td>${F(pxm,0)} %</td></tr>
-    <tr><td>Débit DXV3 ~60 fps</td><td>~${F(mpx*0.5*60,0)} Mo/s</td></tr>
-    <tr><td>Densité</td><td>${F(pxm,0)} px/m</td></tr>`;
-
-  // ---- verdicts
-  const vg=$('verdictGeo');
-  if (rows*1 > n){
-    vg.className='verdict v-bad';
-    vg.innerHTML=`<b>Couverture insuffisante.</b> Il faut <b>${rows}</b> rangée(s) de projecteurs
-      pour couvrir ${F(fh,1)} m de haut, tu n'en déclares que ${n}.
-      Ajoute des machines, réduis la surface, ou passe en portrait.`;
-  } else if (rendCadre < 0.6){
-    vg.className='verdict v-warn';
-    vg.innerHTML=`<b>${F((1-rendCadre)*100,0)} % de la lumière tombe hors du cadre façade.</b>
-      Le format machine ne colle pas au format façade : essaie l'autre orientation,
-      ou un pavage en plus de rangées avec une optique plus longue.`;
+/* ---------- Préférences d'affichage (v4) ---------- */
+const UISTORE='mapping-ui-v4';
+const UI={theme:'sombre', fs:'m', dens:'full', pal:{a:'#ffb454',b:'#4cc9f0',bg:'#07090d',panel:'#121820',txt:'#f8fafc'}};
+try{ const u=JSON.parse(localStorage.getItem(UISTORE)||'{}'); Object.assign(UI,u); UI.pal=Object.assign({a:'#ffb454',b:'#4cc9f0',bg:'#07090d',panel:'#121820',txt:'#f8fafc'},u.pal||{}); }catch(e){}
+let CA='#ffb454', CB='#4cc9f0', APP_READY=false;
+const FSALL={s:0.9,m:1,l:1.15,xl:1.3};
+let FSC=1;
+const fs=v=>Math.round(v*FSC*10)/10;
+function applyUI(save=true){
+  const r=document.documentElement;
+  r.dataset.theme=UI.theme; r.dataset.dens=UI.dens;
+  FSC=FSALL[UI.fs]||1; r.style.setProperty('--fscale',FSC);
+  if(UI.theme==='perso'){
+    r.style.setProperty('--a',UI.pal.a); r.style.setProperty('--b',UI.pal.b);
+    r.style.setProperty('--bg',UI.pal.bg); r.style.setProperty('--panel',UI.pal.panel);
+    r.style.setProperty('--txt',UI.pal.txt);
+    CA=UI.pal.a; CB=UI.pal.b;
   } else {
-    vg.className='verdict v-ok';
-    vg.innerHTML=`<b>Pavage cohérent.</b> ${rows} zone(s), <b>${F(rendGeo*100,0)} % des
-      lumens tombent sur la pierre</b> (${F(rendCadre*100,0)} % dans le cadre),
-      recouvrement de ${F(ovl,1)} m (${ovlPx} px).`;
+    ['--a','--b','--bg','--panel','--txt'].forEach(v=>r.style.removeProperty(v));
+    CA='#ffb454'; CB='#4cc9f0';
   }
-
-  const vl=$('verdictLum');
-  if (E < 30){
-    vl.className='verdict v-bad';
-    vl.innerHTML=`<b>${F(E,0)} lux — très insuffisant.</b> En dessous de 30 lux, l'image est
-      délavée dès qu'il reste de l'éclairage urbain. Il faudrait <b>${nCible} machines</b>
-      de ${F(lm,0)} lm pour atteindre ${cible} lux, ou réduire la surface à
-      <b>${F(flux*eta/cible,0)} m²</b> de surface éclairée à parc constant.`;
-  } else if (E < 60){
-    vl.className='verdict v-warn';
-    vl.innerHTML=`<b>${F(E,0)} lux — limite.</b> Tenable uniquement avec extinction totale
-      de l'éclairage public et des contenus très contrastés. Confort réel à partir de
-      80 lux, soit <b>${nCible} × ${F(lm,0)} lm</b>.`;
-  } else {
-    vl.className='verdict v-ok';
-    vl.innerHTML=`<b>${F(E,0)} lux — niveau correct</b> (${F(L,1)} cd/m² sur la pierre).
-      Au-delà de 120 lux tu gagnes de la marge pour la captation vidéo.`;
-  }
-
-  // --- table distance <-> optique
-  const classe = t => t<1.0 ? 'très courte — rare, chère'
-                  : t<1.4 ? 'courte'
-                  : t<2.4 ? 'zoom standard ✅'
-                  : t<3.2 ? 'long'
-                  : t<4.2 ? 'très long' : 'exotique';
-  let opt='';
-  [30,40,50,60,70,80,90,100,110,120,150].forEach(D=>{
-    const t=D/iw, near=Math.abs(D-dist)<6;
-    opt+=`<tr style="${near?'color:var(--acc)':''}"><td>${D} m${near?' ←':''}</td>
-          <td style="text-align:center;color:var(--dim);font-weight:400">${classe(t)}</td>
-          <td>${F(t,2)} : 1</td></tr>`;
-  });
-  $('tOpt').innerHTML=opt;
-
-  dessin(fw,fh,iw,ih,rows,ovl,bleed);
+  document.querySelectorAll('[data-th]').forEach(b=>b.classList.toggle('on',b.dataset.th===UI.theme));
+  document.querySelectorAll('[data-fsz]').forEach(b=>b.classList.toggle('on',b.dataset.fsz===UI.fs));
+  document.querySelectorAll('[data-dn]').forEach(b=>b.classList.toggle('on',b.dataset.dn===UI.dens));
+  const pb=$('palBox'); if(pb) pb.style.display=UI.theme==='perso'?'flex':'none';
+  if(save) try{localStorage.setItem(UISTORE,JSON.stringify(UI));}catch(e){}
+  if(APP_READY){ syncSelects(); calc(); }
 }
 
-function dessin(fw,fh,iw,ih,rows,ovl,bleed){
-  const W=900,H=520,pad=46;
-  const hTot=rows*ih-(rows-1)*ovl;
-  const k=Math.min((W-2*pad)/iw,(H-2*pad)/Math.max(fh,hTot));
-  const cx=W/2, y0=H-pad;                       // y0 = sol
-  const X=m=>cx+m*k, Y=m=>y0-m*k;
-  let s='';
-  // faisceaux projecteurs
-  for(let r=0;r<rows;r++){
-    const b=r*(ih-ovl), t=b+ih;
-    s+=`<rect x="${X(-iw/2)}" y="${Y(t)}" width="${iw*k}" height="${ih*k}"
-         fill="var(--beam)" stroke="#ffb454" stroke-width="1" stroke-dasharray="5,4"/>`;
-    s+=`<text x="${X(-iw/2)+8}" y="${Y(t)+18}" fill="#ffb454" font-size="12">
-         projo ${rows-r} — ${iw.toFixed(1)} × ${ih.toFixed(1)} m</text>`;
-    if(r>0) s+=`<rect x="${X(-iw/2)}" y="${Y(b+ovl)}" width="${iw*k}" height="${ovl*k}"
-         fill="#ffb45433" stroke="none"/>`;
+
+/* ======================================================================
+   =====================  CATALOGUE DES OPTIQUES  =======================
+   Pour AJOUTER une optique : copier le GABARIT, remplir, et la lister
+   dans proj:[…] pour chaque projecteur compatible.
+   ⚠ Le rapport de projection (TR) d'une même optique peut CHANGER selon
+   la série de projecteurs (taille de panneau) : si le fabricant donne
+   des plages différentes, créer UNE ENTRÉE PAR SÉRIE.
+   Champs : nom (libellé) · trMin/trMax (rapport de projection = distance
+   ÷ largeur d'image ; égaux si focale fixe) · fMin/fMax (focale en mm,
+   null si inconnue) · proj:[ids de MODELS] · verif:false si une valeur
+   n'est pas confirmée par le fabricant (affiche ⚠) · src (d'où ça vient).
+   GABARIT :
+   monid: {nom:'XX-000 courte focale', trMin:0.8, trMax:1.0, fMin:null, fMax:null,
+           proj:['idprojecteur'], verif:false, src:'manuel fabricant, p. …'},
+   ====================================================================== */
+const LENSES = {
+  sd:     {nom:'SD-800 standard (SD-804)', trMin:2.26, trMax:2.93, fMin:60, fMax:78, proj:['x10000'], verif:true,
+           src:'ProjectorCentral CP-X10000 ; B&H SD-800 (2,2–2,9)'},
+  sl:     {nom:'SL-802 courte focale',  trMin:1.27, trMax:1.53, fMin:34, fMax:41, proj:['x10000'],  verif:true,
+           src:'ProjectorCentral CP-X10000 ; focale : liste optiques Hitachi'},
+  sl803:  {nom:'SL-803 courte focale',  trMin:1.50, trMax:2.20, fMin:null,fMax:null,proj:['x10000'], verif:false,
+           src:'ProjectorCentral seul'},
+  ll805:  {nom:'LL-805 longue focale',  trMin:2.92, trMax:5.33, fMin:null,fMax:null,proj:['x10000'], verif:false,
+           src:'ProjectorCentral seul'},
+  ah32021:{nom:'AH-32021 courte fixe',  trMin:0.82, trMax:0.82, fMin:30, fMax:30, proj:['hdt1000'], verif:false,
+           src:'base projector-database (source secondaire), à recouper'},
+  lu03:   {nom:'ELPLU03 très courte focale', trMin:0.48, trMax:0.57, fMin:null,fMax:null,proj:['l1755u'],verif:false,
+           src:'fiche spec européenne EB-L1755U + revendeur (panneau 1,03") ; optique arrêtée par Epson, à recouper'},
+  lu04:   {nom:'ELPLU04 courte focale', trMin:0.64, trMax:0.77, fMin:null,fMax:null,proj:['pu2220b','l1500uh','l1755u'],verif:true,
+           src:'fiche Epson EB-L1505U (0,64–0,77, shift ±60/±18) ; même plage annoncée gamme 9–20 klm. ⚠ le devis Bargraph indique 0,87–1,06 « pour 12K » : c’est la plage des séries G7000/L1000 — à confirmer avec le loueur'},
+  lm15:   {nom:'ELPLM15 standard',      trMin:1.57, trMax:2.56, fMin:null,fMax:null,proj:['pu2220b','l1500uh','l1755u'],verif:false,
+           src:'annonces revendeurs ; même plage que l’optique standard du L1500UH (fiche Epson)'},
+  ll08:   {nom:'ELPLL08 longue focale', trMin:5.28, trMax:7.72, fMin:null,fMax:null,proj:['l1755u'],verif:false,
+           src:'fiche spec européenne EB-L1755U (5,28–7,72) ; ⚠ Epson US donne 7,20–10,12 sur le L1505UH voisin — à recouper'}
+};
+/* ======================================================================
+   ====================  CATALOGUE DES PROJECTEURS  =====================
+   Pour AJOUTER un projecteur :
+   1) copier le GABARIT ci-dessous et remplir ses champs ;
+   2) créer ou compléter son optique dans LENSES (proj:['sonid']) ;
+   3) ajouter un exemplaire physique dans PARC.
+   Deux façons de remplir : noter soi-même les valeurs du manuel, ou
+   donner le nom exact du produit à Claude qui retrouve la fiche
+   fabricant, recoupe plusieurs sources et remplit le gabarit
+   (toute valeur non confirmée reste verif:false → ⚠ à l'écran).
+   Champs : nom/court (libellés) · lm (lumens ANSI annoncés) · w,h (pixels
+   natifs) · N (contraste NATIF, sans iris — si inconnu, estimer et
+   verif:false) · W (consommation en watts) · lamp (true = lampe avec
+   usure réglable, false = laser) · shiftV/shiftH (plage de décalage
+   d'optique en fraction de l'image, null si inconnue) · src (sources).
+   GABARIT :
+   monid: {nom:'Marque Modèle', court:'Modèle', lm:10000, w:1920, h:1200,
+           N:1000, W:500, shiftV:null, shiftH:null, lamp:false,
+           verif:false, src:'manuel fabricant / URL'},
+   ====================================================================== */
+const MODELS = {
+  x10000: {nom:'Hitachi CP-X10000', court:'CP-X10000',  lm:7500,  w:1024, h:768,  N:1000, W:540,  shiftV:0.85, shiftH:0.60, lamp:true,  verif:true,
+           src:'fiche Hitachi + ProjectorCentral (7500 lm, XGA, 540 W, shift ±85/±60) ; contraste natif estimé (2500:1 annoncé avec iris)'},
+  hdt1000:{nom:'Eiki LC-HDT1000',   court:'LC-HDT1000', lm:10000, w:2048, h:1080, N:3000, W:1000, shiftV:null, shiftH:null, lamp:true,  verif:true,
+           src:'fiche Eiki + ProjectorCentral (10000 lm avec AH-22051, 2K, 3000:1, 1000 W, lampe 380 W)'},
+  pu2220b:{nom:'Epson EB-PU2220B',  court:'EB-PU2220B', lm:20000, w:1920, h:1200, N:2500, W:1100, shiftV:null, shiftH:null, lamp:false, verif:false,
+           src:'fiche Epson (20000 lm, WUXGA) ; contraste natif et consommation estimés'},
+  l1500uh:{nom:'Epson EB-L1500UH',  court:'EB-L1500UH', lm:12000, w:1920, h:1200, N:2000, W:833,  shiftV:0.60, shiftH:0.18, lamp:false, verif:false,
+           src:'fiche Epson EB-L1500UH (12000 lm, WUXGA, laser 20000 h, 833 W en mode normal, shift motorisé ±60/±18) ; contraste natif estimé (2 500 000:1 dynamique annoncé) ; référence du devis Bargraph'},
+  l1755u: {nom:'Epson EB-L1755U',  court:'EB-L1755U', lm:15000, w:1920, h:1200, N:2000, W:1000, shiftV:null, shiftH:null, lamp:false, verif:false,
+           src:'VP de la conduite « soir J » ; fiche Epson (15000 lm, 10500 lm en mode silencieux, WUXGA, laser) ; contraste natif 2000:1 (Icecat et conduite ; 2 500 000:1 dynamique annoncé) ; consommation estimée ~1000 W et décalage d’optique non documenté — à recouper'}
+};
+/* ======================================================================
+   =====================  PARC : machines physiques  ====================
+   Un élément = UN projecteur réel : id unique, modèle (id de MODELS),
+   propriétaire, optique montée par défaut (id de LENSES). owner/W/lm
+   restent modifiables dans le tableau Parc de l'interface.
+   ====================================================================== */
+const PARC = [
+  // tag = repère libre pour distinguer deux machines identiques (numéro, autocollant…)
+  {id:'cpx-1', model:'x10000', owner:'WLTP', tag:'nº1', lens:'sd'},
+  {id:'cpx-2', model:'x10000', owner:'WLTP', tag:'nº2', lens:'sl'},
+  {id:'hdt-1', model:'hdt1000',owner:'Grégoire (Le Bercail)', lens:'ah32021'},
+  {id:'pu-1',  model:'pu2220b',owner:'Novelty', lens:'lu04'},
+  {id:'l15-1', model:'l1500uh',owner:'Bargraph', lens:'lu04'},       // devis Bargraph
+  {id:'l17-1', model:'l1755u', owner:'Bargraph', lens:'lu03'}        // conduite « soir J », prestataire Bargraph
+];
+const STORE = 'mapping-parc-v2';
+try{
+  const saved = JSON.parse(localStorage.getItem(STORE)||'{}');
+  for(const u of PARC){ const s=saved[u.id]; if(s){ if(s.owner) u.owner=s.owner; if(s.tag!=null) u.tag=s.tag; if(s.W!=null) u.W=s.W; if(s.lm!=null) u.lm=s.lm; } }
+}catch(e){}
+function saveParc(){
+  try{ localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(PARC.map(u=>[u.id,{owner:u.owner,tag:u.tag,W:u.W,lm:u.lm}])))); }catch(e){}
+}
+const unitById = id => PARC.find(u=>u.id===id);
+const unitW = u => u.W ?? MODELS[u.model].W;
+const unitLm = u => u.lm ?? MODELS[u.model].lm;
+const ownerTxt = u => (u.owner||'').trim() || 'Propriétaire à renseigner';
+const tagTxt = u => (u.tag||'').trim();
+const unitLabel = u => `${ownerTxt(u)} · ${MODELS[u.model].court}${tagTxt(u)?' '+tagTxt(u):''} · ${F(unitLm(u),0)} lm`;
+const nameKey = u => ((u.owner||'').trim() ? '0' : '1') + (u.owner||'').trim();
+const byOwner = (a,b)=> nameKey(a).localeCompare(nameKey(b),'fr') || MODELS[a.model].court.localeCompare(MODELS[b.model].court,'fr');
+const byModel = (a,b)=> MODELS[a.model].court.localeCompare(MODELS[b.model].court,'fr') || nameKey(a).localeCompare(nameKey(b),'fr');
+const byLm    = (a,b)=> unitLm(b)-unitLm(a) || nameKey(a).localeCompare(nameKey(b),'fr');
+const SORTS = {owner:byOwner, model:byModel, lm:byLm};
+const sortedUnits = () => [...PARC].sort(SORTS[$('sort').value]);
+
+/* ---------- Matières (ρ indicatifs) ---------- */
+const MATS = {
+  toile:  {g:'Supports blancs et diffusants', nom:'Toile de projection blanche', rho:0.90},
+  bache:  {g:'Supports blancs et diffusants', nom:'Bâche PVC blanche tendue',    rho:0.75},
+  mur:    {g:'Supports blancs et diffusants', nom:'Mur peint blanc mat',         rho:0.75},
+  enduit: {g:'Supports blancs et diffusants', nom:'Enduit blanc / plâtre lissé', rho:0.80},
+  tissu:  {g:'Supports blancs et diffusants', nom:'Tissu blanc tendu (coton)',   rho:0.80},
+  tulle:  {g:'Supports blancs et diffusants', nom:'Tulle blanc (semi-transparent)', rho:0.50, note:'laisse passer la lumière : évite'},
+  pierre: {g:'Minéral et construction',       nom:'Pierre calcaire claire',      rho:0.55},
+  beton:  {g:'Minéral et construction',       nom:'Béton clair',                 rho:0.35},
+  brique: {g:'Minéral et construction',       nom:'Brique rouge',                rho:0.20},
+  sombre: {g:'Minéral et construction',       nom:'Pierre sombre / ardoise',     rho:0.12},
+  bois:   {g:'Minéral et construction',       nom:'Bois naturel / contreplaqué brut', rho:0.35},
+  boisf:  {g:'Minéral et construction',       nom:'Bois teinté foncé',           rho:0.10},
+  metal:  {g:'Minéral et construction',       nom:'Métal brossé',                rho:0.50, spec:true},
+  miroir: {g:'Minéral et construction',       nom:'Miroir / inox poli',          rho:0.70, spec:true, note:'reflets : à éviter face au public'},
+  verre:  {g:'Minéral et construction',       nom:'Vitrage / verre',             rho:0.06, spec:true},
+  pblanc: {g:'Scénographie peinte',           nom:'Peinture blanc titane',       rho:0.85},
+  pjaune: {g:'Scénographie peinte',           nom:'Peinture jaune vif',          rho:0.65, teint:'jaune'},
+  porange:{g:'Scénographie peinte',           nom:'Peinture orange vif',         rho:0.45, teint:'orange'},
+  prouge: {g:'Scénographie peinte',           nom:'Peinture rouge vif',          rho:0.22, teint:'rouge'},
+  pvert:  {g:'Scénographie peinte',           nom:'Peinture vert émeraude',      rho:0.18, teint:'vert'},
+  pbleu:  {g:'Scénographie peinte',           nom:'Peinture bleu outremer',      rho:0.15, teint:'bleu'},
+  pgris:  {g:'Scénographie peinte',           nom:'Peinture gris moyen (18 %)',  rho:0.18},
+  pnoir:  {g:'Scénographie peinte',           nom:'Peinture noir scénique mat',  rho:0.04},
+  pnoirv: {g:'Scénographie peinte',           nom:'Velours / tissu noir',        rho:0.02},
+  pantheree:{g:'Scénographie peinte',         nom:'Décor Panthère (bleus + blanc)', rho:0.33, note:'moyenne estimée des 4 teintes de la fiche'},
+  perso:  {g:'Autre',                         nom:'Réflectance personnalisée…',  rho:0.50}
+};
+const currentMat = () => {
+  const v=$('mat').value;
+  if(v==='perso') return {...MATS.perso, nom:'Réflectance personnalisée', rho:Math.min(0.95,Math.max(0.01,+$('rhoPerso').value||0.5))};
+  return MATS[v];
+};
+/* ---------- Relief ---------- */
+const TEXS = {
+  lisse:  {nom:'Lisse (toile, enduit fin)',                 k:1.00, txt:'aucune perte'},
+  fin:    {nom:'Crépi fin',                                 k:0.95, txt:'−5 %'},
+  gran:   {nom:'Granuleuse (pierre taillée)',               k:0.85, txt:'−15 %'},
+  rug:    {nom:'Rugueuse (moellons, pierre brute)',         k:0.70, txt:'−30 %'},
+  relief: {nom:'Très accidentée (sculptures, reliefs)',     k:0.55, txt:'−45 %'}
+};
+/* ---------- Pollution lumineuse ---------- */
+const AMBS = [
+  ['rural','Nuit noire, campagne (≈ 1 lx)',1],
+  ['calme','Nuit, quartier calme (≈ 5 lx)',5],
+  ['ville','Rue éclairée, ville (≈ 20 lx)',20],
+  ['anime','Centre-ville, enseignes (≈ 50 lx)',50],
+  ['monu','Éclairage monumental voisin (≈ 150 lx)',150],
+  ['crep','Crépuscule (≈ 500 lx)',500],
+  ['perso','Valeur personnalisée…',null]
+];
+/* ---------- Surfaces ---------- */
+const SURFACES = [
+  {nom:'Panthère — ensemble avec pattes 5,5 × 5,0 m (estimé)', court:'Panthère entière', silh:'panthere', w:5.5,h:5.0,recul:10.5,reculMin:5.5, mat:'pantheree',tex:'lisse',amb:20,
+   note:"Panthère : dimensions estimées d'après la fiche (cotes 290 cm et 500 cm), à confirmer. Recul de 5,5 m (bord du cercle côté scène) à 10,5 m (bord opposé). Les LED et néons du décor s'ajoutent à la lumière parasite : les couper pendant le mapping."},
+  {nom:'Panthère — visage seul 3,5 × 4,7 m (estimé)', court:'Panthère visage', silh:'visage', w:3.5,h:4.7,recul:10.5,reculMin:5.5, mat:'pantheree',tex:'lisse',amb:20,
+   note:"Panthère : dimensions estimées d'après la fiche, à confirmer. Recul de 5,5 m à 10,5 m. Les LED et néons du décor s'ajoutent à la lumière parasite."},
+  {nom:'Façade Saint-Denis 32,5 × 37,3 m', court:'Façade St-Denis', silh:'cathedrale', w:32.5,h:37.3,recul:50, mat:'pierre',tex:'gran', amb:20},
+  {nom:'Travée centrale 11,3 × 37,3 m', court:'Travée centrale', silh:'travee', w:11.3,h:37.3,recul:50, mat:'pierre',tex:'gran', amb:20},
+  {nom:'Mur 10 × 6 m — recul 15 m', court:'Mur 10 × 6', silh:'mur', w:10,  h:6,   recul:15, mat:'mur',   tex:'fin',  amb:5},
+  {nom:'Surface 5 × 5 m — recul 5,6 m', court:'Carré 5 × 5', silh:'carre', w:5,   h:5,   recul:5.6,mat:'mur',   tex:'lisse',amb:5},
+  {nom:'Écran 3 × 2 m — recul 4 m', court:'Écran 3 × 2', silh:'ecran', w:3,   h:2,   recul:4,  mat:'toile', tex:'lisse',amb:5},
+  {nom:'Personnalisée…', court:'Personnalisée', silh:'perso', custom:true, mat:'mur',tex:'lisse',amb:20}
+];
+/* ---------- Échelle de rendu (contraste effectif) ---------- */
+const LEVELS = [
+  {min:0,   nom:'Invisible', col:'#ff3b30', txt:"l'image est noyée dans la lumière ambiante"},
+  {min:1.5, nom:'Délavé',    col:'#ff9500', txt:"on devine l'image, noirs gris clair, aucun relief"},
+  {min:2.5, nom:'Lisible',   col:'#ffd60a', txt:"formes et textes passent, couleurs pâles"},
+  {min:5,   nom:'Correct',   col:'#3ddc84', txt:"mapping lisible avec un contenu lumineux et contrasté"},
+  {min:10,  nom:'Bon',       col:'#2fd5f0', txt:"couleurs franches, noirs bien marqués"},
+  {min:25,  nom:'Très bon',  col:'#b18cff', txt:"image « punchy », noirs profonds"}
+];
+const levelOf = C => { let l=LEVELS[0]; for(const x of LEVELS) if(C>=x.min) l=x; return l; };
+const contrast = (Ep,Ea,N) => (Ep+Ea)/(Ep/N+Ea);
+const needE = (C,N,Ea) => C>=N ? Infinity : Ea*(C-1)/(1-C/N);
+
+/* ---------- Configurations de comparaison ---------- */
+const PAIRS = [
+  ['2 × CP-X10000 (SD + SL)', [['x10000','sd'],['x10000','sl']]],
+  ['LC-HDT1000 + EB-PU2220B', [['hdt1000','ah32021'],['pu2220b','lu04']]],
+  ['2 × EB-PU2220B',          [['pu2220b','lu04'],['pu2220b','lu04']]],
+  ['2 × LC-HDT1000',          [['hdt1000','ah32021'],['hdt1000','ah32021']]],
+  ['CP-X10000 + EB-PU2220B',  [['x10000','sd'],['pu2220b','lm15']]],
+  ['EB-L1500UH + EB-PU2220B', [['l1500uh','lu04'],['pu2220b','lu04']]],
+  ['EB-L1500UH + CP-X10000',  [['l1500uh','lu04'],['x10000','sd']]],
+  ['EB-L1755U + EB-L1500UH',  [['l1755u','lu04'],['l1500uh','lu04']]]
+];
+
+/* ---------- État ---------- */
+const P = {
+  A:{unit:'cpx-1', lens:'sd', dist:40, zoom:0, orient:'L', x:0, y:0, ph:0, px:0},
+  B:{unit:'cpx-2', lens:'sl', dist:40, zoom:0, orient:'L', x:0, y:0, ph:0, px:0}
+};
+let S = {w:5.5, h:5.0, recul:10.5, reculMin:5.5, note:''};
+let nb = 2, curLay = 'side';
+const mkey = k => unitById(P[k].unit).model;
+const lensesFor = m => Object.keys(LENSES).filter(id=>LENSES[id].proj.includes(m));
+const modelOf = k => MODELS[mkey(k)];
+
+/* ---------- Construction de l'interface ---------- */
+function opt(sel, items){ $(sel).innerHTML = items.map(([v,t])=>`<option value="${v}">${esc(t)}</option>`).join(''); }
+function fillUnitSelect(k){
+  $(`${k}_unit`).innerHTML = sortedUnits().map(u=>`<option value="${u.id}">${esc(unitLabel(u))}</option>`).join('');
+  $(`${k}_unit`).value = P[k].unit;
+}
+function syncSelects(){
+  for(const k of ['A','B']){
+    fillUnitSelect(k);
+    const m=mkey(k);
+    if(!lensesFor(m).includes(P[k].lens)) P[k].lens=lensesFor(m)[0];
+    opt(`${k}_lensSel`, lensesFor(m).map(id=>[id,LENSES[id].nom+(LENSES[id].verif?'':' ⚠')]));
+    $(`${k}_lensSel`).value=P[k].lens;
+    renderUnitRow(k);
+    $(`${k}_cone`).innerHTML=coneSVG(LENSES[P[k].lens], k==='A'?CA:CB);
   }
-  // façade
-  s+=`<rect x="${X(-fw/2)}" y="${Y(fh)}" width="${fw*k}" height="${fh*k}"
-       fill="#e6edf314" stroke="#e6edf3" stroke-width="2"/>`;
-  s+=`<line x1="${X(-fw/2)-30}" y1="${y0}" x2="${X(fw/2)+30}" y2="${y0}" stroke="#8b949e" stroke-width="2"/>`;
-  // cotes
-  s+=`<text x="${cx}" y="${y0+28}" fill="#8b949e" font-size="13" text-anchor="middle">${fw.toFixed(1)} m</text>`;
-  s+=`<text x="${X(fw/2)+10}" y="${Y(fh/2)}" fill="#8b949e" font-size="13">${fh.toFixed(1)} m</text>`;
-  s+=`<text x="${cx}" y="22" fill="#8b949e" font-size="12" text-anchor="middle">
-       couverture totale ${iw.toFixed(1)} × ${hTot.toFixed(1)} m — débord ${bleed.toFixed(1)} m/côté</text>`;
+}
+function card(k){
+  const c=$('card'+k);
+  c.innerHTML=`
+    <h2>Projecteur ${k} <span id="${k}_own"></span></h2>
+    <div class="unitRow" id="${k}_units"></div>
+    <select class="unit" id="${k}_unit" aria-label="Projecteur ${k}"></select>
+    <select class="lensRow" id="${k}_lensSel" aria-label="Optique ${k}"></select>
+    <div class="lens"><span id="${k}_lens"></span><span class="cone" id="${k}_cone"></span></div>
+    <div class="ctl"><div class="lab">Recul <b id="${k}_distV"></b></div>
+      <input type="range" id="${k}_dist" min="1" step="0.1"></div>
+    <div class="ctl"><div class="lab">Zoom <b id="${k}_zoomV"></b></div>
+      <input type="range" id="${k}_zoom" min="0" max="100" step="1"></div>
+    <div class="ctl"><div class="lab">Position horizontale <b id="${k}_xV"></b></div>
+      <input type="range" id="${k}_x" step="0.05"></div>
+    <div class="ctl"><div class="lab">Hauteur du centre <b id="${k}_yV"></b></div>
+      <input type="range" id="${k}_y" step="0.05"></div>
+    <div class="ctl"><div class="lab">Hauteur du projecteur (par rapport au bas de la surface) <b id="${k}_phV"></b></div>
+      <input type="range" id="${k}_ph" step="0.1"></div>
+    <div class="ctl"><div class="lab">Décalage latéral du projecteur <b id="${k}_pxV"></b></div>
+      <input type="range" id="${k}_px" step="0.1"></div>
+    <div class="seg"><button id="${k}_L"></button><button id="${k}_P"></button></div>
+    <div class="gauge" id="${k}_gauge"></div>
+    <div class="res" id="${k}_res"></div>`;
+  ['dist','zoom','x','y','ph','px'].forEach(p=>$(`${k}_${p}`).addEventListener('input',e=>{P[k][p]=+e.target.value;calc();}));
+  $(`${k}_L`).onclick=()=>{P[k].orient='L';calc();};
+  $(`${k}_P`).onclick=()=>{P[k].orient='P';calc();};
+  $(`${k}_unit`).addEventListener('change',e=>{
+    P[k].unit=e.target.value; P[k].lens=unitById(P[k].unit).lens; P[k].zoom=0; P[k].orient='L';
+    syncSelects(); renderParc(); layout(curLay);
+  });
+  $(`${k}_lensSel`).addEventListener('change',e=>{P[k].lens=e.target.value; P[k].zoom=0; syncSelects(); layout(curLay);});
+  $(`${k}_units`).addEventListener('click',e=>{const b=e.target.closest('[data-u]');if(!b)return;
+    const sel=$(`${k}_unit`); sel.value=b.dataset.u; sel.dispatchEvent(new Event('change'));});
+}
+
+function applyPair(spec){
+  const used=[];
+  ['A','B'].forEach((k,i)=>{
+    const [m,lens]=spec[i];
+    const c=PARC.filter(u=>u.model===m);
+    const u=c.find(x=>!used.includes(x.id)) || c[0];
+    used.push(u.id); P[k].unit=u.id; P[k].lens=lens; P[k].zoom=0; P[k].orient='L';
+  });
+  syncSelects(); renderParc(); layout(curLay);
+}
+function applyNb(n){
+  nb=n;
+  $('n1').classList.toggle('on',n===1); $('n2').classList.toggle('on',n===2);
+  $('cardB').style.display = n===2?'':'none';
+  $('projs').classList.toggle('single', n===1);
+  $('pairSel').style.display = n===2?'':'none';
+  $('layRow').style.display = n===2?'flex':'none';
+  renderParc(); layout(curLay);
+}
+
+/* ---------- Parc (tableau) ---------- */
+function renderParc(){
+  $('parcBody').innerHTML = sortedUnits().map(u=>{
+    const m=MODELS[u.model];
+    const used=['A','B'].filter(k=>P[k].unit===u.id && (nb===2 || k==='A')).join(' + ')||'—';
+    return `<tr>
+      <td style="text-align:center">${vpIcon(u.model,44)}<br>${lmBadge(unitLm(u))}</td>
+      <td><input type="text" data-own="${u.id}" value="${esc(u.owner)}" placeholder="Propriétaire à renseigner"></td>
+      <td><input type="text" data-tag="${u.id}" value="${esc(u.tag||'')}" placeholder="nº, repère…" style="min-width:70px;width:80px"></td>
+      <td>${m.court}</td>
+      <td><input type="number" data-lm="${u.id}" value="${unitLm(u)}" step="100" min="0"> lm</td>
+      <td><input type="number" data-w="${u.id}" value="${unitW(u)}" step="10" min="0"> W</td>
+      <td><b>${used}</b></td></tr>`;
+  }).join('');
+}
+$('parcBody').addEventListener('input',e=>{
+  const d=e.target.dataset, u=unitById(d.own || d.tag || d.w || d.lm);
+  if(!u) return;
+  if(d.own!=null) u.owner=e.target.value;
+  else if(d.tag!=null) u.tag=e.target.value;
+  else if(d.w!=null){ const w=+e.target.value; if(isFinite(w)&&w>=0) u.W=w; }
+  else { const l=+e.target.value; if(isFinite(l)&&l>0) u.lm=l; }
+  saveParc(); syncSelects(); calc();
+});
+
+/* ---------- Géométrie ---------- */
+function geom(k){
+  const p=P[k], pr=modelOf(k), L=LENSES[p.lens];
+  const tr=L.trMin+p.zoom/100*(L.trMax-L.trMin);
+  const f=L.fMin==null?null:L.fMin+p.zoom/100*(L.fMax-L.fMin);
+  const portrait=p.orient==='P';
+  // le rapport de projection se rapporte à la largeur de l'image en paysage ; en portrait l'image tourne avec le projecteur
+  const w0=p.dist/tr, h0=w0*pr.h/pr.w;
+  const w=portrait?h0:w0, h=portrait?w0:h0;
+  const pxW=portrait?pr.h:pr.w;
+  return {pr,L,tr,f,w,h,pxm:pxW/w,x0:p.x-w/2,x1:p.x+w/2,y0:p.y-h/2,y1:p.y+h/2};
+}
+const inter=(a,b)=>({x0:Math.max(a.x0,b.x0),x1:Math.min(a.x1,b.x1),y0:Math.max(a.y0,b.y0),y1:Math.min(a.y1,b.y1)});
+const area=r=>Math.max(0,r.x1-r.x0)*Math.max(0,r.y1-r.y0);
+
+function setSurface(){
+  const s=SURFACES[+$('surf').value];
+  $('customBox').classList.toggle('on',!!s.custom);
+  if(s.custom) S={w:+$('cw').value,h:+$('ch').value,recul:Math.min(50,+$('cr').value),reculMin:1,note:'',silh:'perso'};
+  else {
+    S={w:s.w,h:s.h,recul:s.recul,reculMin:s.reculMin||1,note:s.note||'',silh:s.silh};
+    $('mat').value=s.mat; $('tex').value=s.tex; setAmb(s.amb);
+  }
+  renderSurfCards();
+  for(const k of ['A','B']){
+    P[k].dist = s.reculMin ?? Math.min(S.recul, S.recul>=50 ? 40 : S.recul);
+    P[k].zoom = 0; P[k].orient='L';
+  }
+  layout(curLay);
+}
+function setAmb(v){
+  $('amb').value=v;
+  const m=AMBS.find(a=>a[2]===v); $('ambSel').value=m?m[0]:'perso';
+}
+
+function layout(type){
+  curLay=type;
+  document.querySelectorAll('[data-lay]').forEach(b=>b.classList.toggle('on',b.dataset.lay===type));
+  if(nb===1){ P.A.x=0; P.A.y=S.h/2; calc(); return; }
+  const a=geom('A'), b=geom('B'), cy=S.h/2;
+  if(type==='stack'){ P.A.x=P.B.x=0; P.A.y=P.B.y=cy; }
+  if(type==='side'){
+    const t=a.w+b.w; P.A.x=-t/2+a.w/2; P.B.x=t/2-b.w/2; P.A.y=P.B.y=cy;
+  }
+  if(type==='vert'){
+    const t=a.h+b.h; P.A.x=P.B.x=0; P.B.y=cy-t/2+b.h/2; P.A.y=cy+t/2-a.h/2;
+  }
+  calc();
+}
+
+/* ---------- Calcul ---------- */
+function calc(){
+  const mode=+$('mode').value, wear=Math.min(70,Math.max(0,+$('usure').value))/100;
+  const eta=+$('eta').value, cible=+$('cible').value;
+  const Ea=Math.max(0.05,+$('amb').value||0);
+  const mat=currentMat(), tex=TEXS[$('tex').value];
+  const rhoEff=mat.rho*tex.k, gain=1;
+  const qual=LEVELS[+$('qual').value];
+  const ACT = nb===2 ? ['A','B'] : ['A'];
+  $('rhoBox').style.display = $('mat').value==='perso' ? 'block' : 'none';
+  $('matInfo').textContent=`renvoie ${F(mat.rho*100,0)} % de la lumière`+(mat.note?` · ${mat.note}`:'')+(mat.teint?` · teinte l'image en ${mat.teint}`:'');
+  $('texInfo').textContent=`perte liée au relief : ${tex.txt} → ρ effectif ${F(rhoEff,2)}`;
+
+  const surf={x0:-S.w/2,x1:S.w/2,y0:0,y1:S.h}, Sa=S.w*S.h;
+  const G={}, E={}, Lm={}, Cc={}, Lv={}, LM={}, Req={}, Wt={}, spill={}, shift={}; let EQD=null;
+  for(const k of ACT){
+    const g=geom(k), p=P[k], pr=g.pr, u=unitById(p.unit);
+    G[k]=g;
+    const loss=pr.lamp?wear:LASER_DERATE;
+    const lmNom=unitLm(u), lmMode=lmNom*mode, lmEff=lmMode*(1-loss), lmScr=lmEff*eta;
+    E[k]=lmScr/(g.w*g.h);
+    Lm[k]=E[k]*rhoEff*gain/Math.PI;
+    Cc[k]=contrast(E[k],Ea,pr.N); Lv[k]=levelOf(Cc[k]);
+    const eReq=needE(qual.min,pr.N,Ea);
+    LM[k]={nom:lmNom,eff:lmEff,scr:lmScr,ren:lmScr*rhoEff*gain,amb:Ea*g.w*g.h*rhoEff};
+    Req[k]={E:eReq, lm:eReq*g.w*g.h/eta/(1-loss)/mode, maxArea:lmScr/eReq};
+    Wt[k]=unitW(u)*mode;
+    const portrait=p.orient==='P';
+    const limV=pr.shiftV!=null ? (portrait?pr.shiftH:pr.shiftV)*g.h : null;
+    const limH=pr.shiftH!=null ? (portrait?pr.shiftV:pr.shiftH)*g.w : null;
+    shift[k]={needV:Math.abs(p.y-p.ph), needH:Math.abs(p.x-p.px), limV, limH};
+    shift[k].uV=limV?shift[k].needV/limV:null; shift[k].uH=limH?shift[k].needH/limH:null;
+    spill[k]=1-area(inter(g,surf))/(g.w*g.h);
+    if(k==='A') EQD={lmNom,mode,loss,eta,g,N:pr.N};
+
+    // carte du projecteur
+    const set=(id,min,max,val)=>{const el=$(id);el.min=min;el.max=max;el.value=val;};
+    const span=Math.max(S.w,g.w)*1.2, vspan=Math.max(S.h,g.h)*1.3;
+    set(`${k}_dist`,S.reculMin,S.recul,p.dist);
+    $(`${k}_zoom`).value=p.zoom; $(`${k}_zoom`).disabled=g.L.trMin===g.L.trMax;
+    set(`${k}_x`,(-span/2).toFixed(2),(span/2).toFixed(2),p.x);
+    set(`${k}_y`,0,vspan.toFixed(2),p.y);
+    set(`${k}_ph`,-6,10,p.ph); set(`${k}_px`,-8,8,p.px);
+    $(`${k}_phV`).textContent=(p.ph>=0?'+':'')+F(p.ph,1)+' m';
+    $(`${k}_pxV`).textContent=(p.px>=0?'+':'')+F(p.px,1)+' m';
+    $(`${k}_own`).textContent=`— ${ownerTxt(u)}${tagTxt(u)?' · '+tagTxt(u):''}`;
+    $(`${k}_lens`).textContent=`${pr.nom} · ${g.L.nom}`+((pr.verif&&g.L.verif)?'':' · ⚠ données à vérifier');
+    $(`${k}_distV`).textContent=F(p.dist,1)+' m'+(p.dist>=S.recul?' (max)':'');
+    $(`${k}_zoomV`).textContent=(g.f==null?'':`${F(g.f,0)} mm · `)+`TR ${F(g.tr,2)}:1`+(g.L.trMin===g.L.trMax?' (fixe)':'');
+    $(`${k}_xV`).textContent=(p.x>=0?'+':'')+F(p.x,2)+' m';
+    $(`${k}_yV`).textContent=F(p.y,2)+' m';
+    const ar=pr.w/pr.h;
+    $(`${k}_L`).textContent=`Paysage ${F(ar,2)}:1`; $(`${k}_P`).textContent=`Portrait 1:${F(ar,2)}`;
+    $(`${k}_L`).classList.toggle('on',p.orient==='L');
+    $(`${k}_P`).classList.toggle('on',p.orient==='P');
+    const ratio=E[k]/Req[k].E;
+    const fill=isFinite(ratio)?Math.min(100,ratio*50):0;
+    $(`${k}_gauge`).innerHTML=`Puissance disponible ÷ besoin pour « ${qual.nom} »
+      <b style="color:${Lv[k].col}">${isFinite(ratio)?F(ratio*100,0)+' %':'inatteignable'}</b>
+      <div class="track"><i style="width:${fill}%;background:${Lv[k].col}"></i><u style="left:50%"></u></div>`;
+    $(`${k}_res`).innerHTML=`Image <b>${F(g.w,2)} × ${F(g.h,2)} m</b> · <b>${F(E[k],0)} lux</b> ·
+      <b>${F(Lm[k],0)} nits</b><br>Définition <b>${F(g.pxm,0)} px/m</b> (${F(1000/g.pxm,0)} mm/px)<br>
+      Contraste effectif <b style="color:${Lv[k].col}">${F(Cc[k],1)}:1 — ${Lv[k].nom}</b> (natif ${F(pr.N,0)}:1)<br>
+      ${shift[k].uV!=null?`Décalage d'optique requis <b>${F(shift[k].uV*100,0)} %</b> vertical · <b>${F(shift[k].uH*100,0)} %</b> horizontal de la plage<br>`:''}
+      Consommation <b>${F(Wt[k],0)} W</b>`;
+  }
+
+  // couverture et recouvrement
+  const ab = nb===2 ? inter(G.A,G.B) : {x0:0,x1:0,y0:0,y1:0};
+  const hasAB = nb===2 && area(ab)>0.01;
+  const covered = ACT.reduce((s,k)=>s+area(inter(G[k],surf)),0) - (nb===2 ? area(inter(ab,surf)) : 0);
+  const cov=covered/Sa;
+  const Eab = hasAB ? E.A+E.B : NaN;
+  const Cab = hasAB ? (Eab+Ea)/(E.A/G.A.pr.N+E.B/G.B.pr.N+Ea) : NaN;
+  const Lab = hasAB ? levelOf(Cab) : null, Lmab = hasAB ? Lm.A+Lm.B : NaN;
+
+  // électrique
+  const acc=Math.max(0,+$('acc').value||0), hours=Math.max(0,+$('hours').value||0);
+  const Wsum=ACT.reduce((s,k)=>s+Wt[k],0), Wtot=Wsum+acc;
+  const Amp=Wtot/(U_RES*COS_PHI);
+  const circ=Math.max(1,Math.ceil(Wtot/1000/CIRC_KW));
+  const kWh=Wtot*hours/1000;
+
+  const chip=(lab,val,sub,col,lvl)=>`<div class="chip" style="border-left-color:${col}"><span>${lab}</span><b>${val}</b><span>${sub}</span>${lvl?`<em style="color:${col}">${lvl}</em>`:''}</div>`;
+  const covCol=cov>=0.995?'#3ddc84':cov<0.8?'#ff3b30':'#ff9500';
+  let chips = chip('surface couverte',F(Math.min(1,cov)*100,0)+' %',`${F(covered,0)} sur ${F(Sa,0)} m²`,covCol);
+  chips += chip('lux image A',F(E.A,0),`≈ ${F(Lm.A,0)} nits · contraste ${F(Cc.A,1)}:1`,Lv.A.col,Lv.A.nom);
+  if(nb===2){
+    chips += chip('lux image B',F(E.B,0),`≈ ${F(Lm.B,0)} nits · contraste ${F(Cc.B,1)}:1`,Lv.B.col,Lv.B.nom);
+    chips += hasAB
+      ? chip('lux zone commune',F(Eab,0),`≈ ${F(Lmab,0)} nits · contraste ${F(Cab,1)}:1`,Lab.col,Lab.nom)
+      : chip('lux zone commune','—','pas de recouvrement','#b9c3cf');
+  }
+  chips += chip('consommation',`${F(Wtot/1000,2)} kW`,`${F(Amp,1)} A · ${circ} circuit${circ>1?'s':''} 16 A`,'#ff9500');
+  $('chips').innerHTML = chips;
+
+  // verdicts
+  const V=[];
+  const uncovered=Sa-covered;
+  if(cov>=0.995) V.push(['ok',`<b>Surface entièrement couverte.</b>`]);
+  else V.push([cov<0.8?'bad':'warn',`<b>${F(uncovered,1)} m² non couverts</b> (${F((1-cov)*100,0)} % de la surface) — ajuste zoom, recul ou positions.`]);
+  if(S.note) V.push(['warn',S.note]);
+  for(const k of ACT){
+    if(spill[k]>0.25) V.push(['warn',`Lumière hors surface ${k} : ${F(spill[k]*100,0)} %. Réduis le zoom ou rapproche.`]);
+  }
+  if(nb===2 && P.A.unit===P.B.unit) V.push(['warn',`Les deux images utilisent <b>le même projecteur</b> (${esc(ownerTxt(unitById(P.A.unit)))}). Ajoute un exemplaire dans le tableau du parc ou passe en 1 projecteur.`]);
+  for(const k of ACT){
+    const lv=Lv[k], cls=lv.min>=5?'ok':lv.min>=1.5?'warn':'bad';
+    V.push([cls,`Image ${k} : contraste effectif <b>${F(Cc[k],1)}:1 → ${lv.nom}</b> — ${lv.txt}.`]);
+    const share=Ea/(E[k]+Ea);
+    if(share>0.25) V.push(['warn',`Image ${k} : la lumière parasite (${F(Ea,0)} lx) pèse <b>${F(share*100,0)} %</b> de la lumière totale sur l'image. Les noirs deviennent gris : un contenu sombre ou subtil ne passera pas.`]);
+    if(!isFinite(Req[k].E)) V.push(['bad',`Image ${k} : « ${qual.nom} » est <b>inatteignable</b> avec ce projecteur (contraste natif ${F(G[k].pr.N,0)}:1), même avec beaucoup de lumens.`]);
+    else if(E[k]<Req[k].E) V.push([E[k]<Req[k].E/2?'bad':'warn',
+      `Image ${k} : pour « ${qual.nom} » il faut ${F(Req[k].E,0)} lux (${F(Req[k].lm,0)} lm annoncés) ; il y en a ${F(E[k],0)}. Surface max avec cette machine : <b>${F(Req[k].maxArea,1)} m²</b> (l'image fait ${F(G[k].w*G[k].h,1)} m²).`]);
+    if(E[k]<cible) V.push([E[k]<cible/2?'bad':'warn',`Image ${k} : <b>${F(E[k],0)} lux</b> pour une cible de ${cible}.`]);
+    if(G[k].pr.verif===false||G[k].L.verif===false) V.push(['warn',`Image ${k} : certaines données de ${G[k].pr.court} / ${G[k].L.nom} sont à recouper (voir tableau des sources).`]);
+    const sh=shift[k];
+    if(sh.uV!=null){
+      const m=Math.max(sh.uV,sh.uH);
+      if(m>1) V.push(['bad',`Image ${k} : le décalage d'optique requis dépasse la plage de l'optique (vertical ${F(sh.uV*100,0)} %, horizontal ${F(sh.uH*100,0)} % de la plage). Monte ou descends le projecteur, ou recentre-le sur l'image.`]);
+      else if(m>0.8) V.push(['warn',`Image ${k} : décalage d'optique à ${F(m*100,0)} % de la plage : proche de la butée, peu de marge de réglage.`]);
+    }
+  }
+  if(tex.k<0.8) V.push(['warn',`Relief marqué (${tex.nom.toLowerCase()}) : l'image perd ${F((1-tex.k)*100,0)} % de luminosité et en finesse. Les détails plus petits que le relief disparaissent : prévoir un contenu à gros traits.`]);
+  if(rhoEff<0.2) V.push(['warn',`Matière très absorbante (ρ effectif ${F(rhoEff,2)}) : seul ${F(rhoEff*100,0)} % de la lumière revient vers le public.`]);
+  if(mat.teint) V.push(['warn',`Support ${mat.teint} : il colore l'image projetée. Compense la couleur dans le média serveur, sinon les tons de peau et les blancs vireront.`]);
+  if(mat.spec) V.push(['warn',`Surface ${mat.nom.toLowerCase()} : elle renvoie la lumière en reflets directs, visibles depuis certains points du public. Mieux vaut un support mat.`]);
+  if(hasAB){
+    const ratio=Math.max(E.A,E.B)/Math.min(E.A,E.B);
+    if(ratio>1.3) V.push(['warn',`Écart de luminosité A/B de ×${F(ratio,1)} : la jonction sera visible sans correction de niveau dans le média serveur.`]);
+    if(area(ab)/Math.min(G.A.w*G.A.h,G.B.w*G.B.h)<0.9)
+      V.push(['warn',`Zone commune de ${F(area(ab),1)} m² à ${F(Eab,0)} lux : prévoir un soft-edge/blend sur ce recouvrement.`]);
+  }
+  if(nb===2){
+    const dr=Math.max(G.A.pxm,G.B.pxm)/Math.min(G.A.pxm,G.B.pxm);
+    if(dr>1.2) V.push(['warn',`Densités de pixels différentes (${F(G.A.pxm,0)} vs ${F(G.B.pxm,0)} px/m) : le raccord des contenus demande un remapping par sortie.`]);
+  }
+  V.push([circ>1?'warn':'ok',`Consommation totale : <b>${F(Wtot/1000,2)} kW</b> (${F(Amp,1)} A sous 230 V) → ${circ} circuit${circ>1?'s':''} de 16 A au minimum. Sur ${F(hours,1)} h : <b>${F(kWh,1)} kWh</b>.`]);
+  $('verdicts').innerHTML=V.map(([c,t])=>`<div class="v ${c}">${t}</div>`).join('');
+
+  dessin(G,surf,ab,{E,Lm,Cc,Lv,Eab,Cab,Lab,hasAB},ACT);
+  scaleLux(G,E,Ea,qual,ACT);
+  cascade(G,LM,ACT);
+  renderHarmo(G,E,Lm);
+  renderEq(EQD,{Ea,rho:rhoEff,EA:E.A,EB:nb===2?E.B:null,C:Cc.A,L:Lm.A,Wtot,Amp});
+  renderSugg(Ea,mode,wear,eta);
+  renderSpecs({Ea,mode,eta});
+}
+
+/* ---------- Schéma : couleur = qualité de rendu, échelle en mètres ---------- */
+function dessin(G,surf,ab,R,ACT){
+  const W=900,H=560,pad=40;
+  const px=surf.x0-1.2; // position du repère humain, à gauche de la surface
+  const xs=[surf.x0,surf.x1,px-0.4,...ACT.flatMap(k=>[G[k].x0,G[k].x1])];
+  const ys=[0,surf.y1,...ACT.flatMap(k=>[G[k].y0,G[k].y1])];
+  const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+  const k=Math.min((W-2*pad)/(maxX-minX),(H-2*pad-30)/(maxY-minY));
+  const ox=W/2-(minX+maxX)/2*k, oy=H-pad-30+minY*k;
+  const X=m=>ox+m*k, Y=m=>oy-m*k;
+  const rect=(r,fill,stroke,dash='',op=1,sw=3)=>`<rect x="${X(r.x0)}" y="${Y(r.y1)}" width="${(r.x1-r.x0)*k}" height="${(r.y1-r.y0)*k}"
+      fill="${fill}" fill-opacity="${op}" stroke="${stroke}" stroke-width="${sw}" ${dash?`stroke-dasharray="${dash}"`:''}/>`;
+  let s='';
+  s+=`<defs><pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#ffffffaa" stroke-width="2"/></pattern>
+      <style>.t{paint-order:stroke;stroke:#000;stroke-width:3.5px;stroke-linejoin:round;font-weight:700}</style></defs>`;
+  s+=rect(surf,'#f8fafc','#f8fafc','',0.10,2);
+  if(S.silh && S.silh!=='perso'){
+    const sw=(surf.x1-surf.x0)*k/100, sh=(surf.y1-surf.y0)*k/100;
+    s+=`<g transform="translate(${X(surf.x0)},${Y(surf.y1)}) scale(${sw},${sh})" fill="none" stroke="#f8fafc" stroke-opacity="0.5" stroke-width="2.5">`
+      +(SILH[S.silh]||[]).map(d=>`<path d="${d}" vector-effect="non-scaling-stroke"/>`).join('')+`</g>`;
+  }
+  // sol
+  s+=`<line x1="${X(minX)-20}" y1="${Y(0)}" x2="${X(maxX)+20}" y2="${Y(0)}" stroke="#b9c3cf" stroke-width="1.5"/>`;
+  // repère horizontal tous les 10 m, origine = centre de la surface
+  const PR=CONFIG.pasRepere;
+  for(let t=Math.ceil(minX/PR)*PR; t<=maxX; t+=PR){
+    const lab = t===0 ? '0' : (t<0?'−':'+')+Math.abs(t)+' m';
+    s+=`<line x1="${X(t)}" x2="${X(t)}" y1="${Y(0)}" y2="${Y(0)+6}" stroke="#b9c3cf" stroke-width="1.5"/>
+        <text x="${X(t)}" y="${Y(0)+18}" fill="#b9c3cf" font-size="${fs(11)}" text-anchor="middle">${lab}</text>`;
+  }
+  // règle verticale tous les 10 m
+  const rx=16;
+  s+=`<line x1="${rx}" x2="${rx}" y1="${Y(0)}" y2="${Y(Math.min(maxY,60))}" stroke="#b9c3cf" stroke-width="1.5"/>`;
+  for(let h=0; h<=maxY; h+=PR){
+    s+=`<line x1="${rx}" x2="${rx+6}" y1="${Y(h)}" y2="${Y(h)}" stroke="#b9c3cf" stroke-width="1.5"/>
+        <text x="${rx+8}" y="${Y(h)+4}" fill="#b9c3cf" font-size="${fs(11)}">${h} m</text>`;
+  }
+  // repère humain (hauteur CONFIG.tailleHumain)
+  const HS=CONFIG.tailleHumain/1.75;
+  s+=`<g fill="#f8fafc" transform="translate(${X(px)},${Y(0)}) scale(${k*HS},${-k*HS})">
+        <circle cx="0" cy="1.62" r="0.12"/>
+        <rect x="-0.22" y="0.85" width="0.44" height="0.62" rx="0.08"/>
+        <rect x="-0.2" y="0" width="0.4" height="0.88"/>
+      </g>
+      <text class="t" x="${X(px)}" y="${Y(CONFIG.tailleHumain)-8}" fill="#f8fafc" font-size="${fs(12)}" text-anchor="middle">${F(CONFIG.tailleHumain,2)} m</text>`;
+  for(const key of ACT){
+    s+=rect(G[key],R.Lv[key].col,key==='A'?CA:CB,'8,5',0.55);
+  }
+  if(R.hasAB){ s+=rect(ab,R.Lab.col,'none','',0.80); s+=rect(ab,'url(#hatch)','#fff','',1,1.5); }
+  const lab=(g,key,col,anchor)=>{
+    const x=anchor==='end'?X(g.x1)-8:X(g.x0)+8;
+    const y1=anchor==='end'?Y(g.y0)-26:Y(g.y1)+18, y2=y1+16;
+    return `<text class="t" x="${x}" y="${y1}" fill="${col}" font-size="${fs(14)}" text-anchor="${anchor}">${key} · ${g.pr.court} · ${g.L.nom.split(' ')[0]} · ${g.w.toFixed(1)}×${g.h.toFixed(1)} m</text>
+      <text class="t d2" x="${x}" y="${y2}" fill="#fff" font-size="${fs(13)}" text-anchor="${anchor}">${F(R.E[key],0)} lx · ${F(R.Lm[key],0)} nits · ${F(R.Cc[key],1)}:1 ${R.Lv[key].nom}</text>`;
+  };
+  s+=lab(G.A,'A',CA,'start');
+  if(ACT.includes('B')) s+=lab(G.B,'B',CB,'end');
+  if(R.hasAB){
+    const cx=X((ab.x0+ab.x1)/2), cy=Y((ab.y0+ab.y1)/2);
+    s+=`<text class="t" x="${cx}" y="${cy}" fill="#fff" font-size="${fs(14)}" text-anchor="middle">A+B : ${F(R.Eab,0)} lx · ${F(R.Cab,1)}:1 ${R.Lab.nom}</text>`;
+  }
+  s+=`<text class="t" x="${X(0)}" y="${Y(0)+38}" fill="#f8fafc" font-size="${fs(13)}" text-anchor="middle">surface ${F(S.w,1)} × ${F(S.h,1)} m · recul ${S.reculMin>1?F(S.reculMin,1)+' à ':'max '}${F(S.recul,1)} m</text>`;
   $('diag').innerHTML=s;
 }
 
-$('preset').addEventListener('change',e=>{
-  if(!e.target.value) return;
-  const [w,h,st]=e.target.value.split(',');
-  $('fw').value=w; $('fh').value=h; if(st) $('stone').value=st;
-  sauver(); calc();
-});
+/* ---------- Échelle de puissance (lux) selon la pollution lumineuse ---------- */
+function scaleLux(G,E,Ea,qual,ACT){
+  const Wd=900, padL=24, padR=24, lo=0.3, hi=5000, rowH=106, H=rowH*ACT.length+10;
+  const X=e=>padL+(Math.log10(Math.min(hi,Math.max(lo,e)))-Math.log10(lo))/(Math.log10(hi)-Math.log10(lo))*(Wd-padL-padR);
+  let s=`<svg viewBox="0 0 ${Wd} ${H}" role="img" aria-label="Échelle de puissance en lux" style="border:1px solid var(--line);background:#0a0e14;border-radius:8px">
+    <style>.t{paint-order:stroke;stroke:#000;stroke-width:3px;font-weight:700}</style>`;
+  ACT.forEach((k,i)=>{
+    const y=i*rowH, N=G[k].pr.N, col=k==='A'?CA:CB;
+    const th=LEVELS.slice(1).map(l=>needE(l.min,N,Ea));
+    const edges=[lo,...th.map(t=>Math.min(hi,Math.max(lo,t)))];
+    s+=`<text x="${padL}" y="${y+14}" fill="${col}" font-size="${fs(14)}" font-weight="700">Projecteur ${k} · ${G[k].pr.court} — lumière parasite ${F(Ea,0)} lx · contraste natif ${F(N,0)}:1</text>`;
+    LEVELS.forEach((l,j)=>{
+      const x0=X(edges[j]), x1=j+1<edges.length?X(edges[j+1]):X(hi);
+      const startsAbove = j>0 && th[j-1]>=hi;
+      if(x1-x0<0.5||startsAbove) return;
+      s+=`<rect x="${x0}" y="${y+44}" width="${x1-x0}" height="30" fill="${l.col}"/>`;
+      if(x1-x0>62) s+=`<text x="${(x0+x1)/2}" y="${y+64}" fill="#07090d" font-size="${fs(12)}" font-weight="700" text-anchor="middle">${l.nom}</text>`;
+    });
+    [1,3,10,30,100,300,1000,3000].forEach(t=>{
+      s+=`<line x1="${X(t)}" x2="${X(t)}" y1="${y+74}" y2="${y+80}" stroke="#b9c3cf"/>
+          <text x="${X(t)}" y="${y+93}" fill="#b9c3cf" font-size="${fs(11)}" text-anchor="middle">${t>=1000?t/1000+' k':t} lx</text>`;
+    });
+    const mx=X(E[k]);
+    s+=`<line x1="${mx}" x2="${mx}" y1="${y+38}" y2="${y+78}" stroke="#fff" stroke-width="4"/>
+        <line x1="${mx}" x2="${mx}" y1="${y+38}" y2="${y+78}" stroke="#000" stroke-width="1.5"/>
+        <text class="t" x="${Math.min(Wd-80,Math.max(80,mx))}" y="${y+34}" fill="#fff" font-size="${fs(13)}" text-anchor="middle">${k} reçoit ${F(E[k],0)} lx</text>`;
+    const need=needE(qual.min,N,Ea);
+    if(isFinite(need)&&need<hi){
+      const q=X(need);
+      s+=`<path d="M${q-6} ${y+74} L${q+6} ${y+74} L${q} ${y+84} Z" fill="#fff"/>`;
+    }
+  });
+  s+=`</svg>`;
+  $('scaleLux').innerHTML=s+`<div class="note" style="margin-top:0">▲ blanc = seuil de la qualité visée (« ${qual.nom} »).</div>`;
+}
 
-// --- persistance locale : on retrouve son chantier en revenant sur la page
-const CHAMPS=['proj','fw','fh','bleed','stone','dist','ar','orient','ovl','n','lm','eta','rho','res','cible'];
-function sauver(){
-  try{ const o={}; CHAMPS.forEach(k=>o[k]=$(k).value);
-       localStorage.setItem('mapping-facade', JSON.stringify(o)); }catch(e){}
+/* ---------- Cascade des lumens ---------- */
+function cascade(G,LM,ACT){
+  const max=Math.max(...ACT.map(k=>LM[k].nom));
+  const row=(lab,v,col,ref)=>`<div class="cas"><span>${lab}</span><div class="tr"><i style="width:${Math.max(0.5,v/max*100)}%;background:${col}"></i></div>
+    <b>${F(v,0)} lm${ref?` <span style="color:#b9c3cf;font-weight:400">(${F(v/ref*100,0)} %)</span>`:''}</b></div>`;
+  let h='';
+  ACT.forEach(k=>{
+    const c=k==='A'?CA:CB, m=LM[k], pr=G[k].pr;
+    h+=`<div class="casT" style="color:${c}">Projecteur ${k} · ${pr.court}</div>`+
+      row('Annoncés (fiche technique)',m.nom,c,0)+
+      row(pr.lamp?'Après mode & usure lampe':'Après mode & dérive laser',m.eff,c,m.nom)+
+      row('Sur la surface (rendement η)',m.scr,c,m.nom)+
+      row('Renvoyés par la matière (ρ × texture)',m.ren,c,m.nom)+
+      row('Lumière parasite renvoyée (même zone)',m.amb,'#ff3b6b',0);
+  });
+  $('cascade').innerHTML=h+`<div class="note">Les barres rouges comparent ce que la surface renvoie du projecteur à ce qu'elle renvoie déjà de la lumière ambiante sur la même zone : plus la barre colorée domine, meilleur est le contraste.</div>`;
 }
-function charger(){
-  try{ const o=JSON.parse(localStorage.getItem('mapping-facade')||'{}');
-       CHAMPS.forEach(k=>{ if(o[k]!==undefined && o[k]!=='') $(k).value=o[k]; }); }catch(e){}
+
+/* ---------- Harmonisation des deux projecteurs ---------- */
+function widthRange(k){
+  const L=LENSES[P[k].lens];
+  return {wmin:(S.reculMin||1)/L.trMax, wmax:S.recul/L.trMin};
 }
-charger();
-document.querySelectorAll('input,select').forEach(el=>el.addEventListener('input',()=>{sauver();calc();}));
-$('proj').addEventListener('input',()=>{ $('projName').textContent =
-  $('proj').value ? '— '+$('proj').value : ''; });
-$('projName').textContent = $('proj').value ? '— '+$('proj').value : '';
+function renderHarmo(G,E,Lm){
+  const box=$('harmo');
+  if(nb!==2){ box.style.display='none'; return; }
+  box.style.display='';
+  const dmin=S.reculMin||1, dmax=S.recul;
+  const rA=widthRange('A'), rB=widthRange('B');
+  const lo=Math.max(rA.wmin,rB.wmin), hi=Math.min(rA.wmax,rB.wmax), feasible=lo<=hi;
+  const hiK=E.A>=E.B?'A':'B', loK=hiK==='A'?'B':'A';
+  const f=E[loK]/E[hiK], R=1/f, lvl=Math.pow(f,1/2.2);
+  const row=(lab,a,b)=>`<tr><th>${lab}</th><td>${a}</td><td>${b}</td></tr>`;
+  let h=`<div class="casT">Calibrage et harmonisation des deux projecteurs</div>
+    <table><thead><tr><th></th><th style="color:${CA}">A · ${G.A.pr.court}</th><th style="color:${CB}">B · ${G.B.pr.court}</th></tr></thead><tbody>`+
+    row('Optique',G.A.L.nom,G.B.L.nom)+
+    row('Recul',`${F(P.A.dist,1)} m`,`${F(P.B.dist,1)} m`)+
+    row('Image',`${F(G.A.w,2)} × ${F(G.A.h,2)} m`,`${F(G.B.w,2)} × ${F(G.B.h,2)} m`)+
+    row('Éclairement',`${F(E.A,0)} lux`,`${F(E.B,0)} lux`)+
+    row('Luminance',`${F(Lm.A,0)} nits`,`${F(Lm.B,0)} nits`)+
+    row('Finesse',`${F(1000/G.A.pxm,1)} mm/px`,`${F(1000/G.B.pxm,1)} mm/px`)+
+    `</tbody></table>`;
+  if(R<1.1) h+=`<div class="v ok" style="margin-top:8px">Puissances harmonisées : écart de ×${F(R,2)} seulement.</div>`;
+  else h+=`<div class="v ${R>1.5?'bad':'warn'}" style="margin-top:8px">Écart de puissance <b>×${F(R,2)}</b> : ${hiK} reçoit plus de lumière que ${loK}.
+    Pour les égaliser sans toucher à ${loK}, atténuer ${hiK} à <b>${F(f*100,0)} %</b> de luminance (filtre ND ${F(-Math.log10(f),2)}, soit ${F(-Math.log2(f),1)} diaph),
+    ce qui correspond à environ <b>${F(lvl*100,0)} %</b> de niveau vidéo avec un gamma de 2,2. Préférer une atténuation optique (mode éco, iris, filtre) au niveau vidéo : les noirs restent comparables entre les deux machines.</div>`;
+  h+= feasible
+    ? `<div class="v ok" style="margin-top:8px">Avec un recul de ${F(dmin,1)} à ${F(dmax,1)} m, les deux optiques peuvent donner la <b>même taille d'image</b> (largeur en paysage) entre <b>${F(lo,2)} et ${F(hi,2)} m</b>. Deux images de même taille donnent le même éclairement et la même finesse.</div>`
+    : `<div class="v bad" style="margin-top:8px">Aucune taille d'image commune dans la fenêtre de recul ${F(dmin,1)}–${F(dmax,1)} m : A peut faire ${F(rA.wmin,1)}–${F(rA.wmax,1)} m, B ${F(rB.wmin,1)}–${F(rB.wmax,1)} m de large. Il faudra atténuer le plus brillant ou changer d'optique.</div>`;
+  h+=`<div style="margin-top:8px"><button id="harmoBtn" ${feasible?'':'disabled'}>Harmoniser les tailles automatiquement</button></div>`;
+  box.innerHTML=h;
+}
+function harmonize(){
+  if(nb!==2) return;
+  const dmin=S.reculMin||1, dmax=S.recul;
+  const rA=widthRange('A'), rB=widthRange('B');
+  const lo=Math.max(rA.wmin,rB.wmin), hi=Math.min(rA.wmax,rB.wmax);
+  if(lo>hi) return;
+  const surf={x0:-S.w/2,x1:S.w/2,y0:0,y1:S.h}, cy=S.h/2;
+  let best=null;
+  for(const orient of ['L','P']) for(const lay of ['side','vert']) for(let i=0;i<=60;i++){
+    const w0=lo+(hi-lo)*i/60;
+    const sz=k=>{const pr=modelOf(k), h0=w0*pr.h/pr.w; return orient==='P'?{w:h0,h:w0}:{w:w0,h:h0};};
+    const a=sz('A'), b=sz('B');
+    let A,B;
+    if(lay==='side'){ const t=a.w+b.w; A={x0:-t/2,x1:-t/2+a.w,y0:cy-a.h/2,y1:cy+a.h/2}; B={x0:t/2-b.w,x1:t/2,y0:cy-b.h/2,y1:cy+b.h/2}; }
+    else { const t=a.h+b.h; A={x0:-a.w/2,x1:a.w/2,y0:cy+t/2-a.h,y1:cy+t/2}; B={x0:-b.w/2,x1:b.w/2,y0:cy-t/2,y1:cy-t/2+b.h}; }
+    const aS=area(inter(A,surf)), bS=area(inter(B,surf)), abS=area(inter(inter(A,B),surf));
+    const cov=(aS+bS-abS)/(S.w*S.h), spill=1-(aS+bS)/(a.w*a.h+b.w*b.h);
+    const score=cov*100-spill*5;
+    if(!best||score>best.score+1e-9) best={score,orient,lay,w0};
+  }
+  for(const k of ['A','B']){
+    const L=LENSES[P[k].lens];
+    const d0=Math.max(dmin,best.w0*L.trMin), d1=Math.min(dmax,best.w0*L.trMax);
+    const D=(d0+d1)/2, tr=D/best.w0;
+    P[k].dist=Math.round(D*100)/100;
+    P[k].zoom=L.trMax===L.trMin?0:Math.min(100,Math.max(0,(tr-L.trMin)/(L.trMax-L.trMin)*100));
+    P[k].orient=best.orient;
+  }
+  layout(best.lay);
+}
+$('harmo').addEventListener('click',e=>{ if(e.target.id==='harmoBtn') harmonize(); });
+
+
+/* ---------- Silhouettes des surfaces (v4) ---------- */
+const SILH={
+  cathedrale:['M10,100 V34 H24 V10 H40 V34 H90 V100',
+    'M20,100 v-16 a7,9 0 0 1 14,0 v16','M42,100 v-20 a8,11 0 0 1 16,0 v20','M66,100 v-16 a7,9 0 0 1 14,0 v16',
+    'M50,38 m-9,0 a9,9 0 1 0 18,0 a9,9 0 1 0 -18,0','M50,38 m-4,0 a4,4 0 1 0 8,0 a4,4 0 1 0 -8,0',
+    'M10,66 H90','M27,16 v10','M35,16 v10'],
+  travee:['M34,100 V10 H66 V100','M50,32 m-10,0 a10,10 0 1 0 20,0 a10,10 0 1 0 -20,0',
+    'M42,100 v-18 a8,10 0 0 1 16,0 v18','M34,55 H66'],
+  panthere:['M30,100 V46 H38 V100','M62,100 V46 H70 V100',
+    'M28,46 Q26,16 50,12 Q74,16 72,46 Q72,56 50,56 Q28,56 28,46 Z',
+    'M33,22 L28,6 L43,15','M67,22 L72,6 L57,15',
+    'M41,34 a3,3 0 1 0 6,0 a3,3 0 1 0 -6,0','M53,34 a3,3 0 1 0 6,0 a3,3 0 1 0 -6,0',
+    'M40,56 l3,7 l4,-7 l3,7 l4,-7 l3,7 l3,-7',
+    'M2,62 q-3,-16 11,-18 q14,-2 14,11 q0,12 -12,13 q-11,1 -13,-6 Z',
+    'M98,62 q3,-16 -11,-18 q-14,-2 -14,11 q0,12 12,13 q11,1 13,-6 Z'],
+  visage:['M22,88 Q18,22 50,16 Q82,22 78,88 Q78,98 50,98 Q22,98 22,88 Z',
+    'M28,30 L20,6 L42,20','M72,30 L80,6 L58,20',
+    'M38,52 a4,4 0 1 0 8,0 a4,4 0 1 0 -8,0','M54,52 a4,4 0 1 0 8,0 a4,4 0 1 0 -8,0',
+    'M34,80 l4,10 l5,-10 l5,10 l5,-10 l5,10 l4,-10'],
+  mur:['M8,100 V30 H92 V100','M8,52 H92','M8,76 H92','M30,30 V52','M60,30 V52','M45,52 V76','M75,52 V76','M30,76 V100'],
+  carre:['M20,95 H80 V35 H20 Z','M20,28 H80','M24,24 l-4,4 l4,4','M76,24 l4,4 l-4,4'],
+  ecran:['M12,20 H88 V66 H12 Z','M16,24 H84 V62 H16 Z','M50,66 V84','M34,88 H66'],
+  perso:['M15,95 H85 V30 H15 Z']
+};
+function silhSVG(key,w,h){
+  const paths=SILH[key]||SILH.perso;
+  const dash=key==='perso'?' stroke-dasharray="7,5"':'';
+  return `<svg width="${w}" height="${h}" viewBox="0 0 100 104" style="background:none;border:none" aria-hidden="true">
+    <g fill="none" stroke="currentColor" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"${dash}>
+    ${paths.map(d=>`<path d="${d}"/>`).join('')}</g>
+    ${key==='perso'?'<text x="50" y="74" font-size="36" fill="currentColor" text-anchor="middle" font-weight="700">?</text>':''}</svg>`;
+}
+function renderSurfCards(){
+  const row=$('surfRow'); if(!row) return;
+  const cur=+$('surf').value;
+  row.innerHTML=SURFACES.map((x,i)=>`<button class="surfCard${cur===i?' on':''}" data-si="${i}" aria-label="${esc(x.nom)}">
+    ${silhSVG(x.silh||'perso',68,52)}<span>${esc(x.court||x.nom)}</span>
+    <small>${x.custom?'à définir':F(x.w,1)+' × '+F(x.h,1)+' m'}</small></button>`).join('');
+}
+
+/* ---------- Pictogrammes projecteurs (v4) ---------- */
+const VPCOLORS={x10000:'#8fa6c0', hdt1000:'#4db6ac', pu2220b:'#9575cd', l1500uh:'#6fcf97', l1755u:'#ef7fb2'};
+function vpIcon(model,w){
+  const h=Math.round(w*0.58), c=VPCOLORS[model]||'#999', m=MODELS[model];
+  return `<svg width="${w}" height="${h}" viewBox="0 0 100 58" style="background:none;border:none" aria-hidden="true">
+    <rect x="6" y="16" width="70" height="30" rx="6" fill="${c}" opacity="0.92"/>
+    <rect x="12" y="22" width="26" height="4" rx="2" fill="#0009"/>
+    <rect x="12" y="29" width="26" height="4" rx="2" fill="#0009"/>
+    <circle cx="84" cy="31" r="11" fill="#141a22" stroke="${c}" stroke-width="3"/>
+    <circle cx="84" cy="31" r="4.5" fill="${c}"/>
+    <rect x="12" y="46" width="9" height="5" rx="1" fill="${c}"/><rect x="58" y="46" width="9" height="5" rx="1" fill="${c}"/>
+    ${m&&!m.lamp?`<text x="40" y="12" font-size="11" fill="${c}" text-anchor="middle" font-weight="700" letter-spacing="1">LASER</text>`:''}
+  </svg>`;
+}
+const ownShort=u=>((u.owner||'').trim().split(/\s+/)[0])||'proprio ?';
+// symboles légendés (pas de nouveau code couleur) : ▂▄▆█ = tranche de puissance
+const lmBars=lm=> lm<8000?'▂':lm<12000?'▂▄':lm<16000?'▂▄▆':'▂▄▆█';
+const lmBadge=lm=>`<em title="tranche de puissance (voir légende du parc)">${lmBars(lm)} ${F(lm/1000,1)}k lm</em>`;
+function focClass(L){
+  const t=(L.trMin+L.trMax)/2;
+  return t<0.8?'très courte': t<1.6?'courte': t<3?'standard':'longue';
+}
+function renderUnitRow(k){
+  const el=$(`${k}_units`); if(!el) return;
+  el.innerHTML=sortedUnits().map(u=>{const m=MODELS[u.model];
+    return `<button class="unitCard${P[k].unit===u.id?' on':''}" data-u="${u.id}" title="${esc(unitLabel(u))}">
+      ${vpIcon(u.model,58)}<b>${esc(ownShort(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''}</b><small>${m.court}</small>
+      ${lmBadge(unitLm(u))}<small>${focClass(LENSES[u.lens])} ${F(LENSES[u.lens].trMin,2)}${LENSES[u.lens].trMax>LENSES[u.lens].trMin?'–'+F(LENSES[u.lens].trMax,2):''}:1</small></button>`;}).join('');
+}
+function coneSVG(L,color){
+  const w=92,h=36,cy=h/2,len=w-14;
+  const half=tr=>Math.min(cy-2,len*0.5/tr);
+  const y1=half(L.trMin), y2=half(L.trMax);
+  const tri=(yy,op)=>`<path d="M8 ${cy} L${w-4} ${(cy-yy).toFixed(1)} L${w-4} ${(cy+yy).toFixed(1)} Z" fill="${color}" fill-opacity="${op}"/>`;
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="background:none;border:none;vertical-align:middle" aria-hidden="true">
+    <rect x="1" y="${cy-5}" width="8" height="10" rx="2" fill="${color}"/>
+    ${tri(y1,0.22)}${L.trMax>L.trMin?tri(y2,0.55):''}</svg>`;
+}
+
+/* ---------- Exports statiques (v4) ---------- */
+const stamp=()=>new Date().toISOString().slice(0,10);
+function dlBlob(name,txt,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([txt],{type}));
+  a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+}
+function buildReport(){
+  const d=new Date();
+  const date=d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})+' · '
+            +d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const ACT=nb===2?['A','B']:['A'];
+  const mat=currentMat(), tex=TEXS[$('tex').value];
+  const svg=$('diag').outerHTML.replace('<svg ','<svg style="background:#0a0e14;border-radius:8px;max-width:100%;height:auto" ');
+  const rows=ACT.map(k=>{const g=geom(k), u=unitById(P[k].unit);
+    return `<tr><td><b>${k}</b></td><td>${esc(ownerTxt(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''}</td><td>${g.pr.nom}</td><td>${g.L.nom}</td>
+      <td>${F(P[k].dist,1)} m</td><td>TR ${F(g.tr,2)}:1</td><td>${F(g.w,2)} × ${F(g.h,2)} m</td>
+      <td>${P[k].orient==='P'?'portrait':'paysage'}</td><td>${F(unitW(u),0)} W</td></tr>`;}).join('');
+  const chips=[...document.querySelectorAll('#chips .chip')].map(c=>`<li>${esc(c.innerText).replace(/\n/g,' — ')}</li>`).join('');
+  const verd=[...document.querySelectorAll('#verdicts .v')].map(v=>`<li>${esc(v.innerText)}</li>`).join('');
+  return `<h1>Rapport mapping — ${esc(SURFACES[+$('surf').value].nom)}</h1>
+  <p>Généré le ${date} · Calculateur mapping v${VERSION} ·
+    <a href="https://github.com/krbntek/projets-vrac-">code source (MIT)</a></p>
+  <h2>Contexte</h2>
+  <p>Surface ${F(S.w,1)} × ${F(S.h,1)} m · recul ${F(S.reculMin,1)}–${F(S.recul,1)} m ·
+     lumière parasite ${F(+$('amb').value,0)} lx · ${esc(mat.nom)} (ρ ${F(mat.rho,2)}) · ${esc(tex.nom)}</p>
+  ${svg}
+  <h2>Projecteurs</h2>
+  <table><tr><th></th><th>Propriétaire</th><th>Machine</th><th>Optique</th><th>Recul</th><th>Rapport</th><th>Image</th><th>Orientation</th><th>Puissance</th></tr>${rows}</table>
+  <h2>Résultats</h2><ul>${chips}</ul>
+  <h2>Points d'attention</h2><ul>${verd}</ul>
+  <p style="font-size:12px;color:#555">Valeurs théoriques à vérifier au luxmètre sur site. Outil libre co-développé
+  avec l'assistant IA Claude (Anthropic) ; équations et sources détaillées dans l'application.</p>`;
+}
+function exportCfg(){
+  const cfg={v:4, date:new Date().toISOString(), ui:UI,
+    parc:Object.fromEntries(PARC.map(u=>[u.id,{owner:u.owner,tag:u.tag,W:u.W,lm:u.lm}])),
+    surf:+$('surf').value, custom:{w:+$('cw').value,h:+$('ch').value,r:+$('cr').value},
+    env:{amb:+$('amb').value,mat:$('mat').value,tex:$('tex').value,rhoPerso:+$('rhoPerso').value},
+    nb, P:JSON.parse(JSON.stringify(P)), sort:$('sort').value,
+    adv:{mode:$('mode').value,usure:+$('usure').value,cible:+$('cible').value,eta:+$('eta').value,
+         qual:$('qual').value,acc:+$('acc').value,hours:+$('hours').value}};
+  dlBlob(`config-mapping-${stamp()}.json`, JSON.stringify(cfg,null,2), 'application/json');
+}
+function importCfg(c){
+  if(!c || c.v!==4) throw new Error('version de config attendue : 4');
+  if(c.parc) for(const u of PARC){const x=c.parc[u.id];
+    if(x){ if(x.owner)u.owner=x.owner; if(x.tag!=null)u.tag=x.tag; if(x.W!=null)u.W=x.W; if(x.lm!=null)u.lm=x.lm; }}
+  saveParc();
+  if(c.ui){ Object.assign(UI,c.ui); applyUI(); }
+  if(c.sort && SORTS[c.sort]) $('sort').value=c.sort;
+  if(c.custom){ $('cw').value=c.custom.w; $('ch').value=c.custom.h; $('cr').value=c.custom.r; }
+  if(c.surf!=null) $('surf').value=Math.min(SURFACES.length-1,Math.max(0,+c.surf||0));
+  setSurface();
+  if(c.env){
+    $('amb').value=c.env.amb; const m=AMBS.find(a=>a[2]===+c.env.amb); $('ambSel').value=m?m[0]:'perso';
+    if(MATS[c.env.mat]) $('mat').value=c.env.mat;
+    if(TEXS[c.env.tex]) $('tex').value=c.env.tex;
+    if(c.env.rhoPerso) $('rhoPerso').value=c.env.rhoPerso;
+  }
+  if(c.adv){ $('mode').value=c.adv.mode; $('usure').value=c.adv.usure; $('cible').value=c.adv.cible;
+    $('eta').value=c.adv.eta; $('qual').value=c.adv.qual; $('acc').value=c.adv.acc; $('hours').value=c.adv.hours; }
+  applyNb(c.nb===1?1:2);
+  if(c.P) for(const k of ['A','B']){ const q=c.P[k]; if(!q) continue;
+    if(unitById(q.unit)) P[k].unit=q.unit;
+    Object.assign(P[k],{dist:+q.dist||P[k].dist, zoom:+q.zoom||0, orient:q.orient==='P'?'P':'L',
+      x:+q.x||0, y:+q.y||0, ph:+q.ph||0, px:+q.px||0});
+    if(LENSES[q.lens] && LENSES[q.lens].proj.includes(unitById(P[k].unit).model)) P[k].lens=q.lens; }
+  syncSelects(); renderParc(); calc();
+}
+
+/* ---------- Équations en direct (v4) ---------- */
+function renderEq(d,t){
+  const el=$('eqLive'); if(!el) return;
+  if(!d){ el.innerHTML=''; return; }
+  const g=d.g, Si=g.w*g.h, port=P.A.orient==='P';
+  const wPay=port?g.h:g.w;
+  const flux=d.lmNom*d.mode*(1-d.loss)*d.eta;
+  const rows=[
+   ["Taille d'image",`largeur (paysage) = recul ÷ rapport de projection = ${F(P.A.dist,2)} ÷ ${F(g.tr,2)} = <b>${F(wPay,2)} m</b>${port?' (image pivotée en portrait : largeur ↔ hauteur)':''} ; hauteur = largeur × ${g.pr.h}∕${g.pr.w}`],
+   ["Flux utile",`Φ = annoncés × mode × (1−perte) × η = ${F(d.lmNom,0)} × ${F(d.mode,2)} × ${F(1-d.loss,2)} × ${F(d.eta,2)} = <b>${F(flux,0)} lm</b>`],
+   ["Éclairement",`E = Φ ÷ surface de l'image = ${F(flux,0)} ÷ ${F(Si,2)} m² = <b>${F(t.EA,0)} lux</b>`],
+   ["Luminance",`L = E × ρ ÷ π = ${F(t.EA,0)} × ${F(t.rho,2)} ÷ 3,1416 = <b>${F(t.L,0)} cd/m² (nits)</b>`],
+   ["Recoupement externe",`formule foot-lambert de l'industrie : fL = Φ ÷ (surface × 10,764) = ${F(flux,0)} ÷ ${F(Si*10.764,1)} ft² = ${F(flux/(Si*10.764),1)} fL ; nits = fL × 3,426 × ρ = <b>${F(flux/(Si*10.764)*3.426*t.rho,0)} nits</b> — doit égaler la ligne Luminance (sources cliquables ci-dessous)`],
+   ["Contraste effectif",`C = (E + E<sub>amb</sub>) ÷ (E∕N + E<sub>amb</sub>) = (${F(t.EA,0)} + ${F(t.Ea,1)}) ÷ (${F(t.EA,0)}∕${F(d.N,0)} + ${F(t.Ea,1)}) = <b>${F(t.C,1)}:1</b>`],
+   ["Définition",`px/m = pixels ÷ largeur = ${port?g.pr.h:g.pr.w} ÷ ${F(g.w,2)} = <b>${F(g.pxm,0)} px/m</b>, soit ${F(1000/g.pxm,1)} mm par pixel`],
+   ["Courant",`I = P ÷ (U × cosφ) = ${F(t.Wtot,0)} ÷ (230 × 0,9) = <b>${F(t.Amp,1)} A</b>`]];
+  if(t.EB!=null && isFinite(t.EB)){
+    const T=Math.min(t.EA,t.EB)/Math.max(t.EA,t.EB);
+    rows.push(["Égalisation A/B",`T = E faible ∕ E fort = ${F(Math.min(t.EA,t.EB),0)} ∕ ${F(Math.max(t.EA,t.EB),0)} = ${F(T,2)} → filtre ND = −log₁₀(T) = <b>${F(-Math.log10(T),2)}</b> · diaphragmes = log₂(1∕T) = <b>${F(-Math.log2(T),1)}</b>`]);
+  }
+  el.innerHTML=rows.map(([n,x])=>`<div class="eq"><span class="f">${n}</span> — ${x}</div>`).join('');
+}
+
+/* ---------- Suggestions automatiques (v4.3) ----------
+   Pour chaque machine du parc, chaque optique compatible et chaque orientation,
+   on cherche la config mono-projecteur qui couvre la surface en entier dans la
+   fenêtre de recul, au recul le plus court possible (= lux maximum) ; sinon la
+   plus grande image possible. Mêmes formules que le reste de l'outil. */
+function bestMono(u, lensId, orient, env){
+  const m=MODELS[u.model], L=LENSES[lensId], ar=m.w/m.h;
+  const dmin=S.reculMin||1, dmax=S.recul;
+  // largeur "paysage" requise pour couvrir toute la surface dans cette orientation
+  const needW = orient==='P' ? Math.max(S.w*ar, S.h) : Math.max(S.w, S.h*ar);
+  const wMin=dmin/L.trMax, wMax=dmax/L.trMin;
+  let w0, full;
+  if(needW<=wMax){ w0=Math.max(needW,wMin); full=w0>=needW; }
+  else { w0=wMax; full=false; }
+  let d=Math.min(dmax,Math.max(dmin, w0*L.trMin));
+  const tr=Math.min(L.trMax,Math.max(L.trMin, d/w0));
+  w0=d/tr;
+  const wi=orient==='P'?w0/ar:w0, hi=orient==='P'?w0:w0/ar;
+  const loss=m.lamp?env.wear:LASER_DERATE;
+  const E=unitLm(u)*env.mode*(1-loss)*env.eta/(wi*hi);
+  const C=contrast(E,env.Ea,m.N), lvl=levelOf(C);
+  const cov=(Math.min(wi,S.w)*Math.min(hi,S.h))/(S.w*S.h);
+  const zoom=L.trMax===L.trMin?0:(tr-L.trMin)/(L.trMax-L.trMin)*100;
+  return {u,lensId,orient,d,tr,zoom,wi,hi,E,C,lvl,cov:Math.min(1,cov),full};
+}
+let BESTMAP={};
+function renderSugg(Ea,mode,wear,eta){
+  const el=$('sugg'); if(!el) return;
+  const env={Ea,mode,wear,eta};
+  const all=[];
+  for(const u of PARC)
+    for(const lensId of lensesFor(u.model))
+      for(const o of ['L','P'])
+        all.push(bestMono(u,lensId,o,env));
+  // par machine+optique, garder la meilleure orientation
+  BESTMAP={};
+  for(const r of all){ const k=r.u.id+'|'+r.lensId;
+    if(!BESTMAP[k] || r.cov>BESTMAP[k].cov+1e-9 || (Math.abs(r.cov-BESTMAP[k].cov)<1e-9 && r.E>BESTMAP[k].E)) BESTMAP[k]=r; }
+  const SUGG=Object.values(BESTMAP).sort((a,b)=> b.cov-a.cov || b.E-a.E).slice(0,8);
+  // --- matrice d'un coup d'oeil : une ligne par machine, une puce par optique (TR croissant)
+  const mx=sortedUnits().map(u=>{
+    const chips=lensesFor(u.model)
+      .map(id=>BESTMAP[u.id+'|'+id]).filter(Boolean)
+      .sort((a,b)=>LENSES[a.lensId].trMin-LENSES[b.lensId].trMin)
+      .map(r=>{const L=LENSES[r.lensId], ref=L.nom.split(' ')[0];
+        const cls=r.full?'ok':(r.cov>=0.5?'mid':'no');
+        const sym=r.full?'✓':(r.cov>=0.5?'◐':'✕');
+        const lab=cls==='no'?`${sym} ${ref}`:`${sym} ${ref} · ${F(r.d,1)} m · ${F(r.E,0)} lx`;
+        const tip=cls==='ok'?`couvre 100 % (${r.orient==='P'?'portrait':'paysage'}, image ${F(r.wi,1)}×${F(r.hi,1)} m)`
+                 :cls==='mid'?`couvre ${F(r.cov*100,0)} % au mieux`:`couvre moins de 50 % dans la fenêtre de recul`;
+        return `<button class="chipS ${cls}" ${cls==='no'?'disabled':`data-apply="${r.u.id}|${r.lensId}"`} title="${tip}">${lab}</button>`;
+      }).join('');
+    return `<div class="mx"><b>${esc(ownShort(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''} <span style="color:var(--dim)">${MODELS[u.model].court}</span> ${lmBadge(unitLm(u))}</b>${chips}</div>`;
+  }).join('');
+  el.innerHTML=mx+`
+  <div class="note">✓ couvre toute la surface (puce = optique, recul conseillé, lux) · ◐ couverture partielle · ✕ impossible dans la fenêtre de recul. Touche une puce pour appliquer la configuration. Optiques classées de la plus courte à la plus longue.</div>
+  <details><summary>Classement détaillé (couverture puis éclairement)</summary><table>
+    <thead><tr><th>Machine</th><th>Optique</th><th>Orient.</th><th>Recul</th><th>Image</th><th>Lux</th><th>Rendu</th><th>Couverture</th><th></th></tr></thead>
+    <tbody>${SUGG.map(r=>{const m=MODELS[r.u.model], L=LENSES[r.lensId];
+      return `<tr>
+        <td>${esc(ownShort(r.u))}${tagTxt(r.u)?' · '+esc(tagTxt(r.u)):''} <span style="color:var(--dim)">${m.court}</span> ${lmBadge(unitLm(r.u))}</td>
+        <td>${L.nom.split(' ')[0]} <span style="color:var(--dim)">${focClass(L)}</span></td>
+        <td>${r.orient==='P'?'portrait':'paysage'}</td>
+        <td><b>${F(r.d,1)} m</b></td>
+        <td>${F(r.wi,1)} × ${F(r.hi,1)} m</td>
+        <td><b style="color:${r.lvl.col}">${F(r.E,0)}</b></td>
+        <td><b style="color:${r.lvl.col}">${r.lvl.nom}</b></td>
+        <td>${r.full?'<b style="color:#3ddc84">100 %</b>':`<b style="color:${r.cov<0.8?'#ff3b30':'#ff9500'}">${F(r.cov*100,0)} %</b>`}</td>
+        <td><button data-apply="${r.u.id}|${r.lensId}">Appliquer</button></td></tr>`;}).join('')}</tbody></table></details>
+  <div class="note">Pour deux machines : choisis un préréglage dans la barre d'outils puis « Harmoniser ».</div>`;
+}
+
+/* ---------- Cahier des charges location (v4.4) ----------
+   Références du marché vérifiées sommairement (⚠ indicatives, à recouper
+   avec le loueur) — même gabarit que MODELS/LENSES, champ src obligatoire. */
+const MARKET=[
+  {nom:'Optique Epson ELPLX02S seule (ultra courte 0,35:1 fixe)', tr:[0.35,0.35], lm:null,
+   note:"compatible EB-PU2010 → EB-PU2220B : montée sur la machine Novelty du parc, elle double sa surface possible à recul égal",
+   src:'annonces revendeurs + table Epson série EB-PU'},
+  {nom:'Panasonic PT-RZ990 / PT-RZ120 + ET-DLE020 (0,28–0,30:1)', tr:[0.28,0.30], lm:[9400,12600],
+   note:"1-DLP laser WUXGA ; l'optique demande une bague de fixation sur ces châssis",
+   src:'fiche Panasonic ET-DLE020 (0,280–0,299 en WUXGA)'},
+  {nom:'Gamme Epson EB-PU (PU1007 → PU2220, 7–20 k lm laser WUXGA)', tr:[0.35,7.7], lm:[7000,20000],
+   note:'parc d’optiques ELPLX / ELPLU / ELPLM / ELPLL du très court au très long',
+   src:'catalogue Epson'}
+];
+function renderSpecs(env){
+  const el=$('specs'); if(!el) return;
+  const ar=16/10; // panneau WUXGA 16:10, standard du marché actuel
+  const needW=Math.max(S.w, S.h*ar), needH=needW/ar, aire=needW*needH;
+  const dmin=S.reculMin||1, dmax=S.recul;
+  const trMax=dmax/needW, trMin=dmin/needW;
+  const cible=+$('cible').value, qual=LEVELS[+$('qual').value];
+  const Ntyp=2000;
+  const eReq=needE(qual.min, Ntyp, env.Ea);
+  const lmFor=E=>E*aire/env.eta/(1-LASER_DERATE)/env.mode;
+  const refs=MARKET.filter(r=>r.tr[0]<=trMax+1e-9 && (!r.lm || r.lm[1]>=lmFor(cible)*0.8));
+  el.innerHTML=`<dl>
+    <dt>Image à produire</dt><dd><b>${F(needW,1)} × ${F(needH,1)} m</b> (${F(aire,0)} m², panneau 16:10) pour couvrir la surface ${F(S.w,1)} × ${F(S.h,1)} m.</dd>
+    <dt>Optique requise</dt><dd>rapport de projection <b>≤ ${F(trMax,2)}:1</b> placé au recul max (${F(dmax,1)} m) ;
+      pour se mettre au plus près (${F(dmin,1)} m) : <b>≤ ${F(trMin,2)}:1</b>. Plus le rapport est petit, plus la surface est grande à recul égal.</dd>
+    <dt>Flux minimum</dt><dd>pour <b>${F(cible,0)} lux</b> (cible réglée) : <b>${F(lmFor(cible),0)} lm annoncés</b> ;
+      pour « ${qual.nom} » avec ${F(env.Ea,0)} lx parasites (contraste natif typique ${F(Ntyp,0)}:1) :
+      ${isFinite(eReq)?`<b>${F(lmFor(eReq),0)} lm</b>`:'<b>inatteignable</b> quel que soit le flux — réduis la lumière parasite'} .</dd>
+    <dt>Références du marché</dt><dd>${refs.length?refs.map(r=>`⚠ <b>${esc(r.nom)}</b> — ${esc(r.note)} <span style="color:var(--dim)">(${esc(r.src)})</span>`).join('<br>'):'aucune des références pré-listées ne descend assez court : vise une optique ≤ '+F(trMax,2)+':1.'}</dd>
+  </dl>
+  <div class="note">Formules : largeur = recul ÷ rapport ; flux = lux × m² ÷ η ÷ (1 − dérive). Donne-moi ce cahier des charges et un nom de modèle : je recoupe la fiche fabricant et je l'ajoute au parc.</div>`;
+}
+
+/* ---------- Branchements interface v4 ---------- */
+function initUIControls(){
+  document.querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{UI.theme=b.dataset.th;applyUI();});
+  document.querySelectorAll('[data-fsz]').forEach(b=>b.onclick=()=>{UI.fs=b.dataset.fsz;applyUI();});
+  document.querySelectorAll('[data-dn]').forEach(b=>b.onclick=()=>{UI.dens=b.dataset.dn;applyUI();});
+  const map={palA:'a',palB:'b',palBg:'bg',palPanel:'panel',palTxt:'txt'};
+  for(const [id,key] of Object.entries(map)){
+    const el=$(id); el.value=UI.pal[key];
+    el.addEventListener('input',()=>{UI.pal[key]=el.value;UI.theme='perso';applyUI();});
+  }
+  $('surfRow').addEventListener('click',e=>{
+    const b=e.target.closest('[data-si]'); if(!b) return;
+    $('surf').value=b.dataset.si; $('surf').dispatchEvent(new Event('change'));
+  });
+  $('btnPrint').onclick=()=>{ $('report').innerHTML=buildReport();
+    document.body.classList.add('printing'); window.print(); };
+  window.addEventListener('afterprint',()=>{
+    document.body.classList.remove('printing'); $('report').innerHTML=''; });
+  $('btnReport').onclick=()=>dlBlob(`rapport-mapping-${stamp()}.html`,
+    `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rapport mapping ${stamp()}</title><style>body{font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:900px;margin:20px auto;padding:0 16px;color:#111;background:#fff}table{border-collapse:collapse;font-size:13px}td,th{border:1px solid #999;padding:4px 8px;text-align:left}h1{font-size:22px}h2{font-size:16px;margin-top:24px}ul{padding-left:20px}a{color:#0a5}</style></head><body>${buildReport()}</body></html>`,
+    'text/html');
+  $('btnCfg').onclick=exportCfg;
+  $('btnImp').onclick=()=>$('impFile').click();
+  $('impFile').addEventListener('change',e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const r=new FileReader();
+    r.onload=()=>{ try{ importCfg(JSON.parse(r.result)); alert('Configuration importée.'); }
+                   catch(err){ alert('Fichier invalide : '+err.message); } };
+    r.readAsText(file); e.target.value='';
+  });
+  document.addEventListener('click',e=>{
+    document.querySelectorAll('details.menu[open]').forEach(d=>{ if(!d.contains(e.target)) d.open=false; });
+  });
+  $('sugg').addEventListener('click',e=>{
+    const b=e.target.closest('[data-apply]'); if(!b) return;
+    const r=BESTMAP[b.dataset.apply]; if(!r) return;
+    applyNb(1);
+    P.A.unit=r.u.id; P.A.lens=r.lensId; P.A.orient=r.orient;
+    P.A.dist=Math.round(r.d*100)/100; P.A.zoom=r.zoom;
+    P.A.x=0; P.A.y=S.h/2; P.A.ph=0; P.A.px=0;
+    syncSelects(); renderParc(); calc();
+    document.getElementById('diag').scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  $('menuExport').querySelectorAll('button').forEach(b=>
+    b.addEventListener('click',()=>{ $('menuExport').open=false; }));
+  document.querySelectorAll('details.menu .closeMenu').forEach(b=>
+    b.addEventListener('click',()=>{ b.closest('details').open=false; }));
+}
+
+/* ---------- Initialisation ---------- */
+opt('surf', SURFACES.map((s,i)=>[i,s.nom]));
+(() => {
+  const groups={};
+  for(const [id,m] of Object.entries(MATS)) (groups[m.g]??=[]).push([id,`${m.nom}${id==='perso'?'':` (ρ ${F(m.rho,2)})`}`]);
+  $('mat').innerHTML = Object.entries(groups).map(([g,items])=>
+    `<optgroup label="${esc(g)}">${items.map(([v,t])=>`<option value="${v}">${esc(t)}</option>`).join('')}</optgroup>`).join('');
+})();
+opt('tex',  Object.entries(TEXS).map(([k,t])=>[k,t.nom]));
+opt('ambSel', AMBS.map(a=>[a[0],a[1]]));
+opt('qual', LEVELS.slice(2).map((l,i)=>[i+2,`${l.nom} (≥ ${F(l.min,1)}:1)`]));
+$('qual').value = CONFIG.qualiteDefaut;
+$('legend').innerHTML = LEVELS.map(l=>`<span><i style="background:${l.col}"></i><b>${l.nom}</b> ${l.min?'≥ '+F(l.min,1):'< 1,5'}:1</span>`).join('');
+$('sources').innerHTML = `
+  <b>Parc</b> : projecteur + optique au choix pour chaque image. Le flux annoncé est celui du constructeur, réduit par le mode, l'usure et le rendement η.
+  Le décalage d'optique requis est contrôlé par rapport aux plages connues ; la projection oblique (keystone) n'est pas modélisée.
+  Vérifier dans le manuel les plages de shift et les inclinaisons autorisées avant un usage en portrait.
+  <table>
+    <tr><th>Référence</th><th>Données retenues</th><th>Fiabilité</th></tr>
+    <tr><td>Hitachi CP-X10000</td><td>7500 lm ANSI (toutes les sources), XGA 1024×768 4:3, 540 W (lampe 350 W), contraste 2500:1 avec iris (natif retenu : 1000:1), décalage d'optique ±85 % vertical / ±60 % horizontal</td><td>flux, résolution, puissance, décalage : fiche Hitachi et ProjectorCentral ; <b>contraste natif estimé</b></td></tr>
+    <tr><td>SD-800 (= SD-804 chez ProjectorCentral)</td><td>60–78 mm, TR 2,26–2,93 (revendeur : 2,2–2,9)</td><td>deux sources concordantes ; nom à confirmer sur l'optique</td></tr>
+    <tr><td>SL-802</td><td>34–41 mm, TR 1,27–1,53, 4,4 kg</td><td>fiche Hitachi (focale) et ProjectorCentral (TR)</td></tr>
+    <tr><td>SL-803, LL-805</td><td>TR 1,50–2,20 et 2,92–5,33</td><td>⚠ ProjectorCentral seul</td></tr>
+    <tr><td>Eiki LC-HDT1000</td><td>10 000 lm (avec l'optique AH-22051), 2K 2048×1080, 3000:1, 1000 W, lampe 380 W</td><td>fiche constructeur et ProjectorCentral</td></tr>
+    <tr><td>Eiki AH-32021</td><td>fixe, TR 0,82:1, f 30 mm</td><td>⚠ source secondaire (base projector-database), <b>à recouper</b></td></tr>
+    <tr><td>Epson EB-PU2220B</td><td>20 000 lm laser, WUXGA 1920×1200 16:10, contraste natif 2500:1, ~1100 W</td><td>lumens et résolution confirmés ; contraste, puissance et dérive laser (10 %) <b>estimés</b></td></tr>
+    <tr><td>Epson ELPLU04</td><td>zoom courte focale, TR 0,64–0,77 (gamme 9 000–20 000 lm)</td><td>⚠ annonces revendeurs Epson, <b>à recouper</b> avec le calculateur Epson</td></tr>
+    <tr><td>Epson ELPLM15</td><td>zoom standard, TR 1,57–2,56</td><td>⚠ annonces revendeurs, <b>à recouper</b></td></tr>
+    <tr><td>Epson EB-L1500UH</td><td>12 000 lm laser (20 000 h), WUXGA 1920×1200, 833 W (mode normal), décalage d'optique motorisé ±60 % / ±18 %</td><td>fiche Epson ; <b>contraste natif estimé</b> (2 500 000:1 dynamique annoncé) · référence du devis</td></tr>
+    <tr><td>Epson EB-L1755U</td><td>15 000 lm laser (10 500 en silencieux), WUXGA, contraste natif 2000:1 ; optiques ELPLU03 (0,48–0,57), ELPLU04 (0,64–0,77), ELPLM15 (1,57–2,56), ELPLL08 (5,28–7,72)</td><td>VP de la conduite « soir J » ; flux et résolution : fiche Epson ; ⚠ consommation estimée, décalage d'optique non documenté, plages ELPLU03/ELPLL08 d'une fiche spec secondaire</td></tr>
+    <tr><td>ELPLU04 sur EB-L1500UH</td><td>TR 0,64–0,77 retenu (fiche Epson série L1500/L1505)</td><td>⚠ le devis annonce 0,87–1,06 « pour 12K » : c'est la plage des séries G7000/L1000 — <b>à confirmer avec le loueur</b></td></tr>
+  </table>`;
+
+$('mois').textContent = '· ' + new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'}) + ' · v'+VERSION;
+$('n1').onclick=()=>applyNb(1);
+$('n2').onclick=()=>applyNb(2);
+$('pairSel').innerHTML='<option value="">Parc : préréglages…</option>'
+  +PAIRS.map((p,i)=>`<option value="${i}">${esc(p[0])}</option>`).join('');
+$('pairSel').addEventListener('change',e=>{ if(e.target.value!=='') applyPair(PAIRS[+e.target.value][1]); });
+card('A'); card('B');
+$('sort').addEventListener('change',()=>{ renderParc(); syncSelects(); });
+$('surf').addEventListener('change',setSurface);
+['cw','ch','cr'].forEach(id=>$(id).addEventListener('change',setSurface));
+document.querySelectorAll('[data-lay]').forEach(b=>b.onclick=()=>layout(b.dataset.lay));
+$('swap').onclick=()=>{ [P.A.unit,P.B.unit]=[P.B.unit,P.A.unit]; [P.A.lens,P.B.lens]=[P.B.lens,P.A.lens]; syncSelects(); renderParc(); layout(curLay); };
+$('ambSel').addEventListener('change',e=>{ const a=AMBS.find(x=>x[0]===e.target.value); if(a[2]!=null) $('amb').value=a[2]; calc(); });
+$('amb').addEventListener('input',()=>{ const v=+$('amb').value; const m=AMBS.find(a=>a[2]===v); $('ambSel').value=m?m[0]:'perso'; calc(); });
+$('mat').addEventListener('change',calc);
+$('tex').addEventListener('change',calc);
+$('rhoPerso').addEventListener('input',calc);
+['mode','usure','cible','eta','qual','acc','hours'].forEach(id=>$(id).addEventListener('input',calc));
+applyUI(false);
+initUIControls();
+renderParc();
+syncSelects();
+applyNb(2);
+setSurface();
+$('usure').value=CONFIG.usureLampe; $('cible').value=CONFIG.cibleLux; $('eta').value=CONFIG.rendement;
+$('acc').value=CONFIG.accessoiresW; $('hours').value=CONFIG.dureeH; $('cr').value=CONFIG.reculMaxPerso;
+(o=>{o.value=CONFIG.modeEco; o.textContent='Éco (≈ '+Math.round(CONFIG.modeEco*100)+' %)';})($('mode').options[1]);
 calc();
+APP_READY=true;
 </script>
 </body>
 </html>

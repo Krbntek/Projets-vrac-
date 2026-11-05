@@ -58,13 +58,19 @@ const PROJET = {
    CATALOGUE — un type = dimensions, paramètres éditables, dessin. "dims" sert aux emprises et aux contrôles.
    ===================================================================== */
 const P = (cle, label, def, step=0.5, choix=null) => ({cle, label, def, step, choix});
+// Parc VP : le même que outils/calculateur-mapping.html (MODELS / LENSES / PARC)
+const MODELES = {x10000:{nom:"Hitachi CP-X10000 (WLTP, ×2)", lm:7500, W:540}, hdt1000:{nom:"Eiki LC-HDT1000 (Grégoire)", lm:10000, W:1000}, pu2220b:{nom:"Epson EB-PU2220B (Novelty)", lm:20000, W:1100}, l1500uh:{nom:"Epson EB-L1500UH (Bargraph, devis)", lm:12000, W:833}, l1755u:{nom:"Epson EB-L1755U (Bargraph, soir J)", lm:15000, W:1000}};
+const OPTIQUES = {sd:{nom:"SD-804 standard 2,26–2,93", tr:[2.26,2.93], proj:['x10000']}, sl:{nom:"SL-802 courte 1,27–1,53", tr:[1.27,1.53], proj:['x10000']}, ah32021:{nom:"AH-32021 fixe 0,82", tr:[.82,.82], proj:['hdt1000']}, lu03:{nom:"ELPLU03 très courte 0,48–0,57", tr:[.48,.57], proj:['l1755u']}, lu04:{nom:"ELPLU04 courte 0,64–0,77", tr:[.64,.77], proj:['pu2220b','l1500uh','l1755u']}, lm15:{nom:"ELPLM15 standard 1,57–2,56", tr:[1.57,2.56], proj:['pu2220b','l1500uh','l1755u']}, ll08:{nom:"ELPLL08 longue 5,28–7,72", tr:[5.28,7.72], proj:['l1755u']}};
 const TYPES = {
   camion:   {nom:"Camion 20 m³ (écran, hayon DJ)", l:7.3, p:2.2, h:3.15, coul:0xeef0f2, params:[P('hayon','hayon déployé (m)',1.6,.1), P('ecran','écran sur le flanc (1/0)',1,1)]},
   podium:   {nom:"Podium (praticables 2 × 1 m)", l:3, p:2, h:1, coul:0x6b5540, params:[P('nx','praticables en largeur',3,1), P('nz','praticables en profondeur',1,1), P('hauteur','hauteur (m)',1,.2), P('gardecorps','garde-corps (1/0)',1,1)],
              dims:o => ({l:o.nx*1, p:o.nz*2, h:o.hauteur})},
   pile_subs:{nom:"Pile de subs + têtes", l:.7, p:.8, h:2.8, coul:0x1c1f24, params:[P('subs','subs (SACH118)',4,1), P('tetes','têtes dessus',4,1), P('ouverture','ouverture °',90,5), P('portee','portée (m)',60,5)],
              dims:o => ({l:.7, p:.8, h:o.subs*.7 + o.tetes*.35})},
-  vp:       {nom:"Vidéoprojecteur", l:.6, p:.7, h:.42, coul:0x222730, params:[P('altitude','altitude lentille (m)',3.5,.1), P('lumens','lumens',40000,5000), P('tr','rapport optique',2.02,.01), P('cx','centre image x',0,.5), P('cy','centre image y',8,.5)], dims:o => ({l:.6,p:.7,h:.42})},
+  vp:       {nom:"Vidéoprojecteur", l:.6, p:.7, h:.42, coul:0x222730, params:[P('modele','modèle',"pu2220b",null,Object.keys(MODELES)), P('optique','optique',"lu04",null,Object.keys(OPTIQUES)), P('tr','rapport optique (dans la plage de l\'optique)',.64,.01), P('altitude','altitude lentille (m)',3.5,.1), P('cx','centre image x',0,.5), P('cy','centre image y',8,.5)], dims:o => ({l:.6,p:.7,h:.42})},
+  parled:   {nom:"PAR LED au sol", l:.3, p:.3, h:.35, coul:0x111418, params:[P('tx','cible x',0,.5), P('ty','cible y',4,.5), P('tz','cible z (recul)',0,.5)]},
+  tente:    {nom:"Tente garage 3 × 5 (arc, 3 m)", l:3, p:5, h:3, coul:0x8f9aa6, params:[]},
+  regie_table:{nom:"Régie non couverte (table 2 × 0,8)", l:2, p:.8, h:.75, coul:0x6b5a44, params:[]},
   laser:    {nom:"Laser", l:.4, p:.4, h:.24, coul:0x111418, params:[P('altitude','altitude (m)',3.5,.1), P('tx','cible x',-6,.5), P('ty','cible y',17,.5), P('w','puissance W',10,1)]},
   tonnelle: {nom:"Tonnelle 3 × 3", l:3, p:3, h:3, coul:0xe8e0c8, params:[P('usage','usage',"asso",null,["prevention","secours","accueil","buvette","asso"])]},
   totem:    {nom:"Totem lumière 5,5 m", l:1, p:1, h:5.5, coul:0x2b2f36, params:[P('h','hauteur (m)',5.5,.5)]},
@@ -75,7 +81,7 @@ const TYPES = {
   armoire:  {nom:"Armoire / coffret électrique", l:1.2, p:.6, h:1.8, coul:0x9aa4ae, params:[P('ampères','calibre A',63,16)]},
   ge:       {nom:"Groupe électrogène", l:3.2, p:1.5, h:2.2, coul:0x5b6168, params:[P('kva','kVA',100,10)]},
   barnum:   {nom:"Tonnelle repos / stockage 6 × 3", l:6, p:3, h:2.4, coul:0xd8d2c4, params:[]},
-  balise:   {nom:"Repère / agent", l:.5, p:.5, h:1.8, coul:0xffd23f, params:[]}
+  balise:   {nom:"Bénévole service d'ordre", l:.5, p:.5, h:1.8, coul:0xffd23f, params:[]}
 };
 const dimsDe = o => { const t = TYPES[o.type]; const d = t.dims ? t.dims(o) : {l:t.l, p:t.p, h:t.h}; return {l:d.l, p:d.p, h:d.h}; };
 let uid = 1;
@@ -87,17 +93,21 @@ function creer(type, x, z, extra){ const t = TYPES[type], o = {id:uid++, type, x
    ===================================================================== */
 function configMinimale(){
   uid = 1; const o = [];
-  const cam = creer('camion', 0, 20);                                   // garé en long, hayon côté cour
-  o.push(cam);
-  o.push(creer('vp', -1.2, 20, {nom:"VP 1 (toit du camion)", altitude:3.5, cx:-5, cy:7}), creer('vp', 1.2, 20, {nom:"VP 2 (toit du camion)", altitude:3.5, cx:5, cy:7}));
-  o.push(creer('laser', -3, 20, {nom:"Laser 1 (toit)", altitude:3.5, tx:-6, ty:17}), creer('laser', 3, 20, {nom:"Laser 2 (toit)", altitude:3.5, tx:8, ty:20}));
-  o.push(creer('podium', 0, 24, {nom:"Petit podium 3 praticables", nx:3, nz:1, hauteur:1, rot:Math.PI}));   // face au public (+z)
-  o.push(creer('pile_subs', -6.5, 20, {nom:"Sono jardin", subs:4, tetes:4, rot:Math.PI}), creer('pile_subs', 6.5, 20, {nom:"Sono cour", subs:4, tetes:4, rot:Math.PI}));
-  [["Prévention","prevention",-14],["Poste de secours","secours",-10],["Accueil","accueil",-6],["Buvette","buvette",6],["Asso 1","asso",10],["Asso 2","asso",14]].forEach(([n,u,x]) => o.push(creer('tonnelle', x, 4.5, {nom:n, usage:u, rot:Math.PI})));   // comptoir vers le public
-  o.push(creer('regie', 0, 15.5, {nom:"Régie derrière le camion… ou devant ?"}));
-  o.push(creer('armoire', -11, 20, {nom:"Coffret 63 A"}));
-  return {version:3, nom:"Minimale — camion à 20 m", zone:{x0:-20, x1:20, z0:24, z1:60, densite:2}, objets:o,
-    inventaire:{camion:1, podium:3, pile_subs:0, vp:0, laser:0, tonnelle:4, totem:0, wash:0, regie:0, tour:0, delai:0, armoire:1, ge:0, barnum:1, balise:0}};
+  o.push(creer('camion', 0, 20, {nom:"Camion 20 m³ NoName"}));                                   // garé en long, hayon côté cour
+  o.push(creer('vp', -1.2, 20, {nom:"VP 1 · Epson PU2220B + ELPLU04 (toit)", modele:'pu2220b', optique:'lu04', tr:.64, altitude:3.5, cx:0, cy:9}));
+  o.push(creer('vp', 1.2, 20, {nom:"VP 2 · Epson L1755U + ELPLU03 (toit)", modele:'l1755u', optique:'lu03', tr:.57, altitude:3.5, cx:0, cy:9}));
+  o.push(creer('laser', -3, 20, {nom:"Laser 1 (à identifier)", altitude:3.5, tx:-6, ty:17}), creer('laser', 3, 20, {nom:"Laser 2 (à identifier)", altitude:3.5, tx:8, ty:20}));
+  o.push(creer('podium', 0, 24, {nom:"Podium 3 praticables 2 × 1", nx:3, nz:1, hauteur:1, rot:Math.PI}));   // face au public (+z)
+  o.push(creer('pile_subs', -6.5, 20, {nom:"Pile jardin (4 SACH118 + 4 têtes)", subs:4, tetes:4, rot:Math.PI}), creer('pile_subs', 6.5, 20, {nom:"Pile cour (4 + 4)", subs:4, tetes:4, rot:Math.PI}), creer('pile_subs', -2.5, 24.5, {nom:"Pile podium (4 + 2)", subs:4, tetes:2, rot:Math.PI}));
+  [["Prévention","prevention",-12],["Poste de secours","secours",-7.5],["Accueil","accueil",7.5],["Buvette","buvette",12]].forEach(([n,u,x]) => o.push(creer('tonnelle', x, 4.5, {nom:n, usage:u, rot:Math.PI})));   // le long de la façade, comptoir vers le public
+  [[-4,25.3],[4,25.3],[-9,22],[9,22]].forEach(([x,z],i) => o.push(creer('parled', x, z, {nom:"PAR LED " + (i+1), tx:0, ty:1.5, tz:24})));
+  o.push(creer('regie_table', -8.5, 17.5, {nom:"Régie (table, non couverte)"}));
+  o.push(creer('tente', 10.5, 16.5, {nom:"Tente garage 3 × 5 (repli régie)"}));
+  o.push(creer('armoire', -12, 17, {nom:"Coffret : 2 × 32 A tri (son / vidéo + lumière)", ampères:63}));
+  o.push(creer('ge', -14, 13, {nom:"Groupe 63 A tri (si pas de coffret forain)", kva:44}));
+  [[-20,24],[20,24],[-20,42],[20,42],[-10,60],[10,60]].forEach(([x,z],i) => o.push(creer('balise', x, z, {nom:"Bénévole " + (i+1)})));
+  return {version:3, nom:"Minimale — camion NoName à 20 m", zone:{x0:-20, x1:20, z0:26, z1:60, densite:2}, objets:o,
+    inventaire:{camion:0, podium:3, pile_subs:0, laser:0, tonnelle:4, totem:0, wash:0, parled:0, tente:1, regie_table:1, regie:0, tour:0, delai:0, armoire:0, ge:0, barnum:0, balise:6, 'vp:x10000':2, 'vp:hdt1000':0, 'vp:pu2220b':0, 'vp:l1500uh':0, 'vp:l1755u':0}};
 }
 let ETAT = configMinimale();
 try { const s = JSON.parse(localStorage.getItem('studio-implantation') || 'null'); if (s && s.version === 3 && s.objets){ ETAT = s; uid = Math.max(1, ...s.objets.map(o => o.id + 1)); } } catch(e){}
@@ -155,12 +165,17 @@ function dessiner(o, g){
       for (let i = 0; i < o.travees; i++) for (let y = .3; y < o.plancher; y += 2) zs.forEach((z,zi) => g.add(cyl([xs[i+((i+zi)%2)],y,z],[xs[i+1-((i+zi)%2)],Math.min(y+2,o.plancher),z],.02,mg)));
       g.add(boite(-w/2,w/2,o.plancher,o.plancher+.06,-1.5,1.5, mat(0x8f949a, {metalness:.5}))); g.add(boite(-w/2-.2,w/2+.2,o.plancher+2.5,o.plancher+2.6,-1.7,1.7, mat(0xf2f2f2, {transparent:true, opacity:.5}))); break; }
     case 'delai': { for (const [dx,dz] of [[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]]) g.add(cyl([dx,0,dz],[dx*.3,o.h-1,dz*.3],.025,ma)); g.add(cyl([0,0,0],[0,o.h-.9,0],.05,ma)); for (let k = 0; k < o.tetes; k++) g.add(boite(-.5,.5,o.h-.9+k*.36,o.h-.9+(k+1)*.36-.02,-.3,.3,mn)); break; }
+    case 'parled': { g.add(boite(-.15,.15,0,.12,-.15,.15,mn)); const c = new THREE.Mesh(new THREE.CylinderGeometry(.11,.13,.3,10), mn); c.position.set(0,.3,0); c.rotation.x = -.9; g.add(c); break; }
+    case 'tente': { for (let i = 0; i <= 8; i++){ const a = i/8*Math.PI, x0 = Math.cos(a)*1.5, y0 = Math.sin(a)*1.5+1.5; if (i < 8){ const b = (i+1)/8*Math.PI; for (const z of [-2.5, 2.5]) g.add(cyl([x0,Math.min(3,y0),z],[Math.cos(b)*1.5,Math.min(3,Math.sin(b)*1.5+1.5),z],.03,ma)); } }
+      const toit = new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,5,16,1,true,0,Math.PI), mat(t.coul, {side:THREE.DoubleSide, transparent:true, opacity:.85})); toit.rotation.z = Math.PI/2; toit.rotation.y = Math.PI/2; toit.position.y = 1.5; g.add(toit); g.add(boite(-1.5,1.5,0,1.5,-2.5,2.5, mat(t.coul, {transparent:true, opacity:.5}))); break; }
+    case 'regie_table': { g.add(boite(-1,1,.7,.75,-.4,.4, mat(t.coul))); [[-.9,-.35],[.9,-.35],[.9,.35],[-.9,.35]].forEach(([x,z]) => g.add(cyl([x,0,z],[x,.7,z],.02,ma))); g.add(boite(-.8,.8,.75,.9,-.3,.3, mat(0x202226, {metalness:.5}))); break; }
     case 'armoire': case 'ge': case 'balise': { g.add(boite(-d.l/2,d.l/2,0,d.h,-d.p/2,d.p/2, mat(t.coul, {metalness:.3}))); break; }
     case 'barnum': { [[-3,-1.5],[3,-1.5],[3,1.5],[-3,1.5]].forEach(([x,z]) => g.add(cyl([x,0,z],[x,2.2,z],.035,ma))); g.add(boite(-3.1,3.1,2.27,2.33,-1.6,1.6, mat(t.coul))); break; }
   }
 }
 // géométrie dérivée : image d'un VP, faisceaux, emprise au sol (AABB approchée après rotation)
-function image(o){ const z = o.z, W = z/o.tr, H = W/(16/9); return {W, H, x0:o.cx-W/2, x1:o.cx+W/2, y0:o.cy-H/2, y1:o.cy+H/2}; }
+const lumensDe = o => (MODELES[o.modele] || {lm:o.lumens||10000}).lm;
+function image(o){ const z = o.z, W = z/o.tr, H = W/(16/10); return {W, H, x0:o.cx-W/2, x1:o.cx+W/2, y0:o.cy-H/2, y1:o.cy+H/2}; }
 function emprise(o){ const d = dimsDe(o), c = Math.abs(Math.cos(o.rot)), s = Math.abs(Math.sin(o.rot)), l = d.l*c + d.p*s, p = d.l*s + d.p*c, ex = o.type === 'camion' ? (o.hayon||0) : 0;
   return {x0:o.x-l/2-(ex?0:0), x1:o.x+l/2+ex*c, z0:o.z-p/2, z1:o.z+p/2+ex*s, y0:0, y1:d.h + (o.type==='vp'||o.type==='laser' ? o.altitude : 0)}; }
 function rafraichir(){
@@ -175,7 +190,7 @@ function rafraichir(){
       const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); dyn.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:nuit?.12:.08, side:THREE.DoubleSide, depthWrite:false})));
       const li = new THREE.Mesh(new THREE.PlaneGeometry(im.W, im.H), new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:nuit?.45:.22, depthWrite:false})); li.position.set((im.x0+im.x1)/2, (im.y0+im.y1)/2, .06); dyn.add(li); }
     if (o.type === 'laser'){ const ev = evaluerLaser(o), col = {ok:0x3fb950, warn:0xf0883e, bad:0xf85149}[ev.statut]; dyn.add(cyl([o.x,o.altitude,o.z],[o.tx,o.ty,0],.05, new THREE.MeshBasicMaterial({color:col}))); }
-    if (o.type === 'wash'){ dyn.add(cone([o.x,.5,o.z],[o.tx,o.ty,0],4.5,0xb36bff,nuit?.14:.06)); } });
+    if (o.type === 'wash'){ dyn.add(cone([o.x,.5,o.z],[o.tx,o.ty,0],4.5,0xb36bff,nuit?.14:.06)); } if (o.type === 'parled'){ dyn.add(cone([o.x,.35,o.z],[o.tx,o.ty,o.tz],1.8,0xb36bff,nuit?.16:.06)); } });
   sauver(); panneau();
 }
 /* =====================================================================
@@ -183,8 +198,10 @@ function rafraichir(){
    ===================================================================== */
 const chevauche = (a,b) => a.x1 > b.x0 && a.x0 < b.x1 && a.z1 > b.z0 && a.z0 < b.z1;
 function evaluerVP(o){ const Z = ETAT.zone, F = PROJET.facade, im = image(o), res = []; let st = 'ok'; const p = (n,m) => { res.push({niv:n, msg:m}); if (n==='bad') st='bad'; else if (n==='warn'&&st!=='bad') st='warn'; };
-  if (o.z < 55 || o.z > 80) p('warn', `recul ${o.z.toFixed(0)} m : image de ${im.W.toFixed(1)} × ${im.H.toFixed(1)} m seulement (${(im.W*im.H/(F.largeur*29.2)*100).toFixed(0)} % du corps de façade) ; 55–80 m couvre tout`); else p('ok', `recul ${o.z.toFixed(0)} m, image ${im.W.toFixed(1)} × ${im.H.toFixed(1)} m`);
-  const lux = o.lumens*.7/(im.W*im.H); p(lux < 25 ? 'warn' : 'ok', `${Math.round(lux)} lux sur la zone (≥ 25 lisible la nuit, 80 confortable)`);
+  const opt = OPTIQUES[o.optique]; if (opt && (o.tr < opt.tr[0]-1e-6 || o.tr > opt.tr[1]+1e-6)) p('bad', `rapport ${o.tr} hors de la plage ${opt.nom}`); if (opt && !opt.proj.includes(o.modele)) p('bad', `${opt.nom} ne se monte pas sur ${MODELES[o.modele].nom}`);
+  const part = Math.max(0, Math.min(im.x1, F.largeur/2) - Math.max(im.x0, -F.largeur/2)) * Math.max(0, Math.min(im.y1, 29.2) - Math.max(im.y0, 0)) / (F.largeur*29.2);
+  p(part < .3 ? 'warn' : 'ok', `recul ${o.z.toFixed(0)} m, rapport ${o.tr} : image ${im.W.toFixed(1)} × ${im.H.toFixed(1)} m = ${(part*100).toFixed(0)} % du corps de façade`);
+  const lux = lumensDe(o)*.7/(im.W*im.H); p(lux < 20 ? 'warn' : 'ok', `${MODELES[o.modele] ? MODELES[o.modele].lm.toLocaleString('fr-FR') + ' lm → ' : ''}${Math.round(lux)} lux sur l'image (≥ 20 lisible de nuit, 80 confortable)`);
   // bas du faisceau au-dessus des têtes partout où il survole le public
   const zMin = Math.max(Z.z0, 0), zMax = Math.min(Z.z1, o.z); let pire = Infinity;
   if (zMax > zMin){ for (let z = zMin; z <= zMax; z += 1){ const u = z/o.z, yb = im.y0 + (o.altitude-im.y0)*u, xl = im.x0 + (o.x-im.x0)*u, xr = im.x1 + (o.x-im.x1)*u; if (xr > Z.x0 && xl < Z.x1) pire = Math.min(pire, yb); } }
@@ -228,8 +245,10 @@ function panneau(){
     if (o.type === 'vp') h += items(evaluerVP(o).res); if (o.type === 'laser') h += items(evaluerLaser(o).res); }
   else h += `<p class="note">Clique un objet dans la 3D ou dans la liste.</p>`;
   h += `<h2>Objets (${ETAT.objets.length})</h2>` + ETAT.objets.map(x => `<div class="obj ${x.id===selId?'cur':''}" data-sel="${x.id}"><span>${x.nom}</span><span class="note">${TYPES[x.type].nom.split(' ')[0]}</span></div>`).join('');
-  const compte = {}; ETAT.objets.forEach(x => compte[x.type] = (compte[x.type]||0) + (x.type==='podium' ? x.nx*x.nz : x.type==='pile_subs' ? 1 : 1));
-  h += `<h2>Inventaire : posé / possédé → à louer</h2><table><tr><th>Type</th><th>posé</th><th>possédé</th><th>à louer</th></tr>` + Object.keys(TYPES).map(k => { const pose = compte[k]||0, pos = ETAT.inventaire[k]||0, lou = Math.max(0, pose-pos); return `<tr><td>${TYPES[k].nom}${k==='podium'?' (praticables)':''}</td><td>${pose}</td><td><input type="number" min="0" step="1" data-inv="${k}" value="${pos}"></td><td style="color:${lou?'var(--warn)':'var(--ok)'}">${lou}</td></tr>`; }).join('') + `</table>
+  const compte = {}; ETAT.objets.forEach(x => { const k = x.type === 'vp' ? 'vp:' + x.modele : x.type; compte[k] = (compte[k]||0) + (x.type==='podium' ? x.nx*x.nz : 1); });
+  const cles = Object.keys(TYPES).filter(k => k !== 'vp').concat(Object.keys(MODELES).map(m => 'vp:' + m)), libelle = k => k.startsWith('vp:') ? 'VP ' + MODELES[k.slice(3)].nom : TYPES[k].nom + (k==='podium'?' (praticables)':'');
+  h += `<h2>Inventaire : posé / possédé → à louer</h2><table><tr><th>Type</th><th>posé</th><th>possédé</th><th>à louer</th></tr>` + cles.map(k => { const pose = compte[k]||0, pos = ETAT.inventaire[k]||0, lou = Math.max(0, pose-pos); return `<tr><td>${libelle(k)}</td><td>${pose}</td><td><input type="number" min="0" step="1" data-inv="${k}" value="${pos}"></td><td style="color:${lou?'var(--warn)':'var(--ok)'}">${lou}</td></tr>`; }).join('') + `</table>
+    <p class="note">Les quantités possédées sont gardées dans le navigateur et dans l'export JSON (clé <code>inventaire</code>).</p>
     <p class="note">Subs et têtes : ${ETAT.objets.filter(x=>x.type==='pile_subs').reduce((a,x)=>a+x.subs,0)} subs et ${ETAT.objets.filter(x=>x.type==='pile_subs').reduce((a,x)=>a+x.tetes,0) + ETAT.objets.filter(x=>x.type==='delai').reduce((a,x)=>a+x.tetes,0)} têtes posés.</p>`;
   h += `<h2>Zone public</h2><div class="grid"><label>x0<input type="number" step="1" data-zone="x0" value="${Z.x0}"></label><label>x1<input type="number" step="1" data-zone="x1" value="${Z.x1}"></label><label>pers/m²<input type="number" step=".5" data-zone="densite" value="${Z.densite}"></label><label>z0 (recul)<input type="number" step="1" data-zone="z0" value="${Z.z0}"></label><label>z1<input type="number" step="1" data-zone="z1" value="${Z.z1}"></label></div>`;
   const evs = ETAT.objets.filter(x=>x.type==='vp').map(evaluerVP).concat(ETAT.objets.filter(x=>x.type==='laser').map(evaluerLaser)), site = evaluerSite();
