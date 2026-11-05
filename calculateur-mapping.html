@@ -11,7 +11,10 @@
   v4.2 bloc CONFIG des parametres principaux en tete du code, catalogues standardises avec
   gabarits et sources par entree, ajout Epson EB-L1500UH (devis) et ELPLU04/ELPLM15 associees -
   v4.3 proprietaires retrouves (WLTP, Bargraph, Novelty a confirmer), pastille proprio et badge
-  de puissance, classe de focale sur les cartes, suggestions automatiques de machine par surface.
+  de puissance, classe de focale sur les cartes, suggestions automatiques de machine par surface -
+  v4.4 proprietaires confirmes (Novelty, Gregoire/Le Bercail), symboles legendes au lieu de
+  nouvelles couleurs, menus fermables au telephone, recoupement externe refaisable (foot-lambert,
+  liens sources), matrice rapide machine x optique, cahier des charges location avec references.
 -->
 <html lang="fr">
 <head>
@@ -160,8 +163,14 @@
   .unitCard{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:94px;padding:6px;flex-shrink:0}
   .unitCard b{font-size:.78em;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .unitCard small{font-size:.7em;color:var(--dim)}
-  .unitCard em{font-style:normal;font-size:.72em;font-weight:700}
-  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:baseline;border:1px solid #fff5}
+  .unitCard em,#parcBody em,#sugg em{font-style:normal;font-size:.72em;font-weight:700;color:var(--txt);background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 5px;white-space:nowrap}
+  .mx{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+  .mx:last-of-type{border-bottom:none}
+  .mx>b{min-width:170px;font-size:.9em}
+  .chipS{border:1px solid var(--line);border-radius:6px;padding:4px 9px;font-size:.82em;background:var(--panel2);color:var(--txt);cursor:pointer}
+  .chipS.ok{border-color:#3ddc84} .chipS.mid{border-color:#ff9500}
+  .chipS.no{opacity:.5;cursor:default;border-style:dashed}
+  .closeMenu{align-self:flex-end;padding:4px 10px;font-size:.8em}
   .unitCard.on{border-width:2px;padding:5px}
   .A .unitCard.on{border-color:var(--a)} .B .unitCard.on{border-color:var(--b)}
   #surf{display:none} .card .unit{display:none}
@@ -201,6 +210,7 @@
     </div>
     <select id="pairSel" aria-label="Préréglages du parc"></select>
     <details class="menu" id="menuExport"><summary>Exporter</summary><div>
+      <button class="closeMenu" type="button">✕ Fermer</button>
       <button id="btnPrint">Imprimer / PDF</button>
       <button id="btnReport">Rapport HTML</button>
       <button id="btnCfg">Config JSON</button>
@@ -208,6 +218,7 @@
       <input type="file" id="impFile" accept="application/json,.json" style="display:none">
     </div></details>
     <details class="menu" id="menuDisp"><summary>Affichage</summary><div>
+      <button class="closeMenu" type="button">✕ Fermer</button>
       <div class="dispRow"><span>Palette</span>
         <button data-th="sombre">Sombre</button><button data-th="clair">Clair</button>
         <button data-th="max">Contraste max</button><button data-th="perso">Personnalisée</button></div>
@@ -267,6 +278,9 @@
   <h3>Suggestions — quelle machine pour cette surface ?</h3>
   <div class="panel parcWrap" id="sugg"></div>
 
+  <h3>Si le parc ne suffit pas — cahier des charges pour louer</h3>
+  <div class="panel" id="specs"></div>
+
   <h3>Projecteurs</h3>
   <div class="projs" id="projs">
     <div class="card A" id="cardA"></div>
@@ -309,6 +323,7 @@
         <tbody id="parcBody"></tbody>
       </table>
     </div>
+    <div class="note"><b>Légende</b> : ▂ &lt;8 k lm · ▂▄ 8–12 k · ▂▄▆ 12–16 k · ▂▄▆█ &gt;16 k — LASER = source laser (pas d'usure de lampe) — ⚠ = donnée non confirmée par le fabricant.</div>
     <div class="note">Les noms et puissances sont enregistrés dans ce navigateur (cet appareil). Pour les garder partout, demande-moi de les mettre dans le fichier.</div>
   </div>
 
@@ -371,6 +386,11 @@
       <li>ANSI/AVIXA 3M-2011 — rapport de contraste utile d'une image projetée selon l'usage</li>
       <li>IEC 61966-2-1 (sRGB) — gamma ≈ 2,2 utilisé pour convertir niveau vidéo ↔ luminance</li>
       <li>Densité optique d'un filtre ND : D = −log₁₀(T)</li>
+      <li><b>Vérifier par toi-même, hors de cet outil</b> — resaisis Φ (flux utile), la surface et ρ dans :
+        <a href="https://elitescreens.com/2016/04/ansi-lumens-foot-lamberts-image-luminance/" style="color:var(--b)">Elite Screens — ANSI lumens &amp; foot-lamberts</a> ·
+        <a href="https://www.avnetwork.com/avnetwork/understanding-image-luminance" style="color:var(--b)">AVNetwork — Understanding Image Luminance</a> ·
+        <a href="https://xtenav.com/projector-throw-ratio/" style="color:var(--b)">XTEN-AV — Throw ratio = distance ÷ largeur</a>.
+        La ligne « Recoupement externe » ci-dessus fait déjà ce calcul avec tes valeurs courantes.</li>
       <li>Fiches produits recoupées : tableau des sources en bas de page (Hitachi, Eiki, Epson, ProjectorCentral, B&amp;H)</li>
     </ul>
   </details>
@@ -383,7 +403,7 @@
 const $ = id => document.getElementById(id);
 const F = (v,d=1) => (isFinite(v)? v.toLocaleString('fr-FR',{minimumFractionDigits:d,maximumFractionDigits:d}) : '–');
 const esc = s => String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-const VERSION='4.3';
+const VERSION='4.4';
 
 /* ======================================================================
    =============  PARAMÈTRES PRINCIPAUX — À MODIFIER ICI  ===============
@@ -524,8 +544,8 @@ const PARC = [
   // tag = repère libre pour distinguer deux machines identiques (numéro, autocollant…)
   {id:'cpx-1', model:'x10000', owner:'WLTP', tag:'nº1', lens:'sd'},
   {id:'cpx-2', model:'x10000', owner:'WLTP', tag:'nº2', lens:'sl'},
-  {id:'hdt-1', model:'hdt1000',owner:'', lens:'ah32021'},            // propriétaire inconnu — à renseigner
-  {id:'pu-1',  model:'pu2220b',owner:'Novelty ?', lens:'lu04'},      // référence repérée au catalogue Novelty — à confirmer
+  {id:'hdt-1', model:'hdt1000',owner:'Grégoire (Le Bercail)', lens:'ah32021'},
+  {id:'pu-1',  model:'pu2220b',owner:'Novelty', lens:'lu04'},
   {id:'l15-1', model:'l1500uh',owner:'Bargraph', lens:'lu04'},       // devis Bargraph
   {id:'l17-1', model:'l1755u', owner:'Bargraph', lens:'lu03'}        // conduite « soir J », prestataire Bargraph
 ];
@@ -729,7 +749,7 @@ function renderParc(){
     const m=MODELS[u.model];
     const used=['A','B'].filter(k=>P[k].unit===u.id && (nb===2 || k==='A')).join(' + ')||'—';
     return `<tr>
-      <td style="text-align:center">${vpIcon(u.model,44)}<br><i class="dot" style="background:${ownColor(u)}"></i>${lmBadge(unitLm(u))}</td>
+      <td style="text-align:center">${vpIcon(u.model,44)}<br>${lmBadge(unitLm(u))}</td>
       <td><input type="text" data-own="${u.id}" value="${esc(u.owner)}" placeholder="Propriétaire à renseigner"></td>
       <td><input type="text" data-tag="${u.id}" value="${esc(u.tag||'')}" placeholder="nº, repère…" style="min-width:70px;width:80px"></td>
       <td>${m.court}</td>
@@ -944,6 +964,7 @@ function calc(){
   renderHarmo(G,E,Lm);
   renderEq(EQD,{Ea,rho:rhoEff,EA:E.A,EB:nb===2?E.B:null,C:Cc.A,L:Lm.A,Wtot,Amp});
   renderSugg(Ea,mode,wear,eta);
+  renderSpecs({Ea,mode,eta});
 }
 
 /* ---------- Schéma : couleur = qualité de rendu, échelle en mètres ---------- */
@@ -1188,24 +1209,18 @@ function vpIcon(model,w){
   </svg>`;
 }
 const ownShort=u=>((u.owner||'').trim().split(/\s+/)[0])||'proprio ?';
-const OWNCOLS=['#ffb454','#4cc9f0','#3ddc84','#b18cff','#ff5e7a','#ffd60a','#6fcf97'];
-function ownColor(u){
-  const n=(u.owner||'').trim(); if(!n) return '#5a6676';
-  let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))>>>0;
-  return OWNCOLS[h%OWNCOLS.length];
-}
-const lmColor=lm=> lm<8000?'#7ea4c8': lm<12000?'#ffd60a': lm<16000?'#ff9500':'#ff5e7a';
+// symboles légendés (pas de nouveau code couleur) : ▂▄▆█ = tranche de puissance
+const lmBars=lm=> lm<8000?'▂':lm<12000?'▂▄':lm<16000?'▂▄▆':'▂▄▆█';
+const lmBadge=lm=>`<em title="tranche de puissance (voir légende du parc)">${lmBars(lm)} ${F(lm/1000,1)}k lm</em>`;
 function focClass(L){
   const t=(L.trMin+L.trMax)/2;
   return t<0.8?'très courte': t<1.6?'courte': t<3?'standard':'longue';
 }
-const lmBadge=lm=>{const c=lmColor(lm);
-  return `<em style="background:${c}22;border:1px solid ${c};color:${c};border-radius:4px;padding:0 5px">${F(lm/1000,1)}k lm</em>`;};
 function renderUnitRow(k){
   const el=$(`${k}_units`); if(!el) return;
   el.innerHTML=sortedUnits().map(u=>{const m=MODELS[u.model];
     return `<button class="unitCard${P[k].unit===u.id?' on':''}" data-u="${u.id}" title="${esc(unitLabel(u))}">
-      ${vpIcon(u.model,58)}<b><i class="dot" style="background:${ownColor(u)}"></i>${esc(ownShort(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''}</b><small>${m.court}</small>
+      ${vpIcon(u.model,58)}<b>${esc(ownShort(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''}</b><small>${m.court}</small>
       ${lmBadge(unitLm(u))}<small>${focClass(LENSES[u.lens])} ${F(LENSES[u.lens].trMin,2)}${LENSES[u.lens].trMax>LENSES[u.lens].trMin?'–'+F(LENSES[u.lens].trMax,2):''}:1</small></button>`;}).join('');
 }
 function coneSVG(L,color){
@@ -1302,6 +1317,7 @@ function renderEq(d,t){
    ["Flux utile",`Φ = annoncés × mode × (1−perte) × η = ${F(d.lmNom,0)} × ${F(d.mode,2)} × ${F(1-d.loss,2)} × ${F(d.eta,2)} = <b>${F(flux,0)} lm</b>`],
    ["Éclairement",`E = Φ ÷ surface de l'image = ${F(flux,0)} ÷ ${F(Si,2)} m² = <b>${F(t.EA,0)} lux</b>`],
    ["Luminance",`L = E × ρ ÷ π = ${F(t.EA,0)} × ${F(t.rho,2)} ÷ 3,1416 = <b>${F(t.L,0)} cd/m² (nits)</b>`],
+   ["Recoupement externe",`formule foot-lambert de l'industrie : fL = Φ ÷ (surface × 10,764) = ${F(flux,0)} ÷ ${F(Si*10.764,1)} ft² = ${F(flux/(Si*10.764),1)} fL ; nits = fL × 3,426 × ρ = <b>${F(flux/(Si*10.764)*3.426*t.rho,0)} nits</b> — doit égaler la ligne Luminance (sources cliquables ci-dessous)`],
    ["Contraste effectif",`C = (E + E<sub>amb</sub>) ÷ (E∕N + E<sub>amb</sub>) = (${F(t.EA,0)} + ${F(t.Ea,1)}) ÷ (${F(t.EA,0)}∕${F(d.N,0)} + ${F(t.Ea,1)}) = <b>${F(t.C,1)}:1</b>`],
    ["Définition",`px/m = pixels ÷ largeur = ${port?g.pr.h:g.pr.w} ÷ ${F(g.w,2)} = <b>${F(g.pxm,0)} px/m</b>, soit ${F(1000/g.pxm,1)} mm par pixel`],
    ["Courant",`I = P ÷ (U × cosφ) = ${F(t.Wtot,0)} ÷ (230 × 0,9) = <b>${F(t.Amp,1)} A</b>`]];
@@ -1337,7 +1353,7 @@ function bestMono(u, lensId, orient, env){
   const zoom=L.trMax===L.trMin?0:(tr-L.trMin)/(L.trMax-L.trMin)*100;
   return {u,lensId,orient,d,tr,zoom,wi,hi,E,C,lvl,cov:Math.min(1,cov),full};
 }
-let SUGG=[];
+let BESTMAP={};
 function renderSugg(Ea,mode,wear,eta){
   const el=$('sugg'); if(!el) return;
   const env={Ea,mode,wear,eta};
@@ -1346,16 +1362,33 @@ function renderSugg(Ea,mode,wear,eta){
     for(const lensId of lensesFor(u.model))
       for(const o of ['L','P'])
         all.push(bestMono(u,lensId,o,env));
-  // par machine+optique, garder la meilleure orientation ; trier couverture puis lux
-  const best={};
+  // par machine+optique, garder la meilleure orientation
+  BESTMAP={};
   for(const r of all){ const k=r.u.id+'|'+r.lensId;
-    if(!best[k] || r.cov>best[k].cov+1e-9 || (Math.abs(r.cov-best[k].cov)<1e-9 && r.E>best[k].E)) best[k]=r; }
-  SUGG=Object.values(best).sort((a,b)=> b.cov-a.cov || b.E-a.E).slice(0,8);
-  el.innerHTML=`<table>
+    if(!BESTMAP[k] || r.cov>BESTMAP[k].cov+1e-9 || (Math.abs(r.cov-BESTMAP[k].cov)<1e-9 && r.E>BESTMAP[k].E)) BESTMAP[k]=r; }
+  const SUGG=Object.values(BESTMAP).sort((a,b)=> b.cov-a.cov || b.E-a.E).slice(0,8);
+  // --- matrice d'un coup d'oeil : une ligne par machine, une puce par optique (TR croissant)
+  const mx=sortedUnits().map(u=>{
+    const chips=lensesFor(u.model)
+      .map(id=>BESTMAP[u.id+'|'+id]).filter(Boolean)
+      .sort((a,b)=>LENSES[a.lensId].trMin-LENSES[b.lensId].trMin)
+      .map(r=>{const L=LENSES[r.lensId], ref=L.nom.split(' ')[0];
+        const cls=r.full?'ok':(r.cov>=0.5?'mid':'no');
+        const sym=r.full?'✓':(r.cov>=0.5?'◐':'✕');
+        const lab=cls==='no'?`${sym} ${ref}`:`${sym} ${ref} · ${F(r.d,1)} m · ${F(r.E,0)} lx`;
+        const tip=cls==='ok'?`couvre 100 % (${r.orient==='P'?'portrait':'paysage'}, image ${F(r.wi,1)}×${F(r.hi,1)} m)`
+                 :cls==='mid'?`couvre ${F(r.cov*100,0)} % au mieux`:`couvre moins de 50 % dans la fenêtre de recul`;
+        return `<button class="chipS ${cls}" ${cls==='no'?'disabled':`data-apply="${r.u.id}|${r.lensId}"`} title="${tip}">${lab}</button>`;
+      }).join('');
+    return `<div class="mx"><b>${esc(ownShort(u))}${tagTxt(u)?' · '+esc(tagTxt(u)):''} <span style="color:var(--dim)">${MODELS[u.model].court}</span> ${lmBadge(unitLm(u))}</b>${chips}</div>`;
+  }).join('');
+  el.innerHTML=mx+`
+  <div class="note">✓ couvre toute la surface (puce = optique, recul conseillé, lux) · ◐ couverture partielle · ✕ impossible dans la fenêtre de recul. Touche une puce pour appliquer la configuration. Optiques classées de la plus courte à la plus longue.</div>
+  <details><summary>Classement détaillé (couverture puis éclairement)</summary><table>
     <thead><tr><th>Machine</th><th>Optique</th><th>Orient.</th><th>Recul</th><th>Image</th><th>Lux</th><th>Rendu</th><th>Couverture</th><th></th></tr></thead>
-    <tbody>${SUGG.map((r,i)=>{const m=MODELS[r.u.model], L=LENSES[r.lensId];
+    <tbody>${SUGG.map(r=>{const m=MODELS[r.u.model], L=LENSES[r.lensId];
       return `<tr>
-        <td><i class="dot" style="background:${ownColor(r.u)}"></i>${esc(ownShort(r.u))}${tagTxt(r.u)?' · '+esc(tagTxt(r.u)):''} <span style="color:var(--dim)">${m.court}</span> ${lmBadge(unitLm(r.u))}</td>
+        <td>${esc(ownShort(r.u))}${tagTxt(r.u)?' · '+esc(tagTxt(r.u)):''} <span style="color:var(--dim)">${m.court}</span> ${lmBadge(unitLm(r.u))}</td>
         <td>${L.nom.split(' ')[0]} <span style="color:var(--dim)">${focClass(L)}</span></td>
         <td>${r.orient==='P'?'portrait':'paysage'}</td>
         <td><b>${F(r.d,1)} m</b></td>
@@ -1363,9 +1396,45 @@ function renderSugg(Ea,mode,wear,eta){
         <td><b style="color:${r.lvl.col}">${F(r.E,0)}</b></td>
         <td><b style="color:${r.lvl.col}">${r.lvl.nom}</b></td>
         <td>${r.full?'<b style="color:#3ddc84">100 %</b>':`<b style="color:${r.cov<0.8?'#ff3b30':'#ff9500'}">${F(r.cov*100,0)} %</b>`}</td>
-        <td><button data-apply="${i}">Appliquer</button></td></tr>`;}).join('')}</tbody></table>
-  <div class="note">Meilleure configuration à une machine par couple machine + optique, dans la fenêtre de recul de la surface
-  (couverture d'abord, puis éclairement). Pour deux machines : choisis un préréglage dans la barre d'outils puis « Harmoniser ».</div>`;
+        <td><button data-apply="${r.u.id}|${r.lensId}">Appliquer</button></td></tr>`;}).join('')}</tbody></table></details>
+  <div class="note">Pour deux machines : choisis un préréglage dans la barre d'outils puis « Harmoniser ».</div>`;
+}
+
+/* ---------- Cahier des charges location (v4.4) ----------
+   Références du marché vérifiées sommairement (⚠ indicatives, à recouper
+   avec le loueur) — même gabarit que MODELS/LENSES, champ src obligatoire. */
+const MARKET=[
+  {nom:'Optique Epson ELPLX02S seule (ultra courte 0,35:1 fixe)', tr:[0.35,0.35], lm:null,
+   note:"compatible EB-PU2010 → EB-PU2220B : montée sur la machine Novelty du parc, elle double sa surface possible à recul égal",
+   src:'annonces revendeurs + table Epson série EB-PU'},
+  {nom:'Panasonic PT-RZ990 / PT-RZ120 + ET-DLE020 (0,28–0,30:1)', tr:[0.28,0.30], lm:[9400,12600],
+   note:"1-DLP laser WUXGA ; l'optique demande une bague de fixation sur ces châssis",
+   src:'fiche Panasonic ET-DLE020 (0,280–0,299 en WUXGA)'},
+  {nom:'Gamme Epson EB-PU (PU1007 → PU2220, 7–20 k lm laser WUXGA)', tr:[0.35,7.7], lm:[7000,20000],
+   note:'parc d’optiques ELPLX / ELPLU / ELPLM / ELPLL du très court au très long',
+   src:'catalogue Epson'}
+];
+function renderSpecs(env){
+  const el=$('specs'); if(!el) return;
+  const ar=16/10; // panneau WUXGA 16:10, standard du marché actuel
+  const needW=Math.max(S.w, S.h*ar), needH=needW/ar, aire=needW*needH;
+  const dmin=S.reculMin||1, dmax=S.recul;
+  const trMax=dmax/needW, trMin=dmin/needW;
+  const cible=+$('cible').value, qual=LEVELS[+$('qual').value];
+  const Ntyp=2000;
+  const eReq=needE(qual.min, Ntyp, env.Ea);
+  const lmFor=E=>E*aire/env.eta/(1-LASER_DERATE)/env.mode;
+  const refs=MARKET.filter(r=>r.tr[0]<=trMax+1e-9 && (!r.lm || r.lm[1]>=lmFor(cible)*0.8));
+  el.innerHTML=`<dl>
+    <dt>Image à produire</dt><dd><b>${F(needW,1)} × ${F(needH,1)} m</b> (${F(aire,0)} m², panneau 16:10) pour couvrir la surface ${F(S.w,1)} × ${F(S.h,1)} m.</dd>
+    <dt>Optique requise</dt><dd>rapport de projection <b>≤ ${F(trMax,2)}:1</b> placé au recul max (${F(dmax,1)} m) ;
+      pour se mettre au plus près (${F(dmin,1)} m) : <b>≤ ${F(trMin,2)}:1</b>. Plus le rapport est petit, plus la surface est grande à recul égal.</dd>
+    <dt>Flux minimum</dt><dd>pour <b>${F(cible,0)} lux</b> (cible réglée) : <b>${F(lmFor(cible),0)} lm annoncés</b> ;
+      pour « ${qual.nom} » avec ${F(env.Ea,0)} lx parasites (contraste natif typique ${F(Ntyp,0)}:1) :
+      ${isFinite(eReq)?`<b>${F(lmFor(eReq),0)} lm</b>`:'<b>inatteignable</b> quel que soit le flux — réduis la lumière parasite'} .</dd>
+    <dt>Références du marché</dt><dd>${refs.length?refs.map(r=>`⚠ <b>${esc(r.nom)}</b> — ${esc(r.note)} <span style="color:var(--dim)">(${esc(r.src)})</span>`).join('<br>'):'aucune des références pré-listées ne descend assez court : vise une optique ≤ '+F(trMax,2)+':1.'}</dd>
+  </dl>
+  <div class="note">Formules : largeur = recul ÷ rapport ; flux = lux × m² ÷ η ÷ (1 − dérive). Donne-moi ce cahier des charges et un nom de modèle : je recoupe la fiche fabricant et je l'ajoute au parc.</div>`;
 }
 
 /* ---------- Branchements interface v4 ---------- */
@@ -1403,7 +1472,7 @@ function initUIControls(){
   });
   $('sugg').addEventListener('click',e=>{
     const b=e.target.closest('[data-apply]'); if(!b) return;
-    const r=SUGG[+b.dataset.apply]; if(!r) return;
+    const r=BESTMAP[b.dataset.apply]; if(!r) return;
     applyNb(1);
     P.A.unit=r.u.id; P.A.lens=r.lensId; P.A.orient=r.orient;
     P.A.dist=Math.round(r.d*100)/100; P.A.zoom=r.zoom;
@@ -1413,6 +1482,8 @@ function initUIControls(){
   });
   $('menuExport').querySelectorAll('button').forEach(b=>
     b.addEventListener('click',()=>{ $('menuExport').open=false; }));
+  document.querySelectorAll('details.menu .closeMenu').forEach(b=>
+    b.addEventListener('click',()=>{ b.closest('details').open=false; }));
 }
 
 /* ---------- Initialisation ---------- */
