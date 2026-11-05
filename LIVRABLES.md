@@ -7,7 +7,8 @@
 | **La vidéo de la démo** | `exports/demo-soiree.mp4` (60 s, 1280 × 720) | VLC, lecteur vidéo, pièce jointe de mail |
 | **Les photos** | `exports/photos/01…15-*.jpg` | légendes dans `exports/dossier/plan.json` |
 | **Tester la démo animée en local** | `outils/demo-evenement.html` | double-clic dans Chrome ou Firefox (charge three.js depuis le réseau) ; en ligne : https://claude.ai/artifact/QpJGtbyad4SqdgK5KoQqnQ |
-| **Déplacer les éléments moi-même** | `outils/implantation-3d.html` | double-clic ; glisser-déposer, variantes, Exporter JSON ; en ligne : https://claude.ai/artifact/71WAU7uw4JiS5Rf54EmmNE |
+| **Tester des configurations** (studio : catalogue, quantités possédées / à louer, souris, contrôles, PNG, JSON v3) | `outils/studio-implantation.html` | double-clic ; en ligne : https://claude.ai/artifact/STUDIO |
+| **Déplacer les éléments du plan complet** | `outils/implantation-3d.html` | double-clic ; glisser-déposer, variantes, Exporter JSON ; en ligne : https://claude.ai/artifact/71WAU7uw4JiS5Rf54EmmNE |
 | Calculer un autre mapping | `outils/calculateur-mapping.html` | double-clic |
 | **Ouvrir dans Unreal Engine 5** | `unreal/MappingSaintDenis/MappingSaintDenis.uproject` puis *Tools → Execute Python Script* → `Content/Python/assembler_scene.py` | mode d'emploi : `unreal/README.md` |
 | Les éléments 3D un par un | `unreal/MappingSaintDenis/Content/Import/Elements/SM_*.glb` (+ `.obj`) | import dans Unreal, Blender, Cinema 4D… |

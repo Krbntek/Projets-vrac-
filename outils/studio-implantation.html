@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio d'implantation</title>
+<style>
+  :root{--bg:#0e1116;--panel:#161b22;--line:#2a3138;--txt:#e6edf3;--dim:#8b949e;--acc:#ffb454;--ok:#3fb950;--warn:#f0883e;--bad:#f85149}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);font:13.5px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  #wrap{display:grid;grid-template-columns:1fr 400px;height:100%}
+  #view{position:relative;min-height:0} #view canvas{display:block;width:100%;height:100%}
+  #bar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 20px)}
+  button,select,input{background:#21262d;color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:5px 9px;font:inherit}
+  button{cursor:pointer} button:hover{border-color:var(--acc)} button.on{background:var(--acc);color:#1a1200;border-color:var(--acc)} button.sec{background:transparent;color:var(--dim)}
+  #aide{position:absolute;bottom:10px;left:10px;background:rgba(14,17,22,.85);padding:8px 10px;border-radius:8px;font-size:11.5px;color:var(--dim);max-width:520px;line-height:1.5}
+  #aide b{color:var(--txt)}
+  #sel{position:absolute;top:48px;left:10px;background:rgba(14,17,22,.85);padding:6px 10px;border-radius:8px;font-size:12px;color:var(--acc);display:none}
+  #side{background:var(--panel);border-left:1px solid var(--line);overflow:auto;padding:12px}
+  h2{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--acc);margin:16px 0 8px} h2:first-child{margin-top:0}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px} .grid label{font-size:11px;color:var(--dim);display:block} .grid input,.grid select{width:100%}
+  .item{padding:5px 8px;border-radius:6px;margin:3px 0;border-left:3px solid var(--dim);background:#0b0f14;font-size:12.5px}
+  .ok{border-color:var(--ok)} .warn{border-color:var(--warn)} .bad{border-color:var(--bad)}
+  table{width:100%;border-collapse:collapse;font-size:12px} td,th{padding:3px 4px;border-bottom:1px solid var(--line);text-align:left} td:last-child{text-align:right} td input{width:58px;padding:2px 5px;text-align:right}
+  .row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:center}
+  .obj{display:grid;grid-template-columns:1fr auto;gap:4px;padding:3px 6px;border-radius:5px;cursor:pointer;font-size:12.5px} .obj:hover{background:#0b0f14} .obj.cur{background:#2a2410;color:var(--acc)}
+  .note{font-size:11.5px;color:var(--dim)}
+  @media(max-width:900px){#wrap{grid-template-columns:1fr;grid-template-rows:58vh auto}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="view">
+    <div id="bar">
+      <button data-view="persp">Perspective</button><button data-view="plan">Plan</button><button data-view="public">Depuis le public</button><button data-view="facade">Face à la façade</button>
+      <button id="nuit">🌙 Nuit</button><button id="png">⤓ Image</button>
+    </div>
+    <div id="sel"></div>
+    <div id="aide"><b>Souris</b> : clic sur un objet = sélection · glisser = déplacer (pas 0,5 m, <b>Alt</b> libre) · molette / clic droit = caméra · <b>R</b> / <b>Maj+R</b> tourne de 15° · <b>flèches</b> déplacent de 0,5 m · <b>D</b> duplique · <b>Suppr</b> retire · <b>Ctrl+Z</b> annule. Les quantités possédées se saisissent dans l'inventaire ; ce qui dépasse est à louer.</div>
+  </div>
+  <aside id="side"></aside>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* =====================================================================
+   SITE — façade, voisins. Mètres. X = axe façade (+ côté cour), Y haut, Z = recul.
+   ===================================================================== */
+const PROJET = {
+  nom: "Basilique Saint-Denis — parvis",
+  facade: { largeur:32.5, hauteur:37.3, profondeur:3,
+    contour:[[-16.25,0],[-16.25,29.2],[-5.9,29.2],[0,37.3],[5.9,29.2],[5.2,29.2],[5.2,50.6],[6.1,50.6],[6.7,54.6],[10.5,60.1],[14.3,54.6],[14.9,50.6],[15.8,50.6],[15.8,29.2],[16.25,29.2],[16.25,0]],
+    rosace:{x:0,y:22.5,r:3}, ouvertures:[[-2.6,2.6,0,5.5],[-12.3,-6.9,0,3.3],[6.9,12.3,0,3.3],[-2.95,2.95,13.6,24],[-11.25,-7.95,12.2,23],[-7.95,-4.65,12.2,23],[7.95,11.25,12.2,23],[11.25,14.55,12.2,23],[6.3,9.5,30.1,36.3],[11.5,14.7,30.1,36.3],[6.3,9.5,37,49],[11.5,14.7,37,49]] },
+  voisins:[{x0:-55,x1:-30,z0:0,z1:50,h:16},{x0:32,x1:60,z0:0,z1:45,h:14},{x0:-60,x1:-40,z0:62,z1:100,h:12},{x0:40,x1:70,z0:62,z1:110,h:18}],
+  nef:{x0:-16.25,x1:16.25,z0:-108,z1:-3,h:24}
+};
+/* =====================================================================
+   CATALOGUE — un type = dimensions, paramètres éditables, dessin. "dims" sert aux emprises et aux contrôles.
+   ===================================================================== */
+const P = (cle, label, def, step=0.5, choix=null) => ({cle, label, def, step, choix});
+const TYPES = {
+  camion:   {nom:"Camion 20 m³ (écran, hayon DJ)", l:7.3, p:2.2, h:3.15, coul:0xeef0f2, params:[P('hayon','hayon déployé (m)',1.6,.1), P('ecran','écran sur le flanc (1/0)',1,1)]},
+  podium:   {nom:"Podium (praticables 2 × 1 m)", l:3, p:2, h:1, coul:0x6b5540, params:[P('nx','praticables en largeur',3,1), P('nz','praticables en profondeur',1,1), P('hauteur','hauteur (m)',1,.2), P('gardecorps','garde-corps (1/0)',1,1)],
+             dims:o => ({l:o.nx*1, p:o.nz*2, h:o.hauteur})},
+  pile_subs:{nom:"Pile de subs + têtes", l:.7, p:.8, h:2.8, coul:0x1c1f24, params:[P('subs','subs (SACH118)',4,1), P('tetes','têtes dessus',4,1), P('ouverture','ouverture °',90,5), P('portee','portée (m)',60,5)],
+             dims:o => ({l:.7, p:.8, h:o.subs*.7 + o.tetes*.35})},
+  vp:       {nom:"Vidéoprojecteur", l:.6, p:.7, h:.42, coul:0x222730, params:[P('altitude','altitude lentille (m)',3.5,.1), P('lumens','lumens',40000,5000), P('tr','rapport optique',2.02,.01), P('cx','centre image x',0,.5), P('cy','centre image y',8,.5)], dims:o => ({l:.6,p:.7,h:.42})},
+  laser:    {nom:"Laser", l:.4, p:.4, h:.24, coul:0x111418, params:[P('altitude','altitude (m)',3.5,.1), P('tx','cible x',-6,.5), P('ty','cible y',17,.5), P('w','puissance W',10,1)]},
+  tonnelle: {nom:"Tonnelle 3 × 3", l:3, p:3, h:3, coul:0xe8e0c8, params:[P('usage','usage',"asso",null,["prevention","secours","accueil","buvette","asso"])]},
+  totem:    {nom:"Totem lumière 5,5 m", l:1, p:1, h:5.5, coul:0x2b2f36, params:[P('h','hauteur (m)',5.5,.5)]},
+  wash:     {nom:"Wash de façade (au sol)", l:.9, p:.7, h:.5, coul:0x111418, params:[P('tx','cible x',-10,.5), P('ty','cible y',26,.5)]},
+  regie:    {nom:"Régie (conteneur 20')", l:6.06, p:2.44, h:2.59, coul:0xd7dde4, params:[P('surel','surélévation (m)',0,.2)]},
+  tour:     {nom:"Tour Layher", l:9.21, p:3.07, h:12.9, coul:0xb5bbc2, params:[P('travees','travées de 3,07',3,1), P('plancher','plancher (m)',10.3,.5)], dims:o => ({l:o.travees*3.07, p:3.07, h:o.plancher+2.6})},
+  delai:    {nom:"Tour de délai", l:1.4, p:1.4, h:5, coul:0x1c1f24, params:[P('h','hauteur (m)',5,.5), P('tetes','têtes',2,1)]},
+  armoire:  {nom:"Armoire / coffret électrique", l:1.2, p:.6, h:1.8, coul:0x9aa4ae, params:[P('ampères','calibre A',63,16)]},
+  ge:       {nom:"Groupe électrogène", l:3.2, p:1.5, h:2.2, coul:0x5b6168, params:[P('kva','kVA',100,10)]},
+  barnum:   {nom:"Tonnelle repos / stockage 6 × 3", l:6, p:3, h:2.4, coul:0xd8d2c4, params:[]},
+  balise:   {nom:"Repère / agent", l:.5, p:.5, h:1.8, coul:0xffd23f, params:[]}
+};
+const dimsDe = o => { const t = TYPES[o.type]; const d = t.dims ? t.dims(o) : {l:t.l, p:t.p, h:t.h}; return {l:d.l, p:d.p, h:d.h}; };
+let uid = 1;
+function creer(type, x, z, extra){ const t = TYPES[type], o = {id:uid++, type, x, z, rot:0, nom:t.nom}; t.params.forEach(p => o[p.cle] = p.def); return Object.assign(o, extra || {}); }
+
+/* =====================================================================
+   CONFIGURATIONS — la minimale demandée : camion à 20 m, VP et lasers sur son toit, petit podium
+   devant, stands le long de la façade, 2 piles de subs. Le public est derrière le camion.
+   ===================================================================== */
+function configMinimale(){
+  uid = 1; const o = [];
+  const cam = creer('camion', 0, 20);                                   // garé en long, hayon côté cour
+  o.push(cam);
+  o.push(creer('vp', -1.2, 20, {nom:"VP 1 (toit du camion)", altitude:3.5, cx:-5, cy:7}), creer('vp', 1.2, 20, {nom:"VP 2 (toit du camion)", altitude:3.5, cx:5, cy:7}));
+  o.push(creer('laser', -3, 20, {nom:"Laser 1 (toit)", altitude:3.5, tx:-6, ty:17}), creer('laser', 3, 20, {nom:"Laser 2 (toit)", altitude:3.5, tx:8, ty:20}));
+  o.push(creer('podium', 0, 24, {nom:"Petit podium 3 praticables", nx:3, nz:1, hauteur:1, rot:Math.PI}));   // face au public (+z)
+  o.push(creer('pile_subs', -6.5, 20, {nom:"Sono jardin", subs:4, tetes:4, rot:Math.PI}), creer('pile_subs', 6.5, 20, {nom:"Sono cour", subs:4, tetes:4, rot:Math.PI}));
+  [["Prévention","prevention",-14],["Poste de secours","secours",-10],["Accueil","accueil",-6],["Buvette","buvette",6],["Asso 1","asso",10],["Asso 2","asso",14]].forEach(([n,u,x]) => o.push(creer('tonnelle', x, 4.5, {nom:n, usage:u, rot:Math.PI})));   // comptoir vers le public
+  o.push(creer('regie', 0, 15.5, {nom:"Régie derrière le camion… ou devant ?"}));
+  o.push(creer('armoire', -11, 20, {nom:"Coffret 63 A"}));
+  return {version:3, nom:"Minimale — camion à 20 m", zone:{x0:-20, x1:20, z0:24, z1:60, densite:2}, objets:o,
+    inventaire:{camion:1, podium:3, pile_subs:0, vp:0, laser:0, tonnelle:4, totem:0, wash:0, regie:0, tour:0, delai:0, armoire:1, ge:0, barnum:1, balise:0}};
+}
+let ETAT = configMinimale();
+try { const s = JSON.parse(localStorage.getItem('studio-implantation') || 'null'); if (s && s.version === 3 && s.objets){ ETAT = s; uid = Math.max(1, ...s.objets.map(o => o.id + 1)); } } catch(e){}
+function sauver(){ try { localStorage.setItem('studio-implantation', JSON.stringify(ETAT)); } catch(e){} }
+let DL = null; try { if (window.claude && claude.use) claude.use('downloads').then(d => { DL = d; }).catch(() => {}); } catch(e){}
+async function telecharger(nom, data){ if (DL){ try { await DL.save({filename:nom, data}); return; } catch(e){ if (e && e.code === 'declined') return; } }
+  const blob = data instanceof Blob ? data : new Blob([data]), u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = nom; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 20000); }
+
+/* =====================================================================
+   3D
+   ===================================================================== */
+let scene, camera, renderer, controls, sun, hemi, nuit = false; const stat = new THREE.Group(), dyn = new THREE.Group();
+const mat = (c, e) => new THREE.MeshStandardMaterial(Object.assign({color:c, roughness:.85, metalness:0}, e || {}));
+function boite(x0,x1,y0,y1,z0,z1,m){ const o = new THREE.Mesh(new THREE.BoxGeometry(x1-x0,y1-y0,z1-z0), m); o.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2); o.castShadow = o.receiveShadow = true; return o; }
+function cyl(a,b,r,m,seg=8){ const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length(); const o = new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,seg), m); o.position.copy(A).add(B).multiplyScalar(.5); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
+function cone(s, b, r, col, op){ const A = new THREE.Vector3(...s), B = new THREE.Vector3(...b), d = B.clone().sub(A), L = d.length(); const g = new THREE.ConeGeometry(r, L, 24, 1, true); g.translate(0,-L/2,0); g.rotateX(Math.PI); const o = new THREE.Mesh(g, new THREE.MeshBasicMaterial({color:col, transparent:true, opacity:op, side:THREE.DoubleSide, depthWrite:false})); o.position.copy(A); o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.normalize()); return o; }
+function etiquette(txt, x, y, z, l=5, c='#e6edf3'){ const cv = document.createElement('canvas'); cv.width = 512; cv.height = 128; const g = cv.getContext('2d'); g.fillStyle = 'rgba(10,12,16,.78)'; g.fillRect(0,0,512,128); g.font = 'bold 52px -apple-system, Segoe UI, sans-serif'; g.fillStyle = c; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt.slice(0,24), 256, 66);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv), depthTest:false, transparent:true})); sp.scale.set(l, l/4, 1); sp.position.set(x,y,z); sp.renderOrder = 10; return sp; }
+const TENTE = {prevention:0x4fa3ff, secours:0xf85149, accueil:0xffb454, buvette:0xe4c05a, asso:0xe8e0c8};
+function construireSite(){
+  const F = PROJET.facade, forme = new THREE.Shape(); F.contour.forEach(([x,y],i) => i ? forme.lineTo(x,y) : forme.moveTo(x,y));
+  const g = new THREE.ExtrudeGeometry(forme, {depth:F.profondeur, bevelEnabled:false}); g.translate(0,0,-F.profondeur); const f = new THREE.Mesh(g, mat(0xd9d2bf, {roughness:.95})); f.castShadow = f.receiveShadow = true; stat.add(f);
+  F.ouvertures.forEach(([x0,x1,y0,y1],i) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,y1-y0), mat(i<3?0x2a2620:0x1d2a3d, {roughness:.3})); p.position.set((x0+x1)/2,(y0+y1)/2,.02); stat.add(p); });
+  const r = F.rosace, rose = new THREE.Mesh(new THREE.RingGeometry(r.r*.72, r.r, 48), mat(0xc8a24a, {metalness:.6, roughness:.35})); rose.position.set(r.x,r.y,.03); stat.add(rose);
+  const sol = new THREE.Mesh(new THREE.PlaneGeometry(260,240), mat(0x8a8478, {roughness:1})); sol.rotation.x = -Math.PI/2; sol.position.set(0,0,60); sol.receiveShadow = true; stat.add(sol);
+  const n = PROJET.nef; stat.add(boite(n.x0,n.x1,0,n.h,n.z0,n.z1, mat(0xcfc8b4)));
+  PROJET.voisins.forEach(v => stat.add(boite(v.x0,v.x1,0,v.h,v.z0,v.z1, mat(0xb9b2a0))));
+  stat.add(new THREE.GridHelper(220, 22, 0x3a4450, 0x2a3138)).position.set(0,.01,60);
+}
+// dessin d'un objet dans un groupe local (origine au centre de l'emprise, sol à 0, "avant" = -z local)
+function dessiner(o, g){
+  const d = dimsDe(o), t = TYPES[o.type], mn = mat(0x111418), ma = mat(0xb9c0c8, {metalness:.6, roughness:.35});
+  switch (o.type){
+    case 'camion': { const L = d.l, x0 = -L/2, xc = x0 + 2.35, x1 = L/2, z0 = -1.1, z1 = 1.1;
+      g.add(boite(x0+.1, xc-.05, .4, 2.6, z0+.05, z1-.05, mat(t.coul))); g.add(boite(x0, x1, .5, .95, z0+.1, z1-.1, mn)); g.add(boite(xc, x1, .95, 3.15, z0, z1, mat(t.coul)));
+      [x0+1, x1-1.2].forEach(x => [z0+.15, z1-.15].forEach(z => { const r = new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,.3,16), mn); r.rotation.x = Math.PI/2; r.position.set(x,.5,z); g.add(r); }));
+      if (o.hayon > 0){ g.add(boite(x1, x1+o.hayon, .87, .95, z0, z1, mat(0x8c9096, {metalness:.6}))); g.add(boite(x1+o.hayon/2-.6, x1+o.hayon/2+.6, .95, 1.85, z1-.65, z1-.15, mn)); }
+      if (o.ecran){ const e = new THREE.Mesh(new THREE.PlaneGeometry(x1-xc-.2, 2), mat(0x3a2a6a, {emissive:0x7b2fbf, emissiveIntensity:nuit?1.2:.4})); e.position.set((xc+x1)/2, 2.05, z1+.02); g.add(e); }
+      break; }
+    case 'podium': { const H = o.hauteur; g.add(boite(-d.l/2, d.l/2, H-.08, H, -d.p/2, d.p/2, mat(0x6b5540, {roughness:.9}))); g.add(boite(-d.l/2+.05, d.l/2-.05, 0, H-.08, -d.p/2+.05, d.p/2-.05, mat(0x0e1013)));
+      for (let i = 1; i < o.nx; i++) g.add(boite(-d.l/2+i-.01, -d.l/2+i+.01, H, H+.01, -d.p/2, d.p/2, mn));
+      if (o.gardecorps){ [[-d.l/2,d.p/2,d.l/2,d.p/2],[-d.l/2,-d.p/2,-d.l/2,d.p/2],[d.l/2,-d.p/2,d.l/2,d.p/2]].forEach(([x0,z0,x1,z1]) => { for (const hh of [H+.5,H+1.1]) g.add(cyl([x0,hh,z0],[x1,hh,z1],.02,ma)); const n = Math.max(1, Math.round(Math.hypot(x1-x0,z1-z0)/1.5)); for (let i = 0; i <= n; i++) g.add(cyl([x0+(x1-x0)*i/n,H,z0+(z1-z0)*i/n],[x0+(x1-x0)*i/n,H+1.1,z0+(z1-z0)*i/n],.02,ma)); }); }
+      g.add(cyl([0,H,-d.p/2+.4],[0,H+1.5,-d.p/2+.4],.015,mn)); break; }
+    case 'pile_subs': { for (let k = 0; k < o.subs; k++) g.add(boite(-.3,.3,k*.7,(k+1)*.7-.03,-.37,.37,mn)); const top = o.subs*.7; for (let k = 0; k < o.tetes; k++){ const b = boite(-.45,.45,top+k*.35,top+(k+1)*.35-.02,-.3,.3,mn); b.rotation.x = k*.05; g.add(b); }
+      const ang = o.ouverture/2*Math.PI/180, f = new THREE.Shape(); f.moveTo(0,0); for (let a = -ang; a <= ang+1e-6; a += ang/12) f.lineTo(Math.sin(a)*o.portee, -Math.cos(a)*o.portee); f.lineTo(0,0);
+      const s = new THREE.Mesh(new THREE.ShapeGeometry(f), new THREE.MeshBasicMaterial({color:0xf0883e, transparent:true, opacity:.1, side:THREE.DoubleSide, depthWrite:false})); s.rotation.x = -Math.PI/2; s.position.y = .04; g.add(s); break; }
+    case 'vp': { const c = new THREE.Mesh(new THREE.BoxGeometry(.6,.42,.7), mat(0x222730, {metalness:.5, roughness:.4})); c.position.set(0, o.altitude, 0); g.add(c); if (o.altitude > .3) g.add(boite(-.35,.35,0,o.altitude-.21,-.4,.4, mat(0x15171b, {transparent:true, opacity:.25}))); break; }
+    case 'laser': { g.add(boite(-.2,.2,o.altitude-.12,o.altitude+.12,-.2,.2, mat(0x111418, {metalness:.6}))); if (o.altitude > .3) g.add(cyl([0,0,0],[0,o.altitude-.12,0],.03,ma)); break; }
+    case 'tonnelle': { const c = 3; [[-c/2,-c/2],[c/2,-c/2],[c/2,c/2],[-c/2,c/2]].forEach(([x,z]) => g.add(cyl([x,0,z],[x,2.2,z],.035,ma))); const cg = new THREE.ConeGeometry(c*Math.SQRT1_2*1.02,.8,4,1); cg.rotateY(Math.PI/4); const toit = new THREE.Mesh(cg, mat(TENTE[o.usage]||0xe8e0c8, {side:THREE.DoubleSide})); toit.position.y = 2.6; toit.castShadow = true; g.add(toit); g.add(boite(-c/2+.2,c/2-.2,0,.95,-c/2+.1,-c/2+.7, mat(0x6b5a44))); break; }
+    case 'totem': { g.add(boite(-.5,.5,0,.25,-.5,.5, mat(t.coul))); g.add(cyl([0,0,0],[0,o.h,0],.06, mat(t.coul))); g.add(boite(-.5,.5,o.h-.3,o.h+.05,-.1,.1,mn)); g.add(cone([0,o.h-.2,0],[0,.1,-14],6,0xb36bff,nuit?.14:.06)); break; }
+    case 'wash': { g.add(boite(-.45,.45,0,.5,-.35,.35, mn)); break; }
+    case 'regie': { const y0 = o.surel||0; if (y0 > 0) g.add(boite(-3,3,.08,y0,-1.2,1.2, mat(0x0e1013))); g.add(boite(-3.03,3.03,y0,y0+2.59,-1.22,1.22, mat(t.coul, {metalness:.3, roughness:.5}))); const fen = new THREE.Mesh(new THREE.PlaneGeometry(3.2,.9), mat(0x1d2a3d, {emissive:0x9fd3ff, emissiveIntensity:nuit?.8:0})); fen.position.set(.4,y0+1.6,-1.23); fen.rotation.y = Math.PI; g.add(fen); break; }
+    case 'tour': { const w = d.l, zs = [-1.535,1.535], xs = []; for (let i = 0; i <= o.travees; i++) xs.push(-w/2+i*3.07); const mg = mat(0xb5bbc2, {metalness:.75, roughness:.35});
+      xs.forEach(x => zs.forEach(z => g.add(cyl([x,0,z],[x,o.plancher+1,z],.024,mg)))); for (let y = .3; y <= o.plancher+1.01; y += 2){ zs.forEach(z => g.add(cyl([xs[0],Math.min(y,o.plancher+1),z],[xs[xs.length-1],Math.min(y,o.plancher+1),z],.024,mg))); xs.forEach(x => g.add(cyl([x,Math.min(y,o.plancher+1),zs[0]],[x,Math.min(y,o.plancher+1),zs[1]],.024,mg))); }
+      for (let i = 0; i < o.travees; i++) for (let y = .3; y < o.plancher; y += 2) zs.forEach((z,zi) => g.add(cyl([xs[i+((i+zi)%2)],y,z],[xs[i+1-((i+zi)%2)],Math.min(y+2,o.plancher),z],.02,mg)));
+      g.add(boite(-w/2,w/2,o.plancher,o.plancher+.06,-1.5,1.5, mat(0x8f949a, {metalness:.5}))); g.add(boite(-w/2-.2,w/2+.2,o.plancher+2.5,o.plancher+2.6,-1.7,1.7, mat(0xf2f2f2, {transparent:true, opacity:.5}))); break; }
+    case 'delai': { for (const [dx,dz] of [[-.5,-.5],[.5,-.5],[.5,.5],[-.5,.5]]) g.add(cyl([dx,0,dz],[dx*.3,o.h-1,dz*.3],.025,ma)); g.add(cyl([0,0,0],[0,o.h-.9,0],.05,ma)); for (let k = 0; k < o.tetes; k++) g.add(boite(-.5,.5,o.h-.9+k*.36,o.h-.9+(k+1)*.36-.02,-.3,.3,mn)); break; }
+    case 'armoire': case 'ge': case 'balise': { g.add(boite(-d.l/2,d.l/2,0,d.h,-d.p/2,d.p/2, mat(t.coul, {metalness:.3}))); break; }
+    case 'barnum': { [[-3,-1.5],[3,-1.5],[3,1.5],[-3,1.5]].forEach(([x,z]) => g.add(cyl([x,0,z],[x,2.2,z],.035,ma))); g.add(boite(-3.1,3.1,2.27,2.33,-1.6,1.6, mat(t.coul))); break; }
+  }
+}
+// géométrie dérivée : image d'un VP, faisceaux, emprise au sol (AABB approchée après rotation)
+function image(o){ const z = o.z, W = z/o.tr, H = W/(16/9); return {W, H, x0:o.cx-W/2, x1:o.cx+W/2, y0:o.cy-H/2, y1:o.cy+H/2}; }
+function emprise(o){ const d = dimsDe(o), c = Math.abs(Math.cos(o.rot)), s = Math.abs(Math.sin(o.rot)), l = d.l*c + d.p*s, p = d.l*s + d.p*c, ex = o.type === 'camion' ? (o.hayon||0) : 0;
+  return {x0:o.x-l/2-(ex?0:0), x1:o.x+l/2+ex*c, z0:o.z-p/2, z1:o.z+p/2+ex*s, y0:0, y1:d.h + (o.type==='vp'||o.type==='laser' ? o.altitude : 0)}; }
+function rafraichir(){
+  while (dyn.children.length){ const c = dyn.children.pop(); c.traverse(x => { if (x.geometry) x.geometry.dispose(); if (x.material){ if (x.material.map) x.material.map.dispose(); x.material.dispose(); } }); }
+  const Z = ETAT.zone, F = PROJET.facade;
+  const zs = new THREE.Mesh(new THREE.PlaneGeometry(Z.x1-Z.x0, Z.z1-Z.z0), new THREE.MeshBasicMaterial({color:0x9fd3ff, transparent:true, opacity:.18, depthWrite:false})); zs.rotation.x = -Math.PI/2; zs.position.set((Z.x0+Z.x1)/2, .03, (Z.z0+Z.z1)/2); dyn.add(zs);
+  dyn.add(etiquette(`ZONE PUBLIC · ${((Z.x1-Z.x0)*(Z.z1-Z.z0)).toLocaleString('fr-FR')} m² · ${Math.round((Z.x1-Z.x0)*(Z.z1-Z.z0)*Z.densite).toLocaleString('fr-FR')} pers.`, (Z.x0+Z.x1)/2, 1, (Z.z0+Z.z1)/2, 14, '#9fd3ff'));
+  ETAT.objets.forEach(o => { const g = new THREE.Group(); g.userData.id = o.id; dessiner(o, g); g.position.set(o.x, 0, o.z); g.rotation.y = o.rot; dyn.add(g);
+    const d = dimsDe(o); if (o.id === selId){ const b = new THREE.Mesh(new THREE.BoxGeometry(d.l+.4, .06, d.p+.4), new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:.7})); b.position.y = .05; g.add(b); }
+    dyn.add(etiquette(o.nom, o.x, (o.type==='vp'||o.type==='laser' ? o.altitude : 0) + d.h + 1, o.z, Math.max(3, Math.min(8, o.nom.length*.35))));
+    if (o.type === 'vp'){ const im = image(o), Pz = [o.x, o.altitude, o.z], C = [[im.x0,im.y0,0],[im.x1,im.y0,0],[im.x1,im.y1,0],[im.x0,im.y1,0]], pos = []; for (let i = 0; i < 4; i++) pos.push(...Pz, ...C[i], ...C[(i+1)%4]);
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); dyn.add(new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:nuit?.12:.08, side:THREE.DoubleSide, depthWrite:false})));
+      const li = new THREE.Mesh(new THREE.PlaneGeometry(im.W, im.H), new THREE.MeshBasicMaterial({color:0xffb454, transparent:true, opacity:nuit?.45:.22, depthWrite:false})); li.position.set((im.x0+im.x1)/2, (im.y0+im.y1)/2, .06); dyn.add(li); }
+    if (o.type === 'laser'){ const ev = evaluerLaser(o), col = {ok:0x3fb950, warn:0xf0883e, bad:0xf85149}[ev.statut]; dyn.add(cyl([o.x,o.altitude,o.z],[o.tx,o.ty,0],.05, new THREE.MeshBasicMaterial({color:col}))); }
+    if (o.type === 'wash'){ dyn.add(cone([o.x,.5,o.z],[o.tx,o.ty,0],4.5,0xb36bff,nuit?.14:.06)); } });
+  sauver(); panneau();
+}
+/* =====================================================================
+   CONTRÔLES — géométriques, indicatifs
+   ===================================================================== */
+const chevauche = (a,b) => a.x1 > b.x0 && a.x0 < b.x1 && a.z1 > b.z0 && a.z0 < b.z1;
+function evaluerVP(o){ const Z = ETAT.zone, F = PROJET.facade, im = image(o), res = []; let st = 'ok'; const p = (n,m) => { res.push({niv:n, msg:m}); if (n==='bad') st='bad'; else if (n==='warn'&&st!=='bad') st='warn'; };
+  if (o.z < 55 || o.z > 80) p('warn', `recul ${o.z.toFixed(0)} m : image de ${im.W.toFixed(1)} × ${im.H.toFixed(1)} m seulement (${(im.W*im.H/(F.largeur*29.2)*100).toFixed(0)} % du corps de façade) ; 55–80 m couvre tout`); else p('ok', `recul ${o.z.toFixed(0)} m, image ${im.W.toFixed(1)} × ${im.H.toFixed(1)} m`);
+  const lux = o.lumens*.7/(im.W*im.H); p(lux < 25 ? 'warn' : 'ok', `${Math.round(lux)} lux sur la zone (≥ 25 lisible la nuit, 80 confortable)`);
+  // bas du faisceau au-dessus des têtes partout où il survole le public
+  const zMin = Math.max(Z.z0, 0), zMax = Math.min(Z.z1, o.z); let pire = Infinity;
+  if (zMax > zMin){ for (let z = zMin; z <= zMax; z += 1){ const u = z/o.z, yb = im.y0 + (o.altitude-im.y0)*u, xl = im.x0 + (o.x-im.x0)*u, xr = im.x1 + (o.x-im.x1)*u; if (xr > Z.x0 && xl < Z.x1) pire = Math.min(pire, yb); } }
+  if (pire === Infinity) p('ok', `le faisceau ne survole pas la zone public`); else if (pire < 2.5) p('bad', `bas du faisceau à ${pire.toFixed(1)} m au-dessus du public : éblouissement, ombres sur la façade — monter le VP, reculer le public ou relever le cadrage (cy)`); else p('ok', `faisceau à ${pire.toFixed(1)} m au-dessus du public au plus bas`);
+  const obs = ETAT.objets.filter(q => q.id !== o.id && q.z < o.z - .5 && q.z > 0).filter(q => { const e = emprise(q), u = ((e.z0+e.z1)/2)/o.z, yb = im.y0 + (o.altitude-im.y0)*u, xl = im.x0 + (o.x-im.x0)*u, xr = im.x1 + (o.x-im.x1)*u; return e.x1 > xl && e.x0 < xr && e.y1 > yb; }).map(q => q.nom);
+  if (obs.length) p('warn', `dans le cône (ombre sur la façade) : ${obs.join(', ')}`);
+  const dec = Math.abs(o.cy - o.altitude)/im.H; if (dec > .6) p('warn', `décalage optique ${(dec*100).toFixed(0)} % : incliner la machine et corriger au warp`);
+  if (im.x0 < -F.largeur/2 || im.x1 > F.largeur/2) p('warn', `image qui déborde de la façade`);
+  return {statut:st, res}; }
+function evaluerLaser(o){ const Z = ETAT.zone, F = PROJET.facade, res = []; let st = 'ok'; const p = (n,m) => { res.push({niv:n, msg:m}); if (n==='bad') st='bad'; else if (n==='warn'&&st!=='bad') st='warn'; };
+  if (Math.abs(o.tx) > F.largeur/2 || o.ty < 0 || o.ty > F.hauteur) p('bad', `cible hors de la façade`); else p('ok', `cible sur la façade (${o.tx} ; ${o.ty})`);
+  let hMin = Infinity; for (let i = 0; i <= 200; i++){ const t = i/200, x = o.x+(o.tx-o.x)*t, y = o.altitude+(o.ty-o.altitude)*t, z = o.z*(1-t); if (x>=Z.x0&&x<=Z.x1&&z>=Z.z0&&z<=Z.z1) hMin = Math.min(hMin, y); }
+  if (hMin !== Infinity && hMin < 2.5) p('bad', `faisceau à ${hMin.toFixed(1)} m dans la zone public`); else if (hMin !== Infinity) p('ok', `passe à ${hMin.toFixed(1)} m au-dessus du public`);
+  const trav = ETAT.objets.filter(q => q.id !== o.id && q.type !== 'balise').filter(q => { const e = emprise(q); for (let i = 1; i < 200; i++){ const t = i/200, x = o.x+(o.tx-o.x)*t, y = o.altitude+(o.ty-o.altitude)*t, z = o.z*(1-t); if (x>=e.x0&&x<=e.x1&&z>=e.z0&&z<=e.z1&&y>=e.y0&&y<=e.y1) return true; } return false; }).map(q => q.nom);
+  if (trav.length) p('bad', `traverse : ${trav.join(', ')}`);
+  return {statut:st, res}; }
+function evaluerSite(){ const Z = ETAT.zone, res = [], p = (n,m) => res.push({niv:n, msg:m}), zone = {x0:Z.x0,x1:Z.x1,z0:Z.z0,z1:Z.z1};
+  const dedans = ETAT.objets.filter(o => o.type !== 'podium' && o.type !== 'balise' && o.type !== 'delai' && chevauche(emprise(o), zone)).map(o => o.nom);
+  if (dedans.length) p('bad', `dans la zone public : ${dedans.join(', ')}`); else p('ok', `rien d'autre que le podium et les délais dans la zone public`);
+  const col = []; for (let i = 0; i < ETAT.objets.length; i++) for (let j = i+1; j < ETAT.objets.length; j++){ const a = ETAT.objets[i], b = ETAT.objets[j]; if ((a.type==='vp'||a.type==='laser'||b.type==='vp'||b.type==='laser')) continue; if (chevauche(emprise(a), emprise(b))) col.push(`${a.nom} / ${b.nom}`); }
+  if (col.length) p('warn', `emprises qui se chevauchent : ${col.join(' · ')}`);
+  const pres = ETAT.objets.filter(o => o.z - dimsDe(o).p/2 < 2 && o.type !== 'vp' && o.type !== 'laser').map(o => o.nom); if (pres.length) p('warn', `à moins de 2 m de la façade (câbles, secours, monument) : ${pres.join(', ')}`);
+  const voie = Math.min(...PROJET.voisins.filter(b => b.z1 > Z.z0 && b.z0 < Z.z1).map(b => b.x0 >= Z.x1 ? b.x0 - Z.x1 : Z.x0 - b.x1)); p(voie < 4 ? 'bad' : 'ok', `couloir latéral ${voie.toFixed(1)} m entre la zone public et les bâtiments (4 m minimum)`);
+  const pod = ETAT.objets.filter(o => o.type==='podium'); pod.forEach(o => { if (o.hauteur > 1.5) p('bad', `${o.nom} : ${o.hauteur} m, 1,50 m maximum`); if (o.hauteur >= 1 && !o.gardecorps) p('warn', `${o.nom} : garde-corps absents à ${o.hauteur} m`); });
+  const surToit = ETAT.objets.filter(o => (o.type==='vp'||o.type==='laser') && o.altitude > 2.5); const cam = ETAT.objets.find(o => o.type==='camion');
+  if (surToit.length && cam) p('info', `${surToit.length} machine(s) en hauteur (${surToit[0].altitude} m) : sur le toit du camion → charge du toit à vérifier (caisse 20 m³ non prévue pour marcher dessus), plateforme + garde-corps, bâche pluie, accès échelle`);
+  const aire = (Z.x1-Z.x0)*(Z.z1-Z.z0); p('info', `zone public ${aire.toLocaleString('fr-FR')} m² → ${Math.round(aire*Z.densite).toLocaleString('fr-FR')} pers. à ${Z.densite}/m²`);
+  return res; }
+/* =====================================================================
+   PANNEAU
+   ===================================================================== */
+let selId = null; const side = document.getElementById('side'), ic = {ok:'✅', warn:'⚠️', bad:'❌', info:'·'};
+const items = r => r.map(x => `<div class="item ${x.niv==='info'?'':x.niv}">${ic[x.niv]} ${x.msg}</div>`).join('');
+function panneau(){
+  const sc = side.scrollTop, o = ETAT.objets.find(x => x.id === selId), Z = ETAT.zone; let h = `<div style="font-weight:600">${PROJET.nom}</div><div class="note">Studio d'implantation · mètres · configuration : ${ETAT.nom}</div>`;
+  h += `<h2>Ajouter</h2><div class="row"><select id="ajType">${Object.keys(TYPES).map(k => `<option value="${k}">${TYPES[k].nom}</option>`).join('')}</select><button id="ajouter">+ au centre</button></div>`;
+  h += `<h2>Objet sélectionné</h2>`;
+  if (o){ const t = TYPES[o.type]; h += `<div class="grid"><label style="grid-column:1/4">nom<input type="text" data-cle="nom" value="${o.nom.replace(/"/g,'&quot;')}"></label><label>x<input type="number" step=".5" data-cle="x" value="${o.x}"></label><label>z (recul)<input type="number" step=".5" data-cle="z" value="${o.z}"></label><label>rotation °<input type="number" step="15" data-cle="rotdeg" value="${Math.round(o.rot*180/Math.PI)}"></label>
+      ${t.params.map(p => p.choix ? `<label>${p.label}<select data-cle="${p.cle}">${p.choix.map(c => `<option ${o[p.cle]===c?'selected':''}>${c}</option>`).join('')}</select></label>` : `<label>${p.label}<input type="number" step="${p.step}" data-cle="${p.cle}" value="${o[p.cle]}"></label>`).join('')}</div>
+      <div class="row"><button id="dup">Dupliquer</button><button class="sec" id="suppr">Retirer</button></div>`;
+    if (o.type === 'vp') h += items(evaluerVP(o).res); if (o.type === 'laser') h += items(evaluerLaser(o).res); }
+  else h += `<p class="note">Clique un objet dans la 3D ou dans la liste.</p>`;
+  h += `<h2>Objets (${ETAT.objets.length})</h2>` + ETAT.objets.map(x => `<div class="obj ${x.id===selId?'cur':''}" data-sel="${x.id}"><span>${x.nom}</span><span class="note">${TYPES[x.type].nom.split(' ')[0]}</span></div>`).join('');
+  const compte = {}; ETAT.objets.forEach(x => compte[x.type] = (compte[x.type]||0) + (x.type==='podium' ? x.nx*x.nz : x.type==='pile_subs' ? 1 : 1));
+  h += `<h2>Inventaire : posé / possédé → à louer</h2><table><tr><th>Type</th><th>posé</th><th>possédé</th><th>à louer</th></tr>` + Object.keys(TYPES).map(k => { const pose = compte[k]||0, pos = ETAT.inventaire[k]||0, lou = Math.max(0, pose-pos); return `<tr><td>${TYPES[k].nom}${k==='podium'?' (praticables)':''}</td><td>${pose}</td><td><input type="number" min="0" step="1" data-inv="${k}" value="${pos}"></td><td style="color:${lou?'var(--warn)':'var(--ok)'}">${lou}</td></tr>`; }).join('') + `</table>
+    <p class="note">Subs et têtes : ${ETAT.objets.filter(x=>x.type==='pile_subs').reduce((a,x)=>a+x.subs,0)} subs et ${ETAT.objets.filter(x=>x.type==='pile_subs').reduce((a,x)=>a+x.tetes,0) + ETAT.objets.filter(x=>x.type==='delai').reduce((a,x)=>a+x.tetes,0)} têtes posés.</p>`;
+  h += `<h2>Zone public</h2><div class="grid"><label>x0<input type="number" step="1" data-zone="x0" value="${Z.x0}"></label><label>x1<input type="number" step="1" data-zone="x1" value="${Z.x1}"></label><label>pers/m²<input type="number" step=".5" data-zone="densite" value="${Z.densite}"></label><label>z0 (recul)<input type="number" step="1" data-zone="z0" value="${Z.z0}"></label><label>z1<input type="number" step="1" data-zone="z1" value="${Z.z1}"></label></div>`;
+  const evs = ETAT.objets.filter(x=>x.type==='vp').map(evaluerVP).concat(ETAT.objets.filter(x=>x.type==='laser').map(evaluerLaser)), site = evaluerSite();
+  const nb = evs.filter(e=>e.statut==='bad').length + site.filter(e=>e.niv==='bad').length, nw = evs.filter(e=>e.statut==='warn').length + site.filter(e=>e.niv==='warn').length;
+  h += `<h2>Contrôles</h2>${nb ? `<div class="item bad">❌ ${nb} point(s) bloquant(s)</div>` : nw ? `<div class="item warn">⚠️ ${nw} point(s) à vérifier</div>` : `<div class="item ok">✅ rien de bloquant</div>`}${items(site)}${evs.map(e => items(e.res.filter(r => r.niv!=='ok'))).join('')}`;
+  h += `<h2>Configurations</h2><div class="row"><button id="cfgMin">Minimale (camion à 20 m)</button><button class="sec" id="cfgVide">Vider</button></div><div class="row"><input type="text" id="varNom" placeholder="nom de la variante" style="flex:1"><button id="varSauver">Enregistrer</button></div>` + Object.keys(variantes()).sort().map(n => `<div class="obj"><span>${n}</span><span><button data-var="${n}">Charger</button> <button class="sec" data-varx="${n}">✕</button></span></div>`).join('');
+  h += `<div class="row" style="margin-top:10px"><button id="json">Exporter JSON</button><button id="imp">Importer JSON</button><input type="file" id="fichier" accept=".json" style="display:none"></div><p class="note">Le JSON (schéma v3, objets libres) est repris par <code>unreal/generer_projet_unreal.py</code>. Les contrôles sont géométriques : ils ne remplacent ni la commission de sécurité ni les notes de calcul.</p>`;
+  side.innerHTML = h; side.scrollTop = sc; brancher();
+}
+function variantes(){ try { return JSON.parse(localStorage.getItem('studio-variantes')||'{}'); } catch(e){ return {}; } }
+function brancher(){
+  const o = ETAT.objets.find(x => x.id === selId);
+  side.querySelectorAll('[data-cle]').forEach(inp => inp.addEventListener('change', () => { if (!o) return; memo(); const k = inp.dataset.cle; if (k === 'nom') o.nom = inp.value; else if (k === 'rotdeg') o.rot = parseFloat(inp.value)*Math.PI/180; else if (inp.tagName === 'SELECT') o[k] = inp.value; else { const v = parseFloat(inp.value); if (!isNaN(v)) o[k] = v; } rafraichir(); }));
+  side.querySelectorAll('[data-inv]').forEach(inp => inp.addEventListener('change', () => { ETAT.inventaire[inp.dataset.inv] = parseInt(inp.value)||0; rafraichir(); }));
+  side.querySelectorAll('[data-zone]').forEach(inp => inp.addEventListener('change', () => { memo(); ETAT.zone[inp.dataset.zone] = parseFloat(inp.value); rafraichir(); }));
+  side.querySelectorAll('[data-sel]').forEach(d => d.addEventListener('click', () => { selId = +d.dataset.sel; rafraichir(); }));
+  document.getElementById('ajouter').onclick = () => { memo(); const t = document.getElementById('ajType').value, c = controls.target, n = creer(t, Math.round(c.x*2)/2, Math.round(Math.max(2, c.z)*2)/2); ETAT.objets.push(n); selId = n.id; rafraichir(); };
+  const d = document.getElementById('dup'); if (d) d.onclick = () => { memo(); const n = Object.assign({}, o, {id:uid++, x:o.x+2, nom:o.nom + ' (copie)'}); ETAT.objets.push(n); selId = n.id; rafraichir(); };
+  const s = document.getElementById('suppr'); if (s) s.onclick = () => { memo(); ETAT.objets = ETAT.objets.filter(x => x.id !== selId); selId = null; rafraichir(); };
+  document.getElementById('cfgMin').onclick = () => { memo(); ETAT = configMinimale(); selId = null; rafraichir(); };
+  document.getElementById('cfgVide').onclick = () => { memo(); ETAT.objets = []; selId = null; rafraichir(); };
+  document.getElementById('varSauver').onclick = () => { const n = document.getElementById('varNom').value.trim(); if (!n) return; const v = variantes(); v[n] = JSON.parse(JSON.stringify(Object.assign({}, ETAT, {nom:n}))); localStorage.setItem('studio-variantes', JSON.stringify(v)); panneau(); };
+  side.querySelectorAll('[data-var]').forEach(b => b.onclick = () => { memo(); ETAT = variantes()[b.dataset.var]; uid = Math.max(1, ...ETAT.objets.map(x => x.id+1)); selId = null; rafraichir(); });
+  side.querySelectorAll('[data-varx]').forEach(b => b.onclick = () => { const v = variantes(); delete v[b.dataset.varx]; localStorage.setItem('studio-variantes', JSON.stringify(v)); panneau(); });
+  document.getElementById('json').onclick = () => telecharger('implantation-studio.json', JSON.stringify(Object.assign({projet:PROJET}, ETAT), null, 1));
+  document.getElementById('imp').onclick = () => document.getElementById('fichier').click();
+  document.getElementById('fichier').onchange = e => { const f = e.target.files[0]; if (!f) return; f.text().then(t => { try { const j = JSON.parse(t); if (j.version !== 3 || !j.objets) throw 0; memo(); ETAT = j; uid = Math.max(1, ...j.objets.map(x => x.id+1)); selId = null; rafraichir(); } catch(err){ document.getElementById('sel').style.display = 'block'; document.getElementById('sel').textContent = 'Fichier illisible ou pas au schéma v3 (studio)'; } }); };
+}
+/* =====================================================================
+   SOURIS ET CLAVIER
+   ===================================================================== */
+const HIST = []; function memo(){ HIST.push(JSON.stringify(ETAT)); if (HIST.length > 60) HIST.shift(); }
+let drag = null, prevu = false; const PLAN = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
+function rayon(ev){ const r = renderer.domElement.getBoundingClientRect(), m = new THREE.Vector2(((ev.clientX-r.left)/r.width)*2-1, -((ev.clientY-r.top)/r.height)*2+1), rc = new THREE.Raycaster(); rc.setFromCamera(m, camera); return rc; }
+function surSol(ev){ const p = new THREE.Vector3(); return rayon(ev).ray.intersectPlane(PLAN, p) ? p : null; }
+function montrer(o){ const el = document.getElementById('sel'); el.style.display = 'block'; el.textContent = `${o.nom} · x ${o.x.toFixed(1)} · z ${o.z.toFixed(1)} · ${Math.round(o.rot*180/Math.PI)}°`; }
+function planifier(){ if (prevu) return; prevu = true; requestAnimationFrame(() => { prevu = false; rafraichir(); }); }
+function souris(){ const c = renderer.domElement;
+  c.addEventListener('pointerdown', ev => { if (ev.button !== 0) return; const hits = rayon(ev).intersectObjects(dyn.children, true);
+    for (const h of hits){ let g = h.object; while (g && g.userData.id === undefined) g = g.parent; if (!g) continue; const o = ETAT.objets.find(x => x.id === g.userData.id); if (!o) continue; const p = surSol(ev); if (!p) return;
+      selId = o.id; drag = {o, dx:o.x-p.x, dz:o.z-p.z, bouge:false}; controls.enabled = false; c.setPointerCapture(ev.pointerId); montrer(o); rafraichir(); return; } });
+  c.addEventListener('pointermove', ev => { if (!drag) return; const p = surSol(ev); if (!p) return; let x = p.x+drag.dx, z = p.z+drag.dz; if (!ev.altKey){ x = Math.round(x*2)/2; z = Math.round(z*2)/2; } if (x === drag.o.x && z === drag.o.z) return; if (!drag.bouge){ memo(); drag.bouge = true; } drag.o.x = x; drag.o.z = z; montrer(drag.o); planifier(); });
+  const fin = () => { if (!drag) return; drag = null; controls.enabled = true; rafraichir(); }; c.addEventListener('pointerup', fin); c.addEventListener('pointercancel', fin);
+  window.addEventListener('keydown', ev => { if (['INPUT','SELECT','TEXTAREA'].includes(ev.target.tagName)) return; const o = ETAT.objets.find(x => x.id === selId);
+    if ((ev.ctrlKey||ev.metaKey) && ev.key.toLowerCase() === 'z'){ ev.preventDefault(); if (HIST.length){ ETAT = JSON.parse(HIST.pop()); rafraichir(); } return; } if (!o) return;
+    const k = ev.key.toLowerCase(); let fait = true;
+    if (k === 'r'){ memo(); o.rot += (ev.shiftKey ? -1 : 1)*Math.PI/12; } else if (k === 'd'){ memo(); const n = Object.assign({}, o, {id:uid++, x:o.x+2, nom:o.nom+' (copie)'}); ETAT.objets.push(n); selId = n.id; }
+    else if (k === 'delete' || k === 'backspace'){ memo(); ETAT.objets = ETAT.objets.filter(x => x.id !== selId); selId = null; }
+    else if (ev.key === 'ArrowLeft'){ memo(); o.x -= .5; } else if (ev.key === 'ArrowRight'){ memo(); o.x += .5; } else if (ev.key === 'ArrowUp'){ memo(); o.z -= .5; } else if (ev.key === 'ArrowDown'){ memo(); o.z += .5; } else fait = false;
+    if (fait){ ev.preventDefault(); if (o) montrer(o); rafraichir(); } });
+}
+/* =====================================================================
+   INIT
+   ===================================================================== */
+const VUES = {persp:{pos:[-34,20,58], cible:[0,4,18]}, plan:{pos:[0,200,40.01], cible:[0,0,40]}, public:{pos:[4,1.7,45], cible:[0,10,0]}, facade:{pos:[0,12,-30], cible:[0,4,30]}};
+function vue(n){ const v = VUES[n]; camera.position.set(...v.pos); controls.target.set(...v.cible); controls.update(); }
+function eclairage(){ const j = nuit ? 0 : 1; scene.background = new THREE.Color().setRGB(.03+.6*j, .04+.73*j, .08+.84*j); sun.intensity = nuit ? 0 : 1.1; hemi.intensity = nuit ? .35 : .9; }
+function init(){ const v = document.getElementById('view');
+  scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(42, 1, .1, 1200); renderer = new THREE.WebGLRenderer({antialias:true, preserveDrawingBuffer:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap; v.appendChild(renderer.domElement);
+  hemi = new THREE.HemisphereLight(0xdfeeff, 0x6b6250, .9); scene.add(hemi); sun = new THREE.DirectionalLight(0xfff1dc, 1.1); sun.position.set(-80,120,60); sun.castShadow = true; Object.assign(sun.shadow.camera, {left:-130,right:130,top:130,bottom:-130,far:420}); sun.shadow.mapSize.set(2048,2048); scene.add(sun);
+  construireSite(); scene.add(stat, dyn); controls = new THREE.OrbitControls(camera, renderer.domElement); controls.mouseButtons = {LEFT:THREE.MOUSE.ROTATE, MIDDLE:THREE.MOUSE.DOLLY, RIGHT:THREE.MOUSE.PAN}; controls.maxPolarAngle = Math.PI*.495; vue('persp');
+  document.querySelectorAll('#bar button[data-view]').forEach(b => b.onclick = () => vue(b.dataset.view));
+  document.getElementById('nuit').onclick = e => { nuit = !nuit; e.target.classList.toggle('on', nuit); eclairage(); rafraichir(); };
+  document.getElementById('png').onclick = () => { renderer.render(scene, camera); renderer.domElement.toBlob(b => telecharger(`implantation-${ETAT.nom.replace(/[^\w]+/g,'-')}.png`, b), 'image/png'); };
+  souris(); eclairage(); redim(); window.addEventListener('resize', redim); rafraichir(); boucle(); }
+function redim(){ const v = document.getElementById('view'), w = v.clientWidth, h = v.clientHeight; renderer.setSize(w,h,false); camera.aspect = w/h; camera.updateProjectionMatrix(); renderer.domElement.style.width = w+'px'; renderer.domElement.style.height = h+'px'; }
+function boucle(){ requestAnimationFrame(boucle); controls.update(); renderer.render(scene, camera); }
+init();
+</script>
+</body>
+</html>

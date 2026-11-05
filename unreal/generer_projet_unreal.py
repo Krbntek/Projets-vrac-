@@ -24,7 +24,7 @@ Conventions
 Dépendances : trimesh, shapely, numpy, mapbox_earcut   (pip install trimesh shapely numpy mapbox_earcut)
 """
 
-import json, math, os, sys
+import json, math, os, re, sys
 import numpy as np
 import trimesh
 from trimesh.creation import box, cylinder, cone, extrude_polygon
@@ -334,6 +334,7 @@ def elem_podium(pb, pd):
     return parts
 
 def elem_camion(cam, c):
+    """cam n'est plus utilisé (tout vient de c)."""
     """origine au centre du véhicule (x = c.x, z = c.z) ; cabine côté -x, hayon déployé côté +x."""
     L = c["longueur"]; x0, x1 = -L / 2, L / 2; xc0 = x0 + c["cabine"]; xh1 = x1 + c["hayon"]; z0, z1 = -c["largeur"] / 2, c["largeur"] / 2; yp, yt = c["plancher"], c["plancher"] + c["hauteurCaisse"]
     mb, mn, mi, parts = M["blanc"], M["noir"], M["inox"], []
@@ -480,8 +481,73 @@ def injecter_lumieres_glb(chemin, lumieres):
         f.write(b"glTF" + struct.pack("<II", 2, total) + struct.pack("<II", len(js), 0x4E4F534A) + js
                 + struct.pack("<II", bin_len, bin_type) + bin_chunk)
 
+def main_v3(E):
+    """schéma v3 (outils/studio-implantation.html) : une liste d'objets libres, chacun avec x, z, rot et ses paramètres."""
+    P = E["projet"]; F = P["facade"]; Z = E["zone"]
+    if os.path.isdir(D_ELEM):
+        for f in os.listdir(D_ELEM):
+            if f.startswith("SM_"): os.remove(os.path.join(D_ELEM, f))
+    os.makedirs(D_SCENE, exist_ok=True); os.makedirs(D_ELEM, exist_ok=True)
+    scene = trimesh.Scene(); placement = []; lumieres = []
+    def poser(nom_elem, parts, inst):
+        ecrire_element(nom_elem, parts); fus = trimesh.util.concatenate([p.copy() for p in parts])
+        scene.add_geometry(fus, node_name=inst["nom"], geom_name=nom_elem, transform=T(inst["x"], inst.get("y", 0), inst["z"], inst.get("rot", 0.0)))
+        placement.append(dict(acteur=inst["nom"], element=nom_elem, location_cm=[inst["z"]*100, inst["x"]*100, inst.get("y", 0)*100], yaw_deg=round(math.degrees(inst.get("rot", 0.0)), 2)))
+    poser("SM_Facade", elem_facade(F), dict(nom="Facade", x=0, z=0))
+    poser("SM_Nef", elem_nef(P["nef"]), dict(nom="Nef", x=0, z=P["nef"]["z1"]))
+    for i, v in enumerate(P["voisins"]): poser(f"SM_Voisin_{i+1}", elem_boite_sol(v["x1"]-v["x0"], v["h"], v["z1"]-v["z0"], M["voisin"]), dict(nom=f"Voisin_{i+1}", x=(v["x0"]+v["x1"])/2, z=(v["z0"]+v["z1"])/2))
+    poser("SM_Sol", [PLAN_XZ(-120, 120, -40, 160, 0, M["pave"])], dict(nom="Sol", x=0, z=0))
+    poser("SM_ZonePublic", [PLAN_XZ(Z["x0"], Z["x1"], Z["z0"], Z["z1"], 0.03, M["zone"])], dict(nom="ZonePublic", x=0, z=0))
+    for o in E["objets"]:
+        t, nom = o["type"], "Obj_" + re.sub(r"[^A-Za-z0-9]+", "_", o["nom"]).strip("_") + f"_{o['id']}"
+        inst = dict(nom=nom, x=o["x"], z=o["z"], rot=float(o.get("rot", 0)))
+        if t == "camion":
+            c = dict(longueur=7.3, largeur=2.2, cabine=2.35, plancher=.95, hauteurCaisse=2.2, hayon=o.get("hayon", 1.6), ecran=bool(o.get("ecran", 1)))
+            poser(f"SM_Camion_{o['id']}", elem_camion(None, c), inst)
+        elif t == "podium":
+            l, p, H = o["nx"]*1.0, o["nz"]*2.0, o["hauteur"]; parts = [B(-l/2, l/2, H-.08, H, -p/2, p/2, M["bois"]), B(-l/2+.05, l/2-.05, 0, H-.08, -p/2+.05, p/2-.05, M["jupe"])]
+            if o.get("gardecorps"):
+                for (x0, z0, x1, z1) in [(-l/2, p/2, l/2, p/2), (-l/2, -p/2, -l/2, p/2), (l/2, -p/2, l/2, p/2)]:
+                    for hh in (H+.5, H+1.1): parts.append(CYL([x0, hh, z0], [x1, hh, z1], .02, M["inox"], 8))
+            poser(f"SM_Podium_{o['id']}", parts, inst)
+        elif t == "pile_subs":
+            parts = [B(-.3, .3, k*.7, (k+1)*.7-.03, -.37, .37, M["noir"]) for k in range(o["subs"])] + elem_tetes(o["tetes"], .45, .35, .75)
+            for g in parts[o["subs"]:]: g.apply_translation([0, o["subs"]*.7, 0])
+            poser(f"SM_PileSubs_{o['id']}", parts, inst)
+        elif t == "vp":
+            p2 = dict(o, x=o["x"], y=o["altitude"], z=o["z"], ratio=16/9); im = cadre_image(p2)
+            poser("SM_Projecteur", elem_projecteur(), dict(nom=nom, x=o["x"], y=o["altitude"], z=o["z"], rot=look_at_y([o["x"], o["altitude"], o["z"]], [o["cx"], o["cy"], 0]) + math.pi))
+            coins = [[im["x0"], im["y0"], 0], [im["x1"], im["y0"], 0], [im["x1"], im["y1"], 0], [im["x0"], im["y1"], 0]]
+            poser(f"SM_ConeVP_{o['id']}", [FRUSTUM_VP([o["x"], o["altitude"], o["z"]], coins, M["cone"]), PLAN_XY(im["x0"], im["x1"], im["y0"], im["y1"], .06, mat("M_ImageVP", (1, .71, .33), alpha=.25))], dict(nom=f"ConeVP_{o['id']}", x=0, z=0))
+            lumieres.append(dict(nom=f"Light_VP_{o['id']}", pos=[o["x"], o["altitude"], o["z"]], cible=[o["cx"], o["cy"], 0], lumens=o["lumens"], angle=2*math.atan((im["W"]/2)/o["z"]), couleur=[1, .94, .86]))
+        elif t == "laser":
+            poser("SM_Laser", elem_laser(), dict(nom=nom, x=o["x"], y=o["altitude"], z=o["z"]))
+            poser(f"SM_FaisceauLaser_{o['id']}", [CYL([o["x"], o["altitude"], o["z"]], [o["tx"], o["ty"], 0], .05, M["laser"])], dict(nom=f"FaisceauLaser_{o['id']}", x=0, z=0))
+        elif t == "tonnelle": poser(f"SM_Tonnelle_{o.get('usage', 'asso')}", elem_tonnelle(3.0, TENTE.get(o.get("usage"), TENTE["asso"])), inst)
+        elif t == "totem":
+            poser("SM_Totem", elem_totem(o["h"]), inst)
+            lumieres.append(dict(nom=f"Light_Totem_{o['id']}", pos=[o["x"], o["h"], o["z"]], cible=[o["x"] - 14*math.sin(o.get("rot", 0)), 0, o["z"] - 14*math.cos(o.get("rot", 0))], lumens=20000, angle=math.radians(60), couleur=[.75, .55, 1]))
+        elif t == "wash":
+            poser("SM_WashFacade", elem_wash(), inst)
+            lumieres.append(dict(nom=f"Light_Wash_{o['id']}", pos=[o["x"], .5, o["z"]], cible=[o["tx"], o["ty"], 0], lumens=15000, angle=math.radians(30), couleur=[.75, .55, 1]))
+        elif t == "regie": poser(f"SM_Regie_{o['id']}", elem_regie(dict(L=6.06, l=2.44, h=2.59, y0=o.get("surel", 0))), inst)
+        elif t == "tour":
+            b = dict(travees=o["travees"], niveaux=max(1, int(round((o["plancher"]-.3)/2))), hauteurNiveau=2.0, base=.3, profondeurPlateforme=3.07)
+            poser(f"SM_TourLayher_{o['id']}", elem_tour_layher(b, dict(hVP=o["plancher"]+.5)), inst)
+        elif t == "delai": poser("SM_DelaiTour", elem_delai_tour(o["h"], o["tetes"]), inst)
+        elif t == "armoire": poser("SM_Armoire", elem_armoire(dict(l=1.2, h=1.8, p=.6)), inst)
+        elif t == "ge": poser("SM_GroupeElectrogene", elem_groupe(dict(l=3.2, h=2.2, p=1.5)), inst)
+        elif t == "barnum": poser("SM_Barnum", elem_tonnelle_plate(6, 3, (.85, .82, .77)), inst)
+        elif t == "balise": poser("SM_Balise", [B(-.25, .25, 0, 1.8, -.25, .25, M["jaune"])], inst)
+    out = os.path.join(D_SCENE, "Implantation.glb"); scene.export(out); injecter_lumieres_glb(out, lumieres)
+    json.dump(dict(unites="cm", repere="Unreal : X avant (= recul Z du modèle), Y droite (= X modèle), Z haut (= Y modèle)", version=3, acteurs=placement,
+                   lumieres=[dict(nom=l["nom"], location_cm=[l["pos"][2]*100, l["pos"][0]*100, l["pos"][1]*100], cible_cm=[l["cible"][2]*100, l["cible"][0]*100, l["cible"][1]*100], lumens=l["lumens"], cone_deg=round(math.degrees(l["angle"]), 1)) for l in lumieres]),
+              open(os.path.join(PROJ, "Content", "Import", "placement.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    print(f"scène v3 : {out} ({len(placement)} acteurs, {len(lumieres)} lumières)")
+
 def main():
     E = json.load(open(SRC, encoding="utf-8"))
+    if E.get("version", 1) == 3: return main_v3(E)
     if E.get("version", 1) < 2: sys.exit("implantation.json version 1 : exporte à nouveau depuis la démo ou le visualiseur (schéma v2 : podium, camion, repos, electricite)")
     P = E["projet"]; pos = positions(E)
     # on repart d'un dossier d'éléments propre : les SM_ de l'ancien schéma ne doivent pas traîner
