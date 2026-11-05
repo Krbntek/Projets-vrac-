@@ -467,10 +467,14 @@ const LENSES = {
            src:'ProjectorCentral seul'},
   ah32021:{nom:'AH-32021 courte fixe',  trMin:0.82, trMax:0.82, fMin:30, fMax:30, proj:['hdt1000'], verif:false,
            src:'base projector-database (source secondaire), à recouper'},
-  lu04:   {nom:'ELPLU04 courte focale', trMin:0.64, trMax:0.77, fMin:null,fMax:null,proj:['pu2220b','l1500uh'],verif:true,
+  lu03:   {nom:'ELPLU03 très courte focale', trMin:0.48, trMax:0.57, fMin:null,fMax:null,proj:['l1755u'],verif:false,
+           src:'fiche spec européenne EB-L1755U + revendeur (panneau 1,03") ; optique arrêtée par Epson, à recouper'},
+  lu04:   {nom:'ELPLU04 courte focale', trMin:0.64, trMax:0.77, fMin:null,fMax:null,proj:['pu2220b','l1500uh','l1755u'],verif:true,
            src:'fiche Epson EB-L1505U (0,64–0,77, shift ±60/±18) ; même plage annoncée gamme 9–20 klm. ⚠ le devis Bargraph indique 0,87–1,06 « pour 12K » : c’est la plage des séries G7000/L1000 — à confirmer avec le loueur'},
-  lm15:   {nom:'ELPLM15 standard',      trMin:1.57, trMax:2.56, fMin:null,fMax:null,proj:['pu2220b','l1500uh'],verif:false,
-           src:'annonces revendeurs ; même plage que l’optique standard du L1500UH (fiche Epson)'}
+  lm15:   {nom:'ELPLM15 standard',      trMin:1.57, trMax:2.56, fMin:null,fMax:null,proj:['pu2220b','l1500uh','l1755u'],verif:false,
+           src:'annonces revendeurs ; même plage que l’optique standard du L1500UH (fiche Epson)'},
+  ll08:   {nom:'ELPLL08 longue focale', trMin:5.28, trMax:7.72, fMin:null,fMax:null,proj:['l1755u'],verif:false,
+           src:'fiche spec européenne EB-L1755U (5,28–7,72) ; ⚠ Epson US donne 7,20–10,12 sur le L1505UH voisin — à recouper'}
 };
 /* ======================================================================
    ====================  CATALOGUE DES PROJECTEURS  =====================
@@ -500,7 +504,9 @@ const MODELS = {
   pu2220b:{nom:'Epson EB-PU2220B',  court:'EB-PU2220B', lm:20000, w:1920, h:1200, N:2500, W:1100, shiftV:null, shiftH:null, lamp:false, verif:false,
            src:'fiche Epson (20000 lm, WUXGA) ; contraste natif et consommation estimés'},
   l1500uh:{nom:'Epson EB-L1500UH',  court:'EB-L1500UH', lm:12000, w:1920, h:1200, N:2000, W:833,  shiftV:0.60, shiftH:0.18, lamp:false, verif:false,
-           src:'fiche Epson EB-L1500UH (12000 lm, WUXGA, laser 20000 h, 833 W en mode normal, shift motorisé ±60/±18) ; contraste natif estimé (2 500 000:1 dynamique annoncé) ; référence du devis Bargraph'}
+           src:'fiche Epson EB-L1500UH (12000 lm, WUXGA, laser 20000 h, 833 W en mode normal, shift motorisé ±60/±18) ; contraste natif estimé (2 500 000:1 dynamique annoncé) ; référence du devis Bargraph'},
+  l1755u: {nom:'Epson EB-L1755U',  court:'EB-L1755U', lm:15000, w:1920, h:1200, N:2000, W:1000, shiftV:null, shiftH:null, lamp:false, verif:false,
+           src:'VP de la conduite « soir J » ; fiche Epson (15000 lm, 10500 lm en mode silencieux, WUXGA, laser) ; contraste natif 2000:1 (Icecat et conduite ; 2 500 000:1 dynamique annoncé) ; consommation estimée ~1000 W et décalage d’optique non documenté — à recouper'}
 };
 /* ======================================================================
    =====================  PARC : machines physiques  ====================
@@ -514,7 +520,8 @@ const PARC = [
   {id:'cpx-2', model:'x10000', owner:'WLTP', tag:'nº2', lens:'sl'},
   {id:'hdt-1', model:'hdt1000',owner:'', lens:'ah32021'},
   {id:'pu-1',  model:'pu2220b',owner:'', lens:'lu04'},
-  {id:'l15-1', model:'l1500uh',owner:'', lens:'lu04'}
+  {id:'l15-1', model:'l1500uh',owner:'', lens:'lu04'},
+  {id:'l17-1', model:'l1755u', owner:'', lens:'lu03'}
 ];
 const STORE = 'mapping-parc-v2';
 try{
@@ -623,7 +630,8 @@ const PAIRS = [
   ['2 × LC-HDT1000',          [['hdt1000','ah32021'],['hdt1000','ah32021']]],
   ['CP-X10000 + EB-PU2220B',  [['x10000','sd'],['pu2220b','lm15']]],
   ['EB-L1500UH + EB-PU2220B', [['l1500uh','lu04'],['pu2220b','lu04']]],
-  ['EB-L1500UH + CP-X10000',  [['l1500uh','lu04'],['x10000','sd']]]
+  ['EB-L1500UH + CP-X10000',  [['l1500uh','lu04'],['x10000','sd']]],
+  ['EB-L1755U + EB-L1500UH',  [['l1755u','lu04'],['l1500uh','lu04']]]
 ];
 
 /* ---------- État ---------- */
@@ -1159,7 +1167,7 @@ function renderSurfCards(){
 }
 
 /* ---------- Pictogrammes projecteurs (v4) ---------- */
-const VPCOLORS={x10000:'#8fa6c0', hdt1000:'#4db6ac', pu2220b:'#9575cd', l1500uh:'#6fcf97'};
+const VPCOLORS={x10000:'#8fa6c0', hdt1000:'#4db6ac', pu2220b:'#9575cd', l1500uh:'#6fcf97', l1755u:'#ef7fb2'};
 function vpIcon(model,w){
   const h=Math.round(w*0.58), c=VPCOLORS[model]||'#999', m=MODELS[model];
   return `<svg width="${w}" height="${h}" viewBox="0 0 100 58" style="background:none;border:none" aria-hidden="true">
@@ -1349,6 +1357,7 @@ $('sources').innerHTML = `
     <tr><td>Epson ELPLU04</td><td>zoom courte focale, TR 0,64–0,77 (gamme 9 000–20 000 lm)</td><td>⚠ annonces revendeurs Epson, <b>à recouper</b> avec le calculateur Epson</td></tr>
     <tr><td>Epson ELPLM15</td><td>zoom standard, TR 1,57–2,56</td><td>⚠ annonces revendeurs, <b>à recouper</b></td></tr>
     <tr><td>Epson EB-L1500UH</td><td>12 000 lm laser (20 000 h), WUXGA 1920×1200, 833 W (mode normal), décalage d'optique motorisé ±60 % / ±18 %</td><td>fiche Epson ; <b>contraste natif estimé</b> (2 500 000:1 dynamique annoncé) · référence du devis</td></tr>
+    <tr><td>Epson EB-L1755U</td><td>15 000 lm laser (10 500 en silencieux), WUXGA, contraste natif 2000:1 ; optiques ELPLU03 (0,48–0,57), ELPLU04 (0,64–0,77), ELPLM15 (1,57–2,56), ELPLL08 (5,28–7,72)</td><td>VP de la conduite « soir J » ; flux et résolution : fiche Epson ; ⚠ consommation estimée, décalage d'optique non documenté, plages ELPLU03/ELPLL08 d'une fiche spec secondaire</td></tr>
     <tr><td>ELPLU04 sur EB-L1500UH</td><td>TR 0,64–0,77 retenu (fiche Epson série L1500/L1505)</td><td>⚠ le devis annonce 0,87–1,06 « pour 12K » : c'est la plage des séries G7000/L1000 — <b>à confirmer avec le loueur</b></td></tr>
   </table>`;
 
